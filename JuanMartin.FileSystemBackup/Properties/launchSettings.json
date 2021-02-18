@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "JuanMartin.FileSystemBackup": {
+      "commandName": "Project",
+      "commandLineArgs": "--configuration --backup=false"
+    }
+  }
+}

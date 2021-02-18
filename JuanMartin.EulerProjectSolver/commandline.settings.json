@@ -1,0 +1,66 @@
+{
+"IsCaseSensitive": "false",
+"AllowBundling": "false",
+"CultureInfo": "en-US",
+"Version": "12052020",
+	"Options": [
+		{
+			"Name": "test_mode",
+			"Status": "initialized",
+			"Value": "false",
+			"ValueType": "System.Boolean",
+			"Abbreviation": "t",
+			"Dependencies": [ "problems "],
+			"IsSingle": "false",
+			"IsRequired": "false"
+		},
+		{
+			"Name": "validate",
+			"Status": "initialized",
+			"Value": "false",
+			"ValueType": "System.Boolean",
+			"Abbreviation": "v",
+			"Dependencies": [],
+			"IsSingle": "false",
+			"IsRequired": "false"
+		},
+		{
+			"Name": "skip",
+			"Status": "defined",
+			"ValueType": "System.Int32[]",
+			"Abbreviation": "s",
+			"Dependencies": [ "problems" ],
+			"IsSingle": "false",
+			"IsRequired": "false"
+		},
+		{
+			"Name": "problems",
+			"Status": "defined",
+			"ValueType": "System.Int32[]",
+			"Abbreviation": "p",
+			"Dependencies": [],
+			"IsSingle": "false",
+			"IsRequired": "false"
+		},
+		{
+			"Name": "version",
+			"Status": "defined",
+			"Value": "12282020",
+			"ValueType": "System.String",
+			"Abbreviation": "vr",
+			"Dependencies": [],
+			"IsSingle": "true",
+			"IsRequired": "false"
+		},
+		{
+			"Name": "help",
+			"Status": "defined",
+			"Value": "Valid Commands:\n\r\t--validate(-v) validate all problems impllemented, by default false\n\r\t--test_mode(-t) run a problem from unit test ptoblems array, introducing test inputs, by default false\n\r\t--skip(-s): comma separated list of problems(id) to skip from validation or execution\n\r\t--problems(-p): comma separated list of problems(id) to execute\n\r\t--help(-vr): current version\n\r\t--help(-h): this help",
+			"ValueType": "System.String",
+			"Abbreviation": "h",
+			"Dependencies": [],
+			"IsSingle": "true",
+			"IsRequired": "false"
+		}
+	]
+}

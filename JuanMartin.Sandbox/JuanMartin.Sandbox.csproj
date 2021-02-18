@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\JuanMartin.Kernel\JuanMartin.Kernel\Kernel.csproj" />
+    <ProjectReference Include="..\..\JuanMartin.Utilities\JuanMartin.Utilities\Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

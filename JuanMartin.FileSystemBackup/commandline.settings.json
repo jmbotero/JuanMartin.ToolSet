@@ -1,0 +1,48 @@
+{
+"IsCaseSensitive": "false",
+"AllowBundling": "false",
+"CultureInfo": "en-US",
+"Version": "02152021",
+	"Options": [
+		{
+			"Name": "configuration"	,
+			"Status": "defined",
+			"Value": "",
+			"ValueType": "System.String",
+			"Abbreviation": "c",
+			"Dependencies": [],
+			"IsSingle": "false",
+			"IsRequired": "true"
+		},
+		{
+			"Name": "backup",
+			"Status": "defined",
+			"Value": "false",
+			"ValueType": "System.Boolean",
+			"Abbreviation": "b",
+			"Dependencies": [],
+			"IsSingle": "true",
+			"IsRequired": "true"
+		},
+		{
+			"Name": "version",
+			"Status": "defined",
+			"Value": "02152021",
+			"ValueType": "System.String",
+			"Abbreviation": "v",
+			"Dependencies": [],
+			"IsSingle": "true",
+			"IsRequired": "false"
+		},
+		{
+			"Name": "help",
+			"Status": "defined",
+			"Value": "Valid Commands:\n\r\t--configuation(-c) configuation fila to use to configure backup, by default ue backup_configuation.json file\n\r\t--backup(-b) execute filesystem backup, by default false\n\r\t--version(-v): current version\n\r\t--help(-h): this help",
+			"ValueType": "System.String",
+			"Abbreviation": "h",
+			"Dependencies": [],
+			"IsSingle": "true",
+			"IsRequired": "false"
+		}
+	]
+}
