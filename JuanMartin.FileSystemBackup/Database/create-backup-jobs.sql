@@ -1,3 +1,4 @@
+use backup;
 TRUNCATE TABLE tblbackupjobs;
 TRUNCATE TABLE tblfolders;
 TRUNCATE TABLE tblbackupjobdefinition;

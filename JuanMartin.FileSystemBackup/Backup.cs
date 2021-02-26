@@ -94,7 +94,7 @@ namespace JuanMartin.FileSystemBackup
 
         private long AddBackupJob(AdapterMySql DbAdapter, string Name)
         {
-            Message request = new Message("Command", System.Data.CommandType.StoredProcedure.ToString());
+             Message request = new Message("Command", System.Data.CommandType.StoredProcedure.ToString());
 
             request.AddData(new ValueHolder("Job", string.Format("uspAddBackupJob('{0}','{1}')", Name, @"C:\Temp")));
             request.AddSender("AddBackupJob", typeof(Job).ToString());
@@ -153,7 +153,7 @@ namespace JuanMartin.FileSystemBackup
 
         private BackupSettings LoadBackupSettings(string file_name)
         {
-            BackupSettings config = null;
+            BackupSettings config = null; 
             var json = string.Empty;
             if (file_name != null && file_name.Length > 0)
             {

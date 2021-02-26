@@ -2,7 +2,8 @@
   "profiles": {
     "JuanMartin.FileSystemBackup": {
       "commandName": "Project",
-      "commandLineArgs": "--configuration --backup=false"
+      "commandLineArgs": "--configuration --backup=false",
+      "sqlDebugging": true
     }
   }
 }

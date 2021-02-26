@@ -1,4 +1,7 @@
 DELIMITER $$
+USE backup;
+
+USE backup;
 
 DROP PROCEDURE IF EXISTS uspUpdateBackupJobFile;
 
