@@ -14,6 +14,8 @@ namespace JuanMartin.FileSystemBackup
     public class Backup
     {
         private AdapterFileLog _logger;
+        private const string _GetBackupJobsQuery = "select job.Name from tblbackupjobs job left outer join tblbackupjobexecution exec on job.JobId = exec.JobId where exec.JobId is null or (exec.Status is not null and exec.Status <> 'INPROGRESS');";
+        private const string _BackupTargetDirectory = @"C:\Temp\Backup\Target";
         public Backup()
         {
             _logger = new AdapterFileLog(new ValueHolder("Backup", Directory.GetCurrentDirectory() + "\\"));
@@ -69,7 +71,7 @@ namespace JuanMartin.FileSystemBackup
 
             Message request = new Message("Command", System.Data.CommandType.Text.ToString());
 
-            request.AddData(new ValueHolder("Jobs", "select job.Name from tblbackupjobs job left outer join tblbackupjobexecution exec on job.JobId = exec.JobId where exec.JobId is null or (exec.Status is not null and exec.Status <> 'INPROGRESS');"));
+            request.AddData(new ValueHolder("Jobs", _GetBackupJobsQuery));
             request.AddSender("GetAllBackupJobs", typeof(Job).ToString());
 
             DbAdapter.Send(request);
@@ -96,7 +98,7 @@ namespace JuanMartin.FileSystemBackup
         {
              Message request = new Message("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("Job", string.Format("uspAddBackupJob('{0}','{1}')", Name, @"C:\Temp")));
+            request.AddData(new ValueHolder("Job", string.Format("uspAddBackupJob('{0}','{1}')", Name, _BackupTargetDirectory)));
             request.AddSender("AddBackupJob", typeof(Job).ToString());
 
             DbAdapter.Send(request);

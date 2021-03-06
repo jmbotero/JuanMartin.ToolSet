@@ -1,0 +1,8 @@
+USE backup;
+
+CREATE TABLE IF NOT EXISTS tblbackupjobfiles (
+  JobId BIGINT NOT NULL,
+  FileId BIGINT NOT NULL,
+  BackupDtm DATETIME NOT NULL,
+  IsNew BIT(1) NOT NULL
+) ENGINE=MyISAM;

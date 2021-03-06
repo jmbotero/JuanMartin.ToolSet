@@ -1,0 +1,3 @@
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe build-database.xml /t:Build /verbosity:detailed 	
+"C:\Program Files\MySQL\MySQL Shell 8.0\bin\mysqlsh.exe" --user=root --database=backup --file=C:\Git\JuanMartin.ToolSet\JuanMartin.FileSystemBackup\Database\Tables\tblfolders.sql
+"C:\Program Files\MySQL\MySQL Shell 8.0\bin\mysqlsh.exe" --user=root --database=backup --file=C:\Git\JuanMartin.ToolSet\JuanMartin.FileSystemBackup\Database\StoredProcedures\uspAddFolder.sql	
