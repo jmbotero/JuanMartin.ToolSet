@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <MySql>"C:\Program Files\MySQL\MySQL Shell 8.0\bin\mysqlsh.exe" </MySql>
-    <SourcePath>C:\Git\JuanMartin.ToolSet\JuanMartin.FileSystemBackup\Database</SourcePath>
-    <Database>backup</Database>
-    <User>root</User>
-    <MySqlShell>$(MySql) --user=$(User) --database=$(Database)</MySqlShell>
-    <CreateDbScript>$(SourcePath)\dbbackup.sql</CreateDbScript>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
     <Name>JuanMartin.FileSystemBackup.Database</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
@@ -22,15 +18,23 @@
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <TargetLanguage>CS</TargetLanguage>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <SqlServerVerification>False</SqlServerVerification>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseSet>True</TargetDatabaseSet>
+    <MySql>"C:\Program Files\MySQL\MySQL Shell 8.0\bin\mysqlsh.exe" </MySql>
+    <SourcePath>$(MSBuildProjectDirectory)</SourcePath>
+    <Database>backup</Database>
+    <User>root</User>
+    <MySqlShell>$(MySql) --user=$(User) --database=$(Database)</MySqlShell>
+    <CreateDbScript>$(SourcePath)\dbbackup.sql</CreateDbScript>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
     <DebugType>pdbonly</DebugType>
@@ -42,6 +46,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DebugSymbols>true</DebugSymbols>
@@ -52,28 +57,27 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
-    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
-    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
-    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
-  </PropertyGroup>
-  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
-  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
-    <Folder Include="Properties" />
-    <Folder Include="Tables\" />
-    <Folder Include="StoredProcedures\" />
+    <Content Include="*.sql" />
+    <Content Include="Tables\*.sql" />
+    <Content Include="StoredProcedures\*.sql" />
   </ItemGroup>
   <ItemGroup>
     <Tables Include="$(SourcePath)\Tables\*.sql" />
     <StoredProcedures Include="$(SourcePath)\StoredProcedures\*.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Tables\" />
+    <Folder Include="StoredProcedures\" />
+  </ItemGroup>
   <Target Name="BuildDatabase">
+    <Message Text="Loading database: $(Database)  " />
     <Exec Command="$(MySqlShell) --file=$(CreateDbScript)" />
   </Target>
   <Target Name="BuildObjects">
+    <Message Text="Loading table: =%(Tables.Identity)  " />
     <Exec Command="$(MySqlShell) --file=%(Tables.Identity)" />
+    <Message Text="Loading stored procedure: =%(Tables.Identity)  " />
     <Exec Command="$(MySqlShell) --file=%(StoredProcedures.Identity)" />
   </Target>
   <Target Name="Build" DependsOnTargets="BuildDatabase;BuildObjects" />

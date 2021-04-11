@@ -1,4 +1,4 @@
-[mysql]
+[client]
 user = root
 password = yala
 host = localhost

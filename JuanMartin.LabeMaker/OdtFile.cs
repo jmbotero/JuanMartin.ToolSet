@@ -21,7 +21,7 @@ namespace JuanMartin.LabeMaker
             {
                 Name = Path.GetTempFileName();
                 _original_file_name = name;
-                _template_file_name = Path.Combine(Path.GetDirectoryName(name), Path.GetFileNameWithoutExtension(name) + "-template" + Path.GetExtension(name));
+                _template_file_name = $"{Path.GetDirectoryName(name)}\\{Path.GetFileNameWithoutExtension(name)}-template.{Path.GetExtension(name)}";
             }
             else
             {

@@ -5,11 +5,11 @@ using System.Linq;
 
 namespace JuanMartin.EulerProject
 {
-    internal class Program
+    public class Program
     {
         private const string separator = "------------------------------------------------------------------------";
 
-        private static void Main(string[] args)
+        public  static void Main(string[] args)
         {
             Models.Problem[] problems = UtilityEulerProjectSolver.problems;
             var cmd = new Kernel.Processors.CommandLine(string.Join(" ", args).ToString());
