@@ -61,12 +61,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="commandline.settings.json" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\JuanMartin.Kernel\JuanMartin.Kernel\JuanMartin.Kernel.csproj">
       <Project>{4515e3a1-f6b3-4af5-ae75-bb9e214ec349}</Project>
       <Name>JuanMartin.Kernel</Name>

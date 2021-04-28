@@ -78,6 +78,8 @@ namespace JuanMartin.EulerProject
                 throw new ArgumentException("Problems to 'skip' array option from command line is not parseable as an array of integers.");
             }
 
+            UtilityEulerProjectSolver.LoadAnswers(test_mode);
+
             if (problem_ids == null && !validate_problems)
             {
                 // no list specified, then execute them all
