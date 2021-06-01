@@ -35,14 +35,14 @@ namespace JuanMartin.EulerProject
 
             // creating object of CultureInfo for string parsing
             //CultureInfo cultures = new CultureInfo("en-US");
-            IEnumerable<int> problem_ids = null;
-            IEnumerable<int> skip_problems = null;
-            var validate_problems = false;
-            var test_mode = false;
+            IEnumerable<int> problemIds = null;
+            IEnumerable<int> skipProblems = null;
+            var validateProblems = false;
+            var testMode = false;
             try
             {
                 if (cmd.Contains("test_mode"))
-                    test_mode = (bool)cmd["test_mode"].Value;
+                    testMode = (bool)cmd["test_mode"].Value;
             }
             catch (Exception)
             {
@@ -51,7 +51,7 @@ namespace JuanMartin.EulerProject
             try
             {
                 if (cmd.Contains("validate"))
-                    validate_problems = (bool)cmd["validate"].Value;
+                    validateProblems = (bool)cmd["validate"].Value;
             }
             catch (Exception)
             {
@@ -61,7 +61,7 @@ namespace JuanMartin.EulerProject
             try
             {
                 if (cmd.Contains("problems"))
-                    problem_ids = (int[])cmd["problems"].Value; // args[1].Split(',').Select(i => Convert.ToInt32(i, cultures)).ToArray();
+                    problemIds = (int[])cmd["problems"].Value; // args[1].Split(',').Select(i => Convert.ToInt32(i, cultures)).ToArray();
             }
             catch (Exception)
             {
@@ -71,53 +71,53 @@ namespace JuanMartin.EulerProject
             try
             {
                 if (cmd.Contains("skip"))
-                    skip_problems = (int[])cmd["skip"].Value;
+                    skipProblems = (int[])cmd["skip"].Value;
             }
             catch (Exception)
             {
                 throw new ArgumentException("Problems to 'skip' array option from command line is not parseable as an array of integers.");
             }
 
-            UtilityEulerProjectSolver.LoadAnswers(test_mode);
+            UtilityEulerProjectSolver.LoadAnswers(testMode);
 
-            if (problem_ids == null && !validate_problems)
+            if (problemIds == null && !validateProblems)
             {
                 // no list specified, then execute them all
                 for (int i = 0; i < problems.Length; i++)
                 {
-                    if (skip_problems != null && skip_problems.Contains(i))
+                    if (skipProblems != null && skipProblems.Contains(i))
                         continue;
                     
-                    var p = UtilityEulerProjectSolver.GetProblemById(i, test_mode);
+                    var p = UtilityEulerProjectSolver.GetProblemById(i, testMode);
                     if (p == null)
-                        Console.WriteLine(string.Format("{0}roblem {1} not found.",(test_mode)?"Test p":"P", i));
+                        Console.WriteLine(string.Format("{0}roblem {1} not found.",(testMode)?"Test p":"P", i));
                     else
                         UtilityEulerProjectSolver.Launch(p.Script, p);
                 }
             }
-            else if (problem_ids != null)
+            else if (problemIds != null)
             {
-                foreach (int id in problem_ids)
+                foreach (int id in problemIds)
                 {
                     if (id == 0)
                         continue;
 
-                    if (skip_problems != null && skip_problems.Contains(id))
+                    if (skipProblems != null && skipProblems.Contains(id))
                         continue;
 
-                    var p = UtilityEulerProjectSolver.GetProblemById(id,test_mode);
+                    var p = UtilityEulerProjectSolver.GetProblemById(id,testMode);
                     if (p == null)
-                        Console.WriteLine(string.Format("{0}roblem {1} not found.", (test_mode) ? "Test p" : "P", id));
+                        Console.WriteLine(string.Format("{0}roblem {1} not found.", (testMode) ? "Test p" : "P", id));
                     else
                         UtilityEulerProjectSolver.Launch(p.Script, p);
                 }
             }
 
-            if (validate_problems)
+            if (validateProblems)
             {
                 Console.WriteLine(separator);
                 Console.WriteLine("Verifying problem answers...");
-                UtilityEulerProjectSolver.ValidateProblems(problems, skip_problems);
+                UtilityEulerProjectSolver.ValidateProblems(problems, skipProblems);
             }
             Console.WriteLine(separator);
             Console.WriteLine("Complete <Press any key to continue...>");

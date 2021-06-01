@@ -8,32 +8,32 @@ namespace JuanMartin.LabeMaker
     {
 
         private const string CONTENT_FILENAME = "content.xml";
-        private bool _use_template;
-        private string _original_file_name;
-        private string _template_file_name;
+        private readonly bool _useTemplate;
+        private readonly string _originalFileName;
+        private readonly string _templateFileName;
 
         public string Name { get; set; }
-        public OdtFile(string name, bool use_template = false)
+        public OdtFile(string name, bool usTemplate = false)
         {
-            _use_template = use_template;
+            _useTemplate = usTemplate;
 
-            if (use_template)
+            if (usTemplate)
             {
                 Name = Path.GetTempFileName();
-                _original_file_name = name;
-                _template_file_name = $"{Path.GetDirectoryName(name)}\\{Path.GetFileNameWithoutExtension(name)}-template.{Path.GetExtension(name)}";
+                _originalFileName = name;
+                _templateFileName = $"{Path.GetDirectoryName(name)}\\{Path.GetFileNameWithoutExtension(name)}-template.{Path.GetExtension(name)}";
             }
             else
             {
                 Name = name;
-                _original_file_name = string.Empty;
-                _template_file_name = string.Empty;
+                _originalFileName = string.Empty;
+                _templateFileName = string.Empty;
             }
         }
 
         public void Update(Dictionary<string, string> changes)
         {
-            if (_use_template)
+            if (_useTemplate)
                 PreFileTemplateProcesing();
 
             var text = UtilityFile.GetTextContentOfFileInZip(Name, CONTENT_FILENAME);
@@ -45,7 +45,7 @@ namespace JuanMartin.LabeMaker
 
             UtilityFile.UpddateTextContentOfFileInZip(Name, CONTENT_FILENAME, text);
 
-            if (_use_template)
+            if (_useTemplate)
                 PostFileTemplateProcesing();
         }
 
@@ -53,14 +53,14 @@ namespace JuanMartin.LabeMaker
         {
             if (File.Exists(Name))
                 File.Delete(Name);
-            File.Copy(_template_file_name, Name);
+            File.Copy(_templateFileName, Name);
         }
 
         private void PostFileTemplateProcesing()
         {
-            if (File.Exists(_original_file_name))
-                File.Delete(_original_file_name);
-            File.Copy(Name, _original_file_name);
+            if (File.Exists(_originalFileName))
+                File.Delete(_originalFileName);
+            File.Copy(Name, _originalFileName);
         }
     }
 }

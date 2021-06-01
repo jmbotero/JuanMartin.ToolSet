@@ -33,8 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="JuanMartin.RestApiClient">
-      <HintPath>..\..\JuanMartin.Api\JuanMartin.RestApiClient\bin\Debug\JuanMartin.RestApiClient.dll</HintPath>
+    <Reference Include="JuanMartin.RestApiClient, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\JuanMartin.Api\JuanMartin.RestApiClient\bin\Debug\JuanMartin.RestApiClient.exe</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

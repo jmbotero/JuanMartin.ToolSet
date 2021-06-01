@@ -2,6 +2,7 @@
 using System;
 using JuanMartin.Kernel.Messaging;
 using JuanMartin.Kernel;
+using JuanMartin.Kernel.Processors;
 using JuanMartin.Kernel.Adapters;
 using JuanMartin.Kernel.Utilities;
 using JuanMartin.Kernel.RuleEngine;
@@ -13,8 +14,8 @@ namespace JuanMartin.FileSystemBackup
 {
     public class Job 
     {
-        Task _task;
-        IExchangeRequest _logger;
+        readonly Task _task;
+        readonly IExchangeRequest _logger;
 
         public Job(ValueHolder Definition, IExchangeRequest Logger) 
         {

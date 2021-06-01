@@ -10,8 +10,12 @@ namespace JuanMartin.Sandbox
     {
         public static void Main(string[] args)
         {
-            //UtilityHelper.Measure(() => SimpleForeach(), true, "Foreach loop:");
-            //UtilityHelper.Measure(() => ParallelForeach(2), true, "Parallel Foreach loop:");
+            if (args is null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+            UtilityHelper.Measure(() => SimpleForeach(), true, "Foreach loop:");
+            UtilityHelper.Measure(() => ParallelForeach(2), true, "Parallel Foreach loop:");
             UtilityHelper.Measure(() =>
             {
                 var f = UtilityMath.GetFactors(12000).ToArray();
@@ -48,11 +52,11 @@ namespace JuanMartin.Sandbox
             }
             return total;
         }
-         private static void ParallelForeach(int thread_count=-1)
+         private static void ParallelForeach(int threadCount=-1)
          {
             var options = new ParallelOptions()
             {
-                MaxDegreeOfParallelism = thread_count
+                MaxDegreeOfParallelism = threadCount
             };
             List<int> integerList = Enumerable.Range(1, 10).ToList();
             Parallel.ForEach(integerList, i =>

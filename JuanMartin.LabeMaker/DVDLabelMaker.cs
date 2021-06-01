@@ -8,7 +8,7 @@ namespace JuanMartin.ToolSet.LabeMaker
     {
         public void Create(string title, string year = "")
         {
-            var doc = new OdtFile(@"x:\JuanMartin\ToolSet\LabelMaker\dvd-labels.odt", use_template: true);
+            var doc = new OdtFile(@"x:\JuanMartin\ToolSet\LabelMaker\dvd-labels.odt", usTemplate: true);
             var api = new ImdbApi();
             var updates = new Dictionary<string, string>();
 

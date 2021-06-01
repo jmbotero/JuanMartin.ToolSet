@@ -13,7 +13,7 @@ namespace JuanMartin.FileSystemBackup
 {
     public class Backup
     {
-        private AdapterFileLog _logger;
+        private readonly AdapterFileLog _logger;
         private const string _GetBackupJobsQuery = "select job.Name from tblbackupjobs job left outer join tblbackupjobexecution exec on job.JobId = exec.JobId where exec.JobId is null or (exec.Status is not null and exec.Status <> 'INPROGRESS');";
         private const string _BackupTargetDirectory = @"C:\Temp\Backup\Target";
         public Backup()
@@ -23,7 +23,7 @@ namespace JuanMartin.FileSystemBackup
 
         public void Run(string[] args)
         {
-            string cfg_file = string.Empty;
+            string configFile = string.Empty;
             var cmd = new CommandLine(string.Join(" ", args).ToString());
 
             if (cmd.Contains("configuration"))
@@ -32,21 +32,21 @@ namespace JuanMartin.FileSystemBackup
                 try
                 {
                     if (cmd.Contains("configuration"))
-                        cfg_file = (string)cmd["configuration"].Value;
+                        configFile = (string)cmd["configuration"].Value;
                 }
                 catch (Exception)
                 {
                     throw new ArgumentException("'configuration' file of backup, option from command line is not parseable as string.");
                 }
-                if (cfg_file == string.Empty)
+                if (configFile == string.Empty)
                 {
                     // This will get the current WORKING directory (i.e. \bin\Debug)
                     string workingDirectory = Environment.CurrentDirectory;
                     // This will get the current PROJECT directory
                     string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
-                    cfg_file = Path.Combine(projectDirectory, "backup_configuration.json");
+                    configFile = Path.Combine(projectDirectory, "backup_configuration.json");
                 }
-                Configure(cfg_file);
+                Configure(configFile);
             }
 
             if (cmd.Contains("backup"))
@@ -139,9 +139,9 @@ namespace JuanMartin.FileSystemBackup
             }
         }
 
-        private void Configure(string config_file)
+        private void Configure(string configFile)
         {
-            var settings = LoadBackupSettings(config_file);
+            var settings = LoadBackupSettings(configFile);
             string baseFolder = settings.BaseFolder;
 
             AdapterMySql dbAdapter = new AdapterMySql("localhost", "backup", "root", "yala");
@@ -153,13 +153,13 @@ namespace JuanMartin.FileSystemBackup
             }
         }
 
-        private BackupSettings LoadBackupSettings(string file_name)
+        private BackupSettings LoadBackupSettings(string fileName)
         {
             BackupSettings config = null; 
             var json = string.Empty;
-            if (file_name != null && file_name.Length > 0)
+            if (fileName != null && fileName.Length > 0)
             {
-                using (var reader = new StreamReader(file_name, Encoding.UTF8))
+                using (var reader = new StreamReader(fileName, Encoding.UTF8))
                 {
                     json = reader.ReadToEnd();
                 }
