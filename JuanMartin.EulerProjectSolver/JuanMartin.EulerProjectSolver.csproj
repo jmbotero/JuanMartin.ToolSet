@@ -56,6 +56,9 @@
     <Compile Include="Sandbox.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="App.config" />
     <None Include="commandline.settings.json" />
     <None Include="packages.config" />

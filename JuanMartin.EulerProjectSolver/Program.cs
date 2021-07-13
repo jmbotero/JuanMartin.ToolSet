@@ -92,7 +92,7 @@ namespace JuanMartin.EulerProject
                     if (p == null)
                         Console.WriteLine(string.Format("{0}roblem {1} not found.",(testMode)?"Test p":"P", i));
                     else
-                        UtilityEulerProjectSolver.Launch(p.Script, p);
+                        UtilityEulerProjectSolver.Launch(p.Script, p,testMode);
                 }
             }
             else if (problemIds != null)
@@ -109,7 +109,7 @@ namespace JuanMartin.EulerProject
                     if (p == null)
                         Console.WriteLine(string.Format("{0}roblem {1} not found.", (testMode) ? "Test p" : "P", id));
                     else
-                        UtilityEulerProjectSolver.Launch(p.Script, p);
+                        UtilityEulerProjectSolver.Launch(p.Script, p,testMode);
                 }
             }
 
