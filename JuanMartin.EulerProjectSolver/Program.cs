@@ -10,7 +10,7 @@ namespace JuanMartin.EulerProject
         private const string separator = "------------------------------------------------------------------------";
 
         public  static void Main(string[] args)
-        {
+       {
             Models.Problem[] problems = UtilityEulerProjectSolver.problems;
             var cmd = new Kernel.Processors.CommandLine(string.Join(" ", args).ToString());
 
