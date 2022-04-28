@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySql.EntityFrameworkCore" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\JuanMartin.Kernel\JuanMartin.Kernel\JuanMartin.Kernel.csproj" />
+    <ProjectReference Include="..\..\JuanMartin.Models\JuanMartin.Models\JuanMartin.Models.csproj" />
+  </ItemGroup>
+
+</Project>

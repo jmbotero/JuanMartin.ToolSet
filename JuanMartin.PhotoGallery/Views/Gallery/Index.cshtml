@@ -1,0 +1,12 @@
+﻿@model JuanMartin.Models.Gallery.Gallery;
+<div class="container body-content">
+    <div class="row gallery-content">
+        @foreach (var image in Model.Album)
+        {
+            <div class="gallery-image-container">
+                <div class="gallery-image" style="background-image:url(@image.Path+@image.FileName" />
+            </div>
+            <div class="hiddentext" style="display: none;">@image.Id </div>
+        }
+    </div>
+</div>
