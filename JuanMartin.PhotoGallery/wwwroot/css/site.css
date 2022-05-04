@@ -107,3 +107,9 @@ body {
     height: 1px;
     overflow: hidden;
 }
+.caption {
+    background-color: gray;
+    color: white;
+    font-size: 10px;
+    padding: 16px 32px;
+}

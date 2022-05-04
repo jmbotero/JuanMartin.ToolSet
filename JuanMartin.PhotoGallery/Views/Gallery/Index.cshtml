@@ -1,12 +1,27 @@
 ﻿@model JuanMartin.Models.Gallery.Gallery;
+<!--
+-->
 <div class="container body-content">
     <div class="row gallery-content">
-        @foreach (var image in Model.Album)
+        @if (Model.Album != null && Model.Album.Count > 0)
         {
-            <div class="gallery-image-container">
-                <div class="gallery-image" style="background-image:url(@image.Path+@image.FileName" />
-            </div>
-            <div class="hiddentext" style="display: none;">@image.Id </div>
-        }
+            @foreach (var image in Model.Album)
+            {
+                <div class="gallery-image-container">
+                    @{
+                        var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
+                        var url = Url.Content(path);
+                    }
+                    <img class="gallery-image" src="@url" />
+                    <span class="caption">@image.FileName</span>
+                @*<div class="gallery-image" style="background-image:url(@url)"/>*@
+                    <div class="hiddentext" style="display: none;">@image.Id</div>
+                </div>
+            }
+    }
+    else
+    {
+        <span>Photography page is empty.</span>
+    }
     </div>
 </div>
