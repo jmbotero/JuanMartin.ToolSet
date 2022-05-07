@@ -1,27 +1,77 @@
 ﻿@model JuanMartin.Models.Gallery.Gallery;
-<!--
--->
+
 <div class="container body-content">
-    <div class="row gallery-content">
+    <div class="gallery-content">
         @if (Model.Album != null && Model.Album.Count > 0)
         {
+            int i = 0;
+
             @foreach (var image in Model.Album)
             {
                 <div class="gallery-image-container">
                     @{
+                        i++;
                         var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
                         var url = Url.Content(path);
                     }
                     <img class="gallery-image" src="@url" />
-                    <span class="caption">@image.FileName</span>
-                @*<div class="gallery-image" style="background-image:url(@url)"/>*@
-                    <div class="hiddentext" style="display: none;">@image.Id</div>
+                    <div class="overlay">
+                        <table>
+                            <tr>
+                                <td style="width:max-content; text-align:right">Name: </td>
+                                <td>@image.FileName</td>
+                            </tr>
+                            <tr>
+                                <td style="width:max-content; text-align:right">Location: </td>
+                                <td>@image.Location</td>
+                            </tr>
+                        </table>
+                    </div>
+                    @*<div class="gallery-image" style="background-image:url(@url)"/>*@
+                    <span id="photo-id-@i" style="display: none;">@image.Id</span>
                 </div>
             }
-    }
-    else
-    {
-        <span>Photography page is empty.</span>
-    }
+        }
+        else
+        {
+            <span>Photography page is empty.</span>
+        }
     </div>
 </div>
+<br />
+@* this should be a partial view *@
+@{
+    var count = ViewBag.PageCount;
+    var currentPage = ViewBag.CurrentPage;
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+    string galleryUrl = "";
+}
+<span>photo count @ViewBag.PhotoCount</span>
+, <span>page count @count</span>
+, <span>current @currentPage</span>
+@if (count > 1)
+{
+    <div class="pagination" style="text-align:center">
+        @if (currentPage > 1)
+        {
+            galleryUrl = baseUrl + $"?pageId ={currentPage - 1}";
+            <a href="@galleryUrl">&laquo;</a>
+        }
+        @for (int p = 1; p <= count; p++)
+        {
+            galleryUrl = baseUrl + $"?pageId={p}";
+            string aClass = "";
+
+            @if (p == currentPage)
+            {
+                aClass = "class=active";
+            }
+            <a href="@galleryUrl" @aClass )>@p</a>
+        }
+        @if (currentPage < count)
+        {
+            galleryUrl = baseUrl + $"?pageId={currentPage + 1}";
+            <a href="@galleryUrl">&raquo;</a>
+        }
+    </div>
+}

@@ -1,0 +1,33 @@
+﻿@model JuanMartin.Models.Gallery.Gallery;
+@{ 
+    var count = ViewBag.PageCount;
+    var currentPage = ViewBag.CurrentPage;
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+    string url = "";
+}
+@if (count > 1)
+{
+    <div class="pagination" style="text-align:center">
+        @if (currentPage > 1)
+        {
+            url = baseUrl + "?pageId  = " + currentPage - 1;
+            <a href="@url">&laquo;</a>
+        }
+        @for (int p = 1; p <= count; p++)
+        {
+            url = baseUrl + $"?pageId={p}";
+            string aClass = "";
+
+            @if (p == currentPage)
+            {
+                aClass = "class=active";
+            }
+            <a href="@url" @aClass )>@p</a>
+        }
+        @if (currentPage < count)
+        {
+            url = baseUrl + "?pageId  = " + currentPage + 1;
+            <a href="@url">&raquo;</a>
+        }
+    </div>
+}

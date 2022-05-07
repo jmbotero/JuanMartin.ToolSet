@@ -6,36 +6,55 @@ using JuanMartin.Models.Gallery;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
     public class GalleryController : Controller
     {
-        public IActionResult Index()
+        private const int PageSize = 8;
+
+        public IActionResult Index(int pageId=1)
         {
             var path = Directory.GetCurrentDirectory() + @"\wwwroot\photos.lnk";
             var model = new Gallery
             {
-                Album = LoadPhotographies(path, ".jpg", true)
+                Album = LoadPhotographies(path, ".jpg", true, pageId)
             };
+
+            int photoCount = model.Album.Count;
+            ViewBag.PhotoCount = photoCount;
+            int pageCount = 0;
+            if(photoCount>0)
+                pageCount = (photoCount <= PageSize) ?  3 : (photoCount / PageSize) + 1;
+            ViewBag.PageCount = pageCount;
+            ViewBag.CurrentPage = pageId;
 
             return View(model);
         }
 
 
-        private static List<PhotoGraphy> LoadPhotographies(string directory, string acceptedExtensions,bool directoryIsLink)
+        private static List<PhotoGraphy> LoadPhotographies(string directory, string acceptedExtensions, bool directoryIsLink, int pageId = 1)
         {
             var photographies = new List<PhotoGraphy>();
             AdapterMySql dbAdapter = new("localhost", "photogallery", "root", "yala");
             var files = UtilityFile.GetAllFiles(directory, directoryIsLink);
 
+            // paginate and exclude uaccepted etensions
+            files = files.Where(f => acceptedExtensions.Contains(f.Extension)).ToList();
+
+            if (files.Count > 0)
+            {
+                int take = PageSize;
+                int skip = (pageId - 1) * PageSize;
+                files = files.Skip(skip).Take(take).ToList();
+            }
+
+            const string archiveTag = @"Archive\";
+            const string photosTag = @"\photos";
+
             foreach (FileInfo file in files)
             {
-                if (!acceptedExtensions.Contains(file.Extension))
-                    continue;
-
-                const string archiveTag = @"Archive\";
-                const string photosTag = @"\photos";
                 string name = file.Name;
                 string path = file.DirectoryName;
                 //preproces for web project
@@ -57,6 +76,7 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             return photographies;
         }
+
         private static string GetProjectDirectory(Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary debugData=null)
         {
             string folder = Directory.GetCurrentDirectory();
