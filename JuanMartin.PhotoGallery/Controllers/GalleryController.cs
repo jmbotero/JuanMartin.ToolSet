@@ -34,9 +34,9 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
 
 
-        private static List<PhotoGraphy> LoadPhotographies(string directory, string acceptedExtensions, bool directoryIsLink, int pageId = 1)
+        private static List<Photography> LoadPhotographies(string directory, string acceptedExtensions, bool directoryIsLink, int pageId = 1)
         {
-            var photographies = new List<PhotoGraphy>();
+            var photographies = new List<Photography>();
             AdapterMySql dbAdapter = new("localhost", "photogallery", "root", "yala");
             var files = UtilityFile.GetAllFiles(directory, directoryIsLink);
 
@@ -71,7 +71,7 @@ namespace JuanMartin.PhotoGallery.Controllers
                 string title = "";
                 long id = AddPhotography(dbAdapter, name, path, title);
 
-                photographies.Add(new PhotoGraphy { Id = id, FileName = name, Path = path, Title = title });
+                photographies.Add(new Photography { Id = id, FileName = name, Path = path, Title = title });
             }
 
             return photographies;
@@ -98,7 +98,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
             request.AddData(new ValueHolder("PhotoGraphy", $"uspAddPhotoGraphy({source},'{name}','{path}','{title}')"));
-            request.AddSender("AddPhotoGraphy", typeof(PhotoGraphy).ToString());
+            request.AddSender("AddPhotoGraphy", typeof(Photography).ToString());
 
             DbAdapter.Send(request);
             IRecordSet reply = (IRecordSet)DbAdapter.Receive();
@@ -108,12 +108,12 @@ namespace JuanMartin.PhotoGallery.Controllers
             return Id;
         }
 
-        private static PhotoGraphy.PhysicalSource GetPhotographySource(string path)
+        private static Photography.PhysicalSource GetPhotographySource(string path)
         {
             if (path.Contains(@"slide"))
-                return PhotoGraphy.PhysicalSource.slide;
+                return Photography.PhysicalSource.slide;
 
-            return PhotoGraphy.PhysicalSource.negative;
+            return Photography.PhysicalSource.negative;
         }
     }
 }
