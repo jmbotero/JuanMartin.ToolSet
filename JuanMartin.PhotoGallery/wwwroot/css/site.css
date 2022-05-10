@@ -119,12 +119,12 @@ body {
 
 /* The overlay effect - lays on top of the container and over the image */
 .overlay {
-    position: center;
-    bottom: 0;
+    position: absolute;
+    bottom: 0px;
     background: rgb(0, 0, 0);
     background: rgba(0, 0, 0, 0.5); /* Black see-through */
     color: #f1f1f1;
-    width: 100%;
+    width: inherit;
     transition: .5s ease;
     opacity: 0;
     background-color: gray;

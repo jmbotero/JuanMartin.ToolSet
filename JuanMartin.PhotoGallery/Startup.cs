@@ -1,3 +1,4 @@
+using JuanMartin.PhotoGallery.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,6 +31,9 @@ namespace JuanMartin.PhotoGallery
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            var path = Directory.GetCurrentDirectory() + @"\wwwroot\photos.lnk";
+            PhotoService.LoadPhotographies(path, ".jpg", true);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

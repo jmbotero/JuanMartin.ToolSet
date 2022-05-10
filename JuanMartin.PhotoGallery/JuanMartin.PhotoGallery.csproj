@@ -13,4 +13,8 @@
     <ProjectReference Include="..\..\JuanMartin.Models\JuanMartin.Models\JuanMartin.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Data\" />
+  </ItemGroup>
+
 </Project>

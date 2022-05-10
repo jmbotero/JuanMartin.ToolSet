@@ -31,20 +31,19 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   `path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
   `filename` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `location` int DEFAULT NULL,
+  `location_id` int DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
-  KEY `FK_photography_locations` (`location`),
-  CONSTRAINT `FK_photography_locations` FOREIGN KEY (`location`) REFERENCES `locations` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `FK_photography_locations` (`location_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tblphotographykeywords`;
 CREATE TABLE IF NOT EXISTS `tblphotographykeywords` (
   `photography_id` bigint DEFAULT NULL,
   `keyword_id` int DEFAULT NULL,
-  KEY `fkPhotography` (`photography_id`),
-  KEY `fkKeyword` (`keyword_id`),
-  CONSTRAINT `fkKeyword` FOREIGN KEY (`keyword_id`) REFERENCES `tblkeyword` (`id`),
-  CONSTRAINT `fkPhotography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`)
+  KEY `FK_keyword` (`keyword_id`),
+  KEY `FK_keyword_photography` (`photography_id`),
+  CONSTRAINT `FK_keyword` FOREIGN KEY (`keyword_id`) REFERENCES `tblkeyword` (`id`),
+  CONSTRAINT `FK_keyword_photography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tblranking`;
@@ -54,20 +53,20 @@ CREATE TABLE IF NOT EXISTS `tblranking` (
   `photography_id` bigint DEFAULT NULL,
   `rank` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
-  KEY `fkUser` (`user_id`),
-  KEY `fkPhotography2` (`photography_id`),
-  CONSTRAINT `fkPhotography2` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`),
-  CONSTRAINT `fkUser` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`)
+  KEY `FK_ranking_photography` (`photography_id`),
+  KEY `FK_ranking_user` (`user_id`),
+  CONSTRAINT `FK_ranking_photography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`),
+  CONSTRAINT `FK_ranking_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbluser`;
 CREATE TABLE IF NOT EXISTS `tbluser` (
   `id` int NOT NULL AUTO_INCREMENT,
   `login` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `password` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP PROCEDURE IF EXISTS `uspAddPhotography`;
 DELIMITER //
@@ -80,6 +79,7 @@ CREATE PROCEDURE `uspAddPhotography`(
 BEGIN
 	DECLARE id BIGINT;
 	
+
 	SELECT pic.id 
 	INTO id
 	FROM tblphotography pic
@@ -88,9 +88,84 @@ BEGIN
 	IF NOT FOUND_ROWS() THEN 	
 		INSERT INTO tblPhotography (source,filename, path, title) VALUE(Source,Filename, Path, Title);
 		SET id=LAST_INSERT_ID();
+	END IF;	
+
+	SELECT id;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspAddUser`;
+DELIMITER //
+CREATE PROCEDURE `uspAddUser`(
+	IN `Login` VARCHAR(50),
+	IN `UserPassword` VARCHAR(255),
+	IN `Email` VARCHAR(100)
+)
+BEGIN
+	DECLARE id BIGINT;
+	
+	SELECT u.id 
+	INTO id
+	FROM tblUser u
+ 	WHERE u.login = Login;
+	
+	IF NOT FOUND_ROWS() THEN 	
+		INSERT INTO tblUser(login, password, email) VALUE(Login, MD5(UserPassword), Email);
+		SET id=LAST_INSERT_ID();
+	ELSE
+		SET id=-1;
 	END IF;
 	
 	SELECT id;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspGetAllPhotographies`;
+DELIMITER //
+CREATE PROCEDURE `uspGetAllPhotographies`(
+	IN `CurrentPage` INT,
+	IN `PageSize` INT,
+	IN `UserID` INT
+)
+BEGIN
+	DECLARE take INT;
+	DECLARE skip INT;
+	
+	SET take = PageSize;
+	SET skip = (CurrentPage - 1) * PageSize;
+	
+	SELECT 	pic.id AS Id,
+				pic.filename AS Filename,
+				'' AS Location,
+				pic.path AS Path,
+				pic.source AS 'Source',
+				pic.title AS Title,
+				'' AS  Keywords,
+				0 AS 'Rank'
+	FROM tblPhotography pic
+	LIMIT take
+	OFFSET skip;
+ /*
+ 	SELECT 	pic.id AS Id,
+				pic.filename AS Filename,
+				loc.reference AS Location,
+				pic.path AS Path,
+				pic.title AS Title,
+				 GROUP_CONCAT(DISTINCT word.word) AS  Keywords,
+				AVG(r.rank) AS 'Rank'
+	FROM tblPhotography pic
+	LEFT JOIN tblLocation loc
+	ON loc.id = pic.location_id
+	LEFT JOIN tblPhotographyKeywords  picwords
+	ON picwords.photography_id=pic.id
+	LEFT JOIN tblKeyword word
+	ON word.id=picwords.keyword_id 
+	LEFT JOIN tblRanking r
+	ON r.user_id=UserID
+	AND r.photography_id=pic.id
+	LIMIT take
+	OFFSET skip;
+*/
 END//
 DELIMITER ;
 
