@@ -13,57 +13,12 @@ namespace JuanMartin.PhotoGallery.Services
 {
     public interface IPhotoService
     {
-        static IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1)
+        IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);
+
+        static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
         {
             var photographies = new List<Photography>();
-            AdapterMySql dbAdapter = new("localhost", "photogallery", "root", "yala");
-
-            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
-
-            request.AddData(new ValueHolder("PhotoGraphy", $"uspGetAllPhotographies({pageId},{PhotoService.PageSize},{userId})"));
-            request.AddSender("AddPhotoGraphy", typeof(Photography).ToString());
-
-            dbAdapter.Send(request);
-            IRecordSet reply = (IRecordSet)dbAdapter.Receive();
-
-            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
-            {
-                foreach (ValueHolder record in reply.Data.Annotations)
-                {
-                    var id = (long)record.GetAnnotation("Id").Value;
-                    var source = (int)record.GetAnnotation("Source").Value;
-                    var path = (string)record.GetAnnotation("Path").Value;
-                    var fileName = (string)record.GetAnnotation("Filename").Value;
-                    var title = (string)record.GetAnnotation("Title").Value;
-                    var location = (string)record.GetAnnotation("Location").Value;
-                    var rank = (long)record.GetAnnotation("Rank").Value;
-                    var keywords = (string)record.GetAnnotation("Keywords").Value;
-
-                    var photography = new Photography
-                    {
-                        UserId = userId,
-                        Id = id,
-                        FileName = fileName,
-                        Path = path,
-                        Source = (Photography.PhysicalSource)source,
-                        Title = title,
-                        Location = location,
-                        Rank = rank
-                    };
-
-                    photography.AddKeywords(keywords);
-
-                    photographies.Add(photography);
-                }
-            }
-
-            return photographies;
-        }
-
-        static void LoadPhotographies(string directory, string acceptedExtensions, bool directoryIsLink)
-        {
-            var photographies = new List<Photography>();
-            AdapterMySql dbAdapter = new("localhost", "photogallery", "root", "yala");
+            //AdapterMySql dbAdapter = new(Startup.ConnectionString);//("localhost", "photogallery", "root", "yala");
             var files = UtilityFile.GetAllFiles(directory, directoryIsLink);
 
             // paginate and exclude uaccepted etensions
@@ -88,7 +43,7 @@ namespace JuanMartin.PhotoGallery.Services
                     path = "~" + path[i..];
                 }
                 string title = "";
-                long id = AddPhotography(dbAdapter, name, path, title);
+                long id = AddPhotography((AdapterMySql)dbAdapter, name, path, title);
             }
         }
 

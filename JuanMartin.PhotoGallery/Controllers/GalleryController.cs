@@ -8,13 +8,19 @@ namespace JuanMartin.PhotoGallery.Controllers
 {
     public class GalleryController : Controller
     {
+        private readonly IPhotoService _photoService;
+        
         const int UserID = 1;
 
+        public GalleryController(IPhotoService photoService)
+        {
+            _photoService = photoService;
+        }
         public IActionResult Index(int pageId = 1)
         {
             var model = new Gallery
             {
-                Album = (List<Photography>)PhotoService.GetAllPhotographies(UserID, pageId)
+                Album = (List<Photography>)_photoService.GetAllPhotographies(UserID, pageId)
 
             };
 
