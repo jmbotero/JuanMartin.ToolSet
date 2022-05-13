@@ -1,7 +1,9 @@
 ﻿using JuanMartin.Models.Gallery;
+using JuanMartin.PhotoGallery.Models;
 using JuanMartin.PhotoGallery.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace JuanMartin.PhotoGallery.Controllers
@@ -18,7 +20,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
         public IActionResult Index(int pageId = 1)
         {
-            var model = new Gallery
+            var model = new GalleryIndexViewModel
             {
                 Album = (List<Photography>)_photoService.GetAllPhotographies(UserID, pageId)
 
@@ -29,6 +31,13 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             return View(model);
         }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
 
 
         private static string GetProjectDirectory(Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary debugData = null)

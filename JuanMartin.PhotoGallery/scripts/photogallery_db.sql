@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `tblkeyword` (
   `id` int NOT NULL AUTO_INCREMENT,
   `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbllocation`;
 CREATE TABLE IF NOT EXISTS `tbllocation` (
@@ -67,6 +67,35 @@ CREATE TABLE IF NOT EXISTS `tbluser` (
   `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+DROP PROCEDURE IF EXISTS `uspAddKeyword`;
+DELIMITER //
+CREATE PROCEDURE `uspAddKeyword`(
+	IN `Word` VARCHAR(50),
+	IN `LinkToPhotographyId` BIGINT
+)
+BEGIN
+	DECLARE id INT;
+	
+	SELECT k.id 
+	INTO id
+	FROM tblkeyword k
+ 	WHERE k.word = Word;
+	
+	IF NOT FOUND_ROWS() THEN 	
+		INSERT INTO tblkeyword(word) VALUE(LOWER(Word));
+		SET id=LAST_INSERT_ID();
+	ELSE
+		SET id=-1;
+	END IF;
+	
+	IF(LinkToPhotographyId<>-1) THEN
+		INSERT INTO tblPhotographykeywords(keyword_id, photography_id) VALUE(id, LinkToPhotographyId);
+	END IF;
+	
+	SELECT id;
+END//
+DELIMITER ;
 
 DROP PROCEDURE IF EXISTS `uspAddPhotography`;
 DELIMITER //

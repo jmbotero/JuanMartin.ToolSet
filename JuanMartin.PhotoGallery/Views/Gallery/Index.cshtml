@@ -1,4 +1,4 @@
-﻿@model JuanMartin.Models.Gallery.Gallery;
+﻿@model JuanMartin.PhotoGallery.Models.GalleryIndexViewModel; 
 
 <div class="container body-content">
     <div class="gallery-content">
@@ -15,6 +15,7 @@
                         var url = Url.Content(path);
                     }
                     <img class="gallery-image" src="@url" />
+                    @*<div class="gallery-image" style="background-image:url(@url)"/>*@
                     <div class="overlay">
                         <table>
                             <tr>
@@ -27,7 +28,6 @@
                             </tr>
                         </table>
                     </div>
-                    @*<div class="gallery-image" style="background-image:url(@url)"/>*@
                     <span id="photo-id-@i" style="display: none;">@image.Id</span>
                 </div>
             }

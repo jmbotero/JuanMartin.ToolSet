@@ -80,16 +80,17 @@ body {
 }
 
 .gallery-image {
+    display: block;
     position:center;
     height: 245px;
     width: 245px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-    display: block;
 }
 
 .gallery-image-container {
+    display: inline-block;
     position:relative;
     height: 260px;
     width: 260px;
@@ -124,7 +125,7 @@ body {
     background: rgb(0, 0, 0);
     background: rgba(0, 0, 0, 0.5); /* Black see-through */
     color: #f1f1f1;
-    width: inherit;
+    width: initial;
     transition: .5s ease;
     opacity: 0;
     background-color: gray;

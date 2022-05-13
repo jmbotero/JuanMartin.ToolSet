@@ -71,5 +71,9 @@ namespace JuanMartin.PhotoGallery.Services
             return photographies;
         }
 
+        public IEnumerable<Photography> GetPhotographiesByKeyword(string keywords, int userId, int pageId = 1)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
