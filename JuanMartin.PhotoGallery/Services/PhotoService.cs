@@ -42,7 +42,7 @@ namespace JuanMartin.PhotoGallery.Services
                 foreach (ValueHolder record in reply.Data.Annotations)
                 {
                     var id = (long)record.GetAnnotation("Id").Value;
-                    var source = (int)record.GetAnnotation("Source").Value;
+                    var source = Convert.ToInt32(record.GetAnnotation("Source").Value); 
                     var path = (string)record.GetAnnotation("Path").Value;
                     var fileName = (string)record.GetAnnotation("Filename").Value;
                     var title = (string)record.GetAnnotation("Title").Value;
