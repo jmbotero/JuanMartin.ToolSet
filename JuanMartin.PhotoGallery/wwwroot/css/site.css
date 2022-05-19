@@ -79,7 +79,7 @@ body {
     grid-gap: 8px;
 }
 
-.gallery-image {
+.gallery-image-index {
     display: block;
     position:center;
     height: 245px;
@@ -89,14 +89,40 @@ body {
     background-position: center;
 }
 
-.gallery-image-container {
+.gallery-image-index-container {
     display: inline-block;
-    position:relative;
+    position: relative;
     height: 260px;
     width: 260px;
     padding: 8px;
     border-radius: 2px;
     box-shadow: 0 10px 18px rgba(0, 0,0, 0.2), 0 5px 5px rgba(0, 0,0, 0.2);
+}
+
+.gallery-image-detail-container {
+    width: 220px;
+}
+
+.gallery-image-detail {
+    height:   auto;
+    width: 550px;
+    padding: 8px;
+    border-radius: 2px;
+    box-shadow: 0 10px 18px rgba(0, 0,0, 0.2), 0 5px 5px rgba(0, 0,0, 0.2);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.gallery-image-detail-meta {
+    padding: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    width: inherit;
+}
+.gallery-image-detail-nav{
+    padding: 12px;
+    font-size: 12px;
 }
 
 .body-content {
@@ -142,15 +168,15 @@ body {
 .pagination {
     display: inline-block;
 }
-    .pagination a {
-        color: black;
-        float: left;
-        padding: 8px 16px;
-        text-decoration: none;
-        transition: background-color .3s;
-        border: 1px solid #ddd; /* Gray */
-        font-size: 22px;
-    }
+.pagination a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    transition: background-color .3s;
+    border: 1px solid #ddd; /* Gray */
+    font-size: 22px;
+}
 .pagination a.active {
     background-color: lawngreen;
     color: white;
@@ -159,4 +185,88 @@ body {
 .pagination a:hover:not(.active) {
     background-color: #ddd;  /* white with a shade */
     border-radius: 5px;
+}
+/* star ranking */
+.center {
+    position: inherit;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.center .stars {
+    height: 20px;
+    width: 500px;
+    text-align: center;
+}
+
+.stars input {
+    padding-left: 15px;
+    display: none;
+}
+
+.stars label {
+    float: right;
+    font-size: 20px;
+    color: lightgrey;
+    margin: 0 5px;
+    text-shadow: 1px 1px #bbb;
+}
+
+    .stars label:before {
+        content: '★';
+    }
+
+.stars input:checked ~ label {
+    color: gold;
+    text-shadow: 1px 1px #c60;
+}
+
+.stars:not(:checked) > label:hover,
+.stars:not(:checked) > label:hover ~ label {
+    color: gold;
+}
+
+.stars input:checked > label:hover,
+.stars input:checked > label:hover ~ label {
+    color: gold;
+    text-shadow: 1px 1px goldenrod;
+}
+
+.stars .result:before {
+    position: absolute;
+    content: "";
+    width: 100%;
+    left: 50%;
+    transform: translateX(-47%);
+    bottom: -30px;
+    font-size: 30px;
+    font-weight: 500;
+    color: gold;
+    font-family: 'Poppins', sans-serif;
+    display: none;
+}
+
+.stars input:checked ~ .result:before {
+    display: block;
+}
+
+.stars #five:checked ~ .result:before {
+    content: "I love it ";
+}
+
+.stars #four:checked ~ .result:before {
+    content: "I like it ";
+}
+
+.stars #three:checked ~ .result:before {
+    content: "It's good ";
+}
+
+.stars #two:checked ~ .result:before {
+    content: "I don't like it ";
+}
+
+.stars #one:checked ~ .result:before {
+    content: "I hate it ";
 }

@@ -13,7 +13,9 @@ namespace JuanMartin.PhotoGallery.Services
 {
     public interface IPhotoService
     {
+        int GetGalleryPageCount(int pageSize);
         IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);
+        Photography GetPhotographyById(long id, int userId);
         IEnumerable<Photography> GetPhotographiesByKeyword(string keywords, int userId, int pageId = 1);
 
         static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)

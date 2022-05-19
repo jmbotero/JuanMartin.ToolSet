@@ -12,8 +12,6 @@ namespace JuanMartin.PhotoGallery.Controllers
     {
         private readonly IPhotoService _photoService;
         
-        const int UserID = 1;
-
         public GalleryController(IPhotoService photoService)
         {
             _photoService = photoService;
@@ -22,12 +20,24 @@ namespace JuanMartin.PhotoGallery.Controllers
         {
             var model = new GalleryIndexViewModel
             {
-                Album = (List<Photography>)_photoService.GetAllPhotographies(UserID, pageId)
+                Album = (List<Photography>)_photoService.GetAllPhotographies(GalleryIndexViewModel.UserID, pageId)
 
             };
 
-            ViewBag.PageCount = 3;
+            ViewBag.PageCount = _photoService.GetGalleryPageCount(PhotoService.PageSize);
             ViewBag.CurrentPage = pageId;
+
+            return View(model);
+        }
+
+        public IActionResult Detail(long id, int pageId)
+        {
+            var image = _photoService.GetPhotographyById(id,GalleryIndexViewModel.UserID);
+
+            var model = new GalleryDetailViewModel();
+
+            model.Image = image;
+            model.PageId = pageId;
 
             return View(model);
         }

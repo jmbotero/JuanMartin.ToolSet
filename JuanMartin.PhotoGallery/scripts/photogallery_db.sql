@@ -204,6 +204,51 @@ BEGIN
 				IFNULL(pic.Location,'') AS 'Location',
 				pic.Path AS 'Path',
 				CASE WHEN LOCATE('slide',pic.Path) > 0
+				 THEN 1 /* Photography.PhysicalSource.slide */
+				 ELSE 0 /* Photography.PhysicalSource.negative */
+				END AS 'Source',
+				pic.Title,
+				IFNULL(pic.Keywords,'') AS 'Keywords',
+				IFNULL(r._rank,0) AS 'Rank'
+	FROM vwPhotographyDetails pic
+	LEFT JOIN tblRanking r
+	ON r.user_id=UserID
+	AND r.photography_id=pic.id
+	LIMIT rec_take
+	OFFSET rec_skip;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspGetPageCount`;
+DELIMITER //
+CREATE PROCEDURE `uspGetPageCount`(
+	IN `PageSize` INT
+)
+BEGIN
+	DECLARE photoCount INT;
+	DECLARE pageCount INT;
+	
+	SELECT COUNT(*)
+	INTO photoCount
+	FROM  vwphotographydetails;
+	
+	SET pageCount = (photoCount / PageSize) + 1;
+	
+	SELECT pageCount;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspGetPotography`;
+DELIMITER //
+CREATE PROCEDURE `uspGetPotography`(
+	IN `Id` BIGINT
+)
+BEGIN
+ 	SELECT 	pic.Id,
+				pic.Filename,
+				IFNULL(pic.Location,'') AS 'Location',
+				pic.Path AS 'Path',
+				CASE WHEN LOCATE('slide',pic.Path) > 0
 				 THEN 1
 				 ELSE 0
 				END AS 'Source',
@@ -214,8 +259,12 @@ BEGIN
 	LEFT JOIN tblRanking r
 	ON r.user_id=UserID
 	AND r.photography_id=pic.id
-	LIMIT rec_take
-	OFFSET rec_skip;
+	WHERE pic.Id = Id;
+	
+	
+	IF NOT FOUND_ROWS() THEN 	
+		SELECT -1 AS Id;
+	END IF;
 END//
 DELIMITER ;
 

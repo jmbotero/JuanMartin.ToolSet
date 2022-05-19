@@ -31,8 +31,8 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("PhotoGraphy", $"uspGetAllPhotographies({pageId},{PhotoService.PageSize},{userId})"));
-            request.AddSender("AddPhotoGraphy", typeof(Photography).ToString());
+            request.AddData(new ValueHolder("PhotoGraphies", $"uspGetAllPhotographies({pageId},{PhotoService.PageSize},{userId})"));
+            request.AddSender("uspGetAllPhotographies", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
             IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
@@ -41,6 +41,7 @@ namespace JuanMartin.PhotoGallery.Services
             {
                 foreach (ValueHolder record in reply.Data.Annotations)
                 {
+                    // be sure record.GetAnnotation("...") exists and is not null
                     var id = (long)record.GetAnnotation("Id").Value;
                     var source = Convert.ToInt32(record.GetAnnotation("Source").Value); 
                     var path = (string)record.GetAnnotation("Path").Value;
@@ -71,9 +72,80 @@ namespace JuanMartin.PhotoGallery.Services
             return photographies;
         }
 
+        public int GetGalleryPageCount(int pageSize)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection nnnot set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetPageCount", $"uspGetPageCount({pageSize})"));
+            request.AddSender("Gallery", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            // be sure record.GetAnnotation("...") exists and is not null
+            var pageCount = (int)reply.Data.GetAnnotationByValue(1).GetAnnotation("pageCount").Value;
+
+            return pageCount;
+        }
+
         public IEnumerable<Photography> GetPhotographiesByKeyword(string keywords, int userId, int pageId = 1)
         {
             throw new NotImplementedException();
+        }
+
+        public Photography GetPhotographyById(long photographyId, int userId)
+        {
+            Photography photography=null;
+
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection nnnot set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetPotography", $"uspGetPotography({photographyId},{userId})"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in reply.Data.Annotations)
+                {
+                    // be sure record.GetAnnotation("...") exists and is not null
+                    var id = (long)record.GetAnnotation("Id").Value;
+
+                    if (id == -1)
+                        return null;
+
+                    var source = Convert.ToInt32(record.GetAnnotation("Source").Value);
+                    var path = (string)record.GetAnnotation("Path").Value;
+                    var fileName = (string)record.GetAnnotation("Filename").Value;
+                    var title = (string)record.GetAnnotation("Title").Value;
+                    var location = (string)record.GetAnnotation("Location").Value;
+                    var rank = (long)record.GetAnnotation("Rank").Value;
+                    var keywords = (string)record.GetAnnotation("Keywords").Value;
+
+                    photography = new Photography
+                    {
+                        UserId = Models.GalleryIndexViewModel.UserID,
+                        Id = id,
+                        FileName = fileName,
+                        Path = path,
+                        Source = (Photography.PhysicalSource)source,
+                        Title = title,
+                        Location = location,
+                        Rank = rank
+                    };
+
+                    photography.AddKeywords(keywords);
+                }
+            }
+
+            return photography;
         }
     }
 }

@@ -1,0 +1,45 @@
+﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
+@{
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery/Index";
+    var galleryUrl = baseUrl + $"?pageId={Model.PageId}";
+}
+<div class="container body-content">
+    <div class="gallery-image-detail-container">
+        <div>
+            @{
+                var path = System.IO.Path.Combine(Model.Image.Path, Model.Image.FileName).Replace(@"\", "/");
+                var url = Url.Content(path);
+            }
+            <img class="gallery-image-detail" src="@url" alt="@url" />
+        </div>
+        <div class="gallery-image-detail-meta">
+            <span>Filename: @Model.Image.FileName</span>
+        </div>
+        <div class="gallery-image-detail-meta">
+            <span>Location: @Model.Image.Location</span>
+        </div>
+        <div class="gallery-image-detail-meta">
+            <span>Rank: @Model.Image.Rank</span>
+            <div class="center">
+                <div class="stars">
+                    <input type="radio" id="five" name="rate" value="5">
+                    <label for="five"></label>
+                    <input type="radio" id="four" name="rate" value="4">
+                    <label for="four"></label>
+                    <input type="radio" id="three" name="rate" value="3">
+                    <label for="three"></label>
+                    <input type="radio" id="two" name="rate" value="2">
+                    <label for="two"></label>
+                    <input type="radio" id="one" name="rate" value="1">
+                    <label for="one"></label>
+                    <span class="result"></span>
+                </div>
+            </div>
+        </div>
+        <div class="gallery-image-detail-nav">
+            <a class="btn btn-primary" href="@galleryUrl">
+                << Back to gallery...
+            </a>
+        </div>
+    </div>
+</div>

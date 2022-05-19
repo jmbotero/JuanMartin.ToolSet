@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace JuanMartin.PhotoGallery.Models
 {
-    public class GalleryIndexViewModel
+    public class GalleryDetailViewModel
     {
-        public const int UserID = 1;
-        public List<Photography> Album { get; set; }
-        public string SearchQuery { get; set; }
+        public int PageId { get; set; }
+        public Photography Image { get; set; }
     }
 }
