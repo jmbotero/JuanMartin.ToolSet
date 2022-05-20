@@ -34,10 +34,11 @@ namespace JuanMartin.PhotoGallery.Controllers
         {
             var image = _photoService.GetPhotographyById(id,GalleryIndexViewModel.UserID);
 
-            var model = new GalleryDetailViewModel();
-
-            model.Image = image;
-            model.PageId = pageId;
+            var model = new GalleryDetailViewModel
+            {
+                Image = image,
+                PageId = pageId
+            };
 
             return View(model);
         }

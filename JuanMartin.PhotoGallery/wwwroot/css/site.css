@@ -16,6 +16,9 @@ a {
   color: #fff;
   background-color: #1b6ec2;
   border-color: #1861ac;
+  font-size: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
 }
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
@@ -117,12 +120,22 @@ body {
 .gallery-image-detail-meta {
     padding: 12px;
     font-size: 12px;
-    font-weight: bold;
-    width: inherit;
+    font-family: Arial, Helvetica, sans-serif;
 }
-.gallery-image-detail-nav{
-    padding: 12px;
-    font-size: 12px;
+.gallery-image-detail-meta-column-right {
+    width: auto;
+    text-align: left;
+}
+
+.gallery-image-detail-meta-column-left {
+    font-weight: bold;
+    width: max-content;
+    text-align: right;
+}
+
+.gallery-image-detail-nav {
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .body-content {
@@ -151,7 +164,7 @@ body {
     background: rgb(0, 0, 0);
     background: rgba(0, 0, 0, 0.5); /* Black see-through */
     color: #f1f1f1;
-    width: initial;
+    width: 245px;
     transition: .5s ease;
     opacity: 0;
     background-color: gray;
@@ -162,9 +175,10 @@ body {
 }
 
 /* When you mouse over the container, fade in the overlay title */
-.gallery-image-container:hover .overlay {
+.gallery-image-index-container:hover .overlay {
     opacity: 1;
 }
+/* gallery pagination */
 .pagination {
     display: inline-block;
 }
@@ -187,64 +201,48 @@ body {
     border-radius: 5px;
 }
 /* star ranking */
-.center {
-    position: inherit;
-    top: 45%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+
+.rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
 }
 
-.center .stars {
-    height: 20px;
-    width: 500px;
-    text-align: center;
-}
 
-.stars input {
-    padding-left: 15px;
+.rating > input {
     display: none;
 }
 
-.stars label {
-    float: right;
-    font-size: 20px;
-    color: lightgrey;
-    margin: 0 5px;
-    text-shadow: 1px 1px #bbb;
-}
-
-    .stars label:before {
-        content: '★';
+    .rating > label {
+        position: relative;
+        width: 1.1em;
+        font-size: 20px;
+        color: red; /*#FFD700; */
+        cursor: pointer;
     }
 
-.stars input:checked ~ label {
-    color: gold;
-    text-shadow: 1px 1px #c60;
-}
-
-.stars:not(:checked) > label:hover,
-.stars:not(:checked) > label:hover ~ label {
-    color: gold;
-}
-
-.stars input:checked > label:hover,
-.stars input:checked > label:hover ~ label {
-    color: gold;
-    text-shadow: 1px 1px goldenrod;
-}
-
-.stars .result:before {
+.rating > label::before {
+    content: "\2605";
     position: absolute;
-    content: "";
-    width: 100%;
-    left: 50%;
-    transform: translateX(-47%);
-    bottom: -30px;
-    font-size: 30px;
-    font-weight: 500;
-    color: gold;
-    font-family: 'Poppins', sans-serif;
-    display: none;
+    opacity: 0;
+}      
+
+.rating > label:hover:before,
+.rating > label:hover ~ label:before {
+    opacity: 1 !important;
+}
+
+.rating > input:checked ~ label:before {
+    opacity: 1;
+}
+
+.rating:hover > input:checked ~ label:before {
+    opacity: 0.4;
+}
+
+
+.stars label:before {
+    content: '★';
 }
 
 .stars input:checked ~ .result:before {

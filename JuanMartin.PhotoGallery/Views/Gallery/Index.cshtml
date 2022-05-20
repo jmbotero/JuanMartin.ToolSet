@@ -56,7 +56,7 @@
 <div class="pagination" style="text-align:center">
     @if (currentPage > 1)
     {
-        galleryUrl = baseUrl + $"?pageId ={currentPage - 1}";
+        galleryUrl = baseUrl + $"?pageId={currentPage - 1}";
         <a href="@galleryUrl">&laquo;</a>
     }
     @for (int p = 1; p <= count; p++)
