@@ -27,7 +27,7 @@ namespace JuanMartin.PhotoGallery.Services
         {
             var photographies = new List<Photography>();
             if (_dbAdapter == null)
-                throw new ApplicationException("MySql connection nnnot set.");
+                throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
@@ -75,7 +75,7 @@ namespace JuanMartin.PhotoGallery.Services
         public int GetGalleryPageCount(int pageSize)
         {
             if (_dbAdapter == null)
-                throw new ApplicationException("MySql connection nnnot set.");
+                throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
@@ -101,7 +101,7 @@ namespace JuanMartin.PhotoGallery.Services
             Photography photography=null;
 
             if (_dbAdapter == null)
-                throw new ApplicationException("MySql connection nnnot set.");
+                throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
@@ -146,6 +146,30 @@ namespace JuanMartin.PhotoGallery.Services
             }
 
             return photography;
+        }
+
+        public double GetAverageRanking(long id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int UpdatePhotographyRanking(long id, int userId, int rank)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspUpdateRanking", $"uspUpdateRanking({userId},{id},{rank})"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            // be sure record.GetAnnotation("...") exists and is not null
+            var rankingId = (int)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
+
+            return rankingId;
         }
     }
 }

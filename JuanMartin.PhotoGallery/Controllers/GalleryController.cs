@@ -30,17 +30,21 @@ namespace JuanMartin.PhotoGallery.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        public IActionResult Detail(long id,  GalleryDetailViewModel galleryDetail)
+        {
+            if (galleryDetail != null && galleryDetail.SelectedRank != 0)
+            {
+                _photoService.UpdatePhotographyRanking(id, GalleryIndexViewModel.UserID, galleryDetail.SelectedRank);
+                //throw new InvalidDataException($"wrong rank: ({galleryDetail.SelectedRank}) for {id}.");
+            }
+            return View(PrepareDetailViewModel(id, galleryDetail.PageId));
+        }
+
+        [HttpGet]
         public IActionResult Detail(long id, int pageId)
         {
-            var image = _photoService.GetPhotographyById(id,GalleryIndexViewModel.UserID);
-
-            var model = new GalleryDetailViewModel
-            {
-                Image = image,
-                PageId = pageId
-            };
-
-            return View(model);
+            return View(PrepareDetailViewModel(id,pageId));
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -49,7 +53,18 @@ namespace JuanMartin.PhotoGallery.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        private GalleryDetailViewModel PrepareDetailViewModel(long id, int pageId)
+        {
+            var image = _photoService.GetPhotographyById(id, GalleryIndexViewModel.UserID);
 
+            var model = new GalleryDetailViewModel
+            {
+                Image = image,
+                PageId = pageId
+            };
+
+            return model;
+        }
 
         private static string GetProjectDirectory(Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary debugData = null)
         {

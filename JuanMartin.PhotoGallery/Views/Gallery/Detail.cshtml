@@ -25,12 +25,22 @@
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Rank: </td>
                 <td class="gallery-image-detail-meta-column-right">
-                    <div class="rating">
-                        @for (int i = 1; i <= 10; i++)
-                        {
-                            <input type="radio" name="rating" value="~@i" id="@i"><label for="@i">☆</label>
-                        }
-                    </div>
+                    <span>-@Model.Image.Rank-</span>
+                    <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@Model.Image.Id" method="post">
+                        <div class="ranking">
+                            @for (int i = 1; i <= 10; i++)
+                            {
+                                string state = "";
+
+                                @if (i <= Model.Image.Rank)
+                                {
+                                    state = "checked";
+                                }
+                                <input @state type="radio" name="ranking" value="@i" id="@i" onclick="setRank();"onchange="this.form.submit();"><label for="@i">☆</label>
+                            }
+                            <input type="text" id="rank" asp-for="SelectedRank">
+                        </div>
+                    </form>
                 </td>
             </tr>
         </table>
@@ -41,3 +51,15 @@
         </div>
     </div>
 </div>
+<script>
+    function setRank() {
+        var getSelectedValue = document.querySelector('input[name="ranking"]:checked');
+
+        if (getSelectedValue != null) {
+            var rank = 11 - parseInt(getSelectedValue.value);
+            var rankText = document.getElementById('rank');
+
+            rankText.value = rank;
+        }
+    }
+</script> 

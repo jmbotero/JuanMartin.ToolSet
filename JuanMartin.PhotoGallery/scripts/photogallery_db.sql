@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `tblranking` (
   KEY `FK_ranking_user` (`user_id`),
   CONSTRAINT `FK_ranking_photography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`),
   CONSTRAINT `FK_ranking_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbluser`;
 CREATE TABLE IF NOT EXISTS `tbluser` (
@@ -121,40 +121,6 @@ BEGIN
 		SET id=LAST_INSERT_ID();
 	END IF;	
 
-	SELECT id;
-END//
-DELIMITER ;
-
-DROP PROCEDURE IF EXISTS `uspAddRanking`;
-DELIMITER //
-CREATE PROCEDURE `uspAddRanking`(
-	IN `UserID` INT,
-	IN `PhotographyID` BIGINT,
-	IN `Rank` INT
-)
-BEGIN
-	DECLARE id INT;
-	DECLARE pid BIGINT;
-
-	SET id=-1;
-	
-	SELECT u.id 
-	INTO id
-	FROM tblUser u
- 	WHERE u.id = UserID;
-
-	IF NOT FOUND_ROWS() THEN 	
-		SELECT p.id 
-		INTO pid
-		FROM tblphotography P
-	 	WHERE p.id = PhotographyID;
-
-		IF NOT FOUND_ROWS() THEN 	
-			INSERT INTO tblranking(user_id, photography_id, _rank) VALUE(UserID, PhotographyID, 'Rank');
-			SET id=LAST_INSERT_ID();
-		END IF;
-	END IF;
-	
 	SELECT id;
 END//
 DELIMITER ;
@@ -241,7 +207,8 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS `uspGetPotography`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPotography`(
-	IN `Id` BIGINT
+	IN `Id` BIGINT,
+	IN `UserID` INT
 )
 BEGIN
  	SELECT 	pic.Id,
@@ -249,11 +216,11 @@ BEGIN
 				IFNULL(pic.Location,'') AS 'Location',
 				pic.Path AS 'Path',
 				CASE WHEN LOCATE('slide',pic.Path) > 0
-				 THEN 1
-				 ELSE 0
+				 THEN 1 /* Photography.PhysicalSource.slide */
+				 ELSE 0 /* Photography.PhysicalSource.negative */
 				END AS 'Source',
 				pic.Title,
-				pic.Keywords,
+				IFNULL(pic.Keywords,'') AS 'Keywords',
 				IFNULL(r._rank,0) AS 'Rank'
 	FROM vwPhotographyDetails pic
 	LEFT JOIN tblRanking r
@@ -265,6 +232,50 @@ BEGIN
 	IF NOT FOUND_ROWS() THEN 	
 		SELECT -1 AS Id;
 	END IF;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspUpdateRanking`;
+DELIMITER //
+CREATE PROCEDURE `uspUpdateRanking`(
+	IN `UserID` INT,
+	IN `PhotographyID` BIGINT,
+	IN `UserRank` INT
+)
+BEGIN
+	DECLARE id INT;
+
+	SET id=-1;
+	
+	SELECT *
+	FROM tblUser u
+ 	WHERE u.id = UserID;
+
+	IF FOUND_ROWS() THEN 	
+		SELECT *
+		FROM tblphotography p
+	 	WHERE p.id = PhotographyID;
+
+		IF FOUND_ROWS() THEN 	
+				SELECT r.id
+					INTO id
+				FROM tblranking r
+			 	WHERE r.photography_id = PhotographyID
+				AND r.user_id = UserID;	
+				
+			IF NOT FOUND_ROWS() THEN 				 	
+				INSERT INTO tblranking(user_id, photography_id, _rank) VALUE(UserID, PhotographyID, UserRank);
+				SET id=LAST_INSERT_ID();
+			ELSE
+				UPDATE tblRanking
+				SET _rank = UserRank
+			 	WHERE photography_id = PhotographyID
+				AND user_id = UserID;	
+			END IF;
+		END IF;
+	END IF;
+	
+	SELECT id;
 END//
 DELIMITER ;
 

@@ -202,41 +202,45 @@ body {
 }
 /* star ranking */
 
-.rating {
+.ranking {
     display: flex;
     flex-direction: row-reverse;
     justify-content: center;
 }
 
-
-.rating > input {
+.ranking > input {
     display: none;
 }
 
-    .rating > label {
-        position: relative;
-        width: 1.1em;
-        font-size: 20px;
-        color: red; /*#FFD700; */
-        cursor: pointer;
-    }
+.ranking > label {
+    position: relative;
+    width: 1.1em;
+    font-size: 20px;
+    color: red; /*#FFD700; */
+    cursor: pointer;
+}
 
-.rating > label::before {
+.ranking > label::before {
     content: "\2605";
     position: absolute;
     opacity: 0;
 }      
 
-.rating > label:hover:before,
-.rating > label:hover ~ label:before {
+.ranking > label:hover:before,
+.ranking > label:hover ~ label:before {
     opacity: 1 !important;
 }
 
-.rating > input:checked ~ label:before {
+#rank
+{
+    display: none;
+    overflow: hidden;
+}
+.ranking > input:checked ~ label:before {
     opacity: 1;
 }
 
-.rating:hover > input:checked ~ label:before {
+.ranking:hover > input:checked ~ label:before {
     opacity: 0.4;
 }
 
@@ -245,26 +249,3 @@ body {
     content: '★';
 }
 
-.stars input:checked ~ .result:before {
-    display: block;
-}
-
-.stars #five:checked ~ .result:before {
-    content: "I love it ";
-}
-
-.stars #four:checked ~ .result:before {
-    content: "I like it ";
-}
-
-.stars #three:checked ~ .result:before {
-    content: "It's good ";
-}
-
-.stars #two:checked ~ .result:before {
-    content: "I don't like it ";
-}
-
-.stars #one:checked ~ .result:before {
-    content: "I hate it ";
-}
