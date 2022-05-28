@@ -2,26 +2,49 @@
 using JuanMartin.PhotoGallery.Models;
 using JuanMartin.PhotoGallery.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Microsoft.Extensions.Configuration;
+using System;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
     public class GalleryController : Controller
     {
         private readonly IPhotoService _photoService;
-        
-        public GalleryController(IPhotoService photoService)
+        private readonly IConfiguration _configuration;
+        private readonly bool _strartInGuestMode = false;
+
+        public GalleryController(IPhotoService photoService, IConfiguration configuration)
         {
             _photoService = photoService;
+            _configuration = configuration;
+
+            _strartInGuestMode = Convert.ToBoolean(configuration["StrartInGuestMode"]);
         }
         public IActionResult Index(int pageId = 1)
         {
+            int sessionUserId = -1;
+
+            TempData["clientId"] = GetClientRemoteId();
+            var clientId = TempData["clientId"].ToString();
+            string queryString = HttpContext.Request.QueryString.Value;
+
+            _photoService.SetRedirectInfo(remoteHost: clientId, controller:  "Gallery",action:  "Index", routeData: queryString);
+            
+            if (!_strartInGuestMode)
+            {
+                if(!HttpContext.Session.IsAvailable)
+                    RedirectToAction(controllerName: "Login", actionName: "Login");
+                else
+                    sessionUserId = HttpContext.Session.GetInt32("UserID").Value;
+            }
+
             var model = new GalleryIndexViewModel
             {
-                Album = (List<Photography>)_photoService.GetAllPhotographies(GalleryIndexViewModel.UserID, pageId)
-
+                Album = (List<Photography>)_photoService.GetAllPhotographies(sessionUserId, pageId)
             };
 
             ViewBag.PageCount = _photoService.GetGalleryPageCount(PhotoService.PageSize);
@@ -33,9 +56,22 @@ namespace JuanMartin.PhotoGallery.Controllers
         [HttpPost]
         public IActionResult Detail(long id,  GalleryDetailViewModel galleryDetail)
         {
+            int sessionUserId = -1;
+            
             if (galleryDetail != null && galleryDetail.SelectedRank != 0)
             {
-                _photoService.UpdatePhotographyRanking(id, GalleryIndexViewModel.UserID, galleryDetail.SelectedRank);
+                var clientId = GetClientRemoteId();
+                string queryString = HttpContext.Request.QueryString.Value;
+
+                _photoService.SetRedirectInfo(remoteHost: clientId,controller:  "Gallery",action: "Detail", model: galleryDetail, routeData: queryString);
+                if (!_strartInGuestMode)
+                {
+                    if (!HttpContext.Session.IsAvailable)
+                        RedirectToAction(controllerName: "Login", actionName: "Login");
+                    else
+                        sessionUserId = HttpContext.Session.GetInt32("UserID").Value;
+                }
+                _photoService.UpdatePhotographyRanking(id, sessionUserId, galleryDetail.SelectedRank);
                 //throw new InvalidDataException($"wrong rank: ({galleryDetail.SelectedRank}) for {id}.");
             }
             return View(PrepareDetailViewModel(id, galleryDetail.PageId));
@@ -78,6 +114,17 @@ namespace JuanMartin.PhotoGallery.Controllers
             if (debugData != null) debugData["path"] = folder;
 
             return folder;
+        }
+        private string GetClientRemoteId()
+        {
+            string id = HttpContext.GetServerVariable("REMOTE_HOST");
+
+            if (string.IsNullOrEmpty(id))
+                id = HttpContext.GetServerVariable("REMOTE_ADDR");
+            if (string.IsNullOrEmpty(id))
+                id = HttpContext.GetServerVariable("REMOTE_USER");
+
+            return id;
         }
     }
 }

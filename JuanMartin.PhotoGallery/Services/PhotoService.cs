@@ -3,6 +3,7 @@ using JuanMartin.Kernel;
 using JuanMartin.Kernel.Adapters;
 using JuanMartin.Kernel.Messaging;
 using JuanMartin.Models.Gallery;
+using JuanMartin.PhotoGallery.Models;
 using System;
 using System.Collections.Generic;
 
@@ -171,5 +172,115 @@ namespace JuanMartin.PhotoGallery.Services
 
             return rankingId;
         }
+
+        public User GetUser(string userName, string password)
+        {
+            User user = null;
+
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetUser", $"uspUser({userName},{password})"));
+            request.AddSender("User", typeof(User).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in reply.Data.Annotations)
+                {
+                    // be sure record.GetAnnotation("...") exists and is not null
+                    var id = (int)record.GetAnnotation("Id").Value;
+
+                    if (id == -1)
+                        return null;
+
+                    var email = (string)record.GetAnnotation("Email").Value;
+
+                    user = new User
+                    {
+                        UserId = id,
+                        UserName = userName,
+                        Password = password,
+                        Email = email
+                    };
+                }
+            }
+
+            return user;
+        }
+
+        public int LoadSession(int userId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspAddSession", $"uspAddSession({userId})"));
+            request.AddSender("Session", typeof(Microsoft.AspNetCore.Http.ISession).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var Id = (int)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
+
+            return Id;
+        }
+
+        public RedirectResponseModel GetRedirectInfo(string remoteHost)
+        {
+            RedirectResponseModel requestModel = null;
+
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetCurrentClientRedirectInfo", $"uspGetCurrentClientRedirectInfo({remoteHost})"));
+            request.AddSender("RedirectRequestModel", typeof(RedirectResponseModel).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in reply.Data.Annotations)
+                {
+                    // be sure record.GetAnnotation("...") exists and is not null
+                    var remoteHostName = (string)record.GetAnnotation("RmoteHost").Value;
+
+                    if (remoteHostName == "")
+                        return null;
+
+                    var controller = (string)record.GetAnnotation("Controller").Value;
+                    var action = (string)record.GetAnnotation("ControllerAction").Value;
+                    var model = (string)record.GetAnnotation("Model").Value;
+                    var queryString = (string)record.GetAnnotation("QueryString").Value;
+
+                    var parsed = System.Web.HttpUtility.ParseQueryString(queryString);
+
+                    requestModel = new RedirectResponseModel
+                    {
+                        RemoteHost=remoteHostName,
+                        Controller=controller,
+                        Action=action,
+                        JsonViewModel=model,
+                        RouteData=new Microsoft.AspNetCore.Routing.RouteValueDictionary(parsed)
+                    };
+                }
+            }
+            
+            return requestModel;
+        }
+
+        public void SetRedirectInfo(string remoteHost, string controller, string action, object model = null, string routeData = "")
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

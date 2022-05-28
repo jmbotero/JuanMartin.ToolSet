@@ -4,7 +4,6 @@
     var currentPage = ViewBag.CurrentPage;
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
 }
-
 <div class="container body-content">
     <div class="gallery-content">
         @if (Model.Album != null && Model.Album.Count > 0)
@@ -13,37 +12,37 @@
 
             @foreach (var image in Model.Album)
             {
-        <div class="gallery-image-index-container">
-            @{
-                i++;
-                var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
-                var url = Url.Content(path);
-            }
-            <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage">
-                <img class="gallery-image-index" src="@url" />
-            </a>
-            @*<div class="gallery-image-index" style="background-image:url(@url)"/>*@
-            <div class="overlay">
-                <table>
-                    <tr>
-                        <td style="width:max-content; text-align:right">Name: </td>
-                        <td>@image.FileName</td>
-                    </tr>
-                    <tr>
-                        <td style="width:max-content; text-align:right">Location: </td>
-                        <td>@image.Location</td>
-                    </tr>
-                    @if (image.Rank > 0)
-                    {
-                <tr>
-                    <td style="width:max-content; text-align:right">Average Rank: </td>
-                    <td style="color:gold;">@image.Rank ★'s</td>
-                </tr>
+                <div class="gallery-image-index-container">
+                    @{
+                        i++;
+                        var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
+                        var url = Url.Content(path);
                     }
-                </table>
-            </div>
-            <span id="photo-id-@i" style="display: none;">@image.Id</span>
-        </div>
+                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage">
+                        <img class="gallery-image-index" src="@url" />
+                    </a>
+                    @*<div class="gallery-image-index" style="background-image:url(@url)"/>*@
+                    <div class="overlay">
+                        <table>
+                            <tr>
+                                <td style="width:max-content; text-align:right">Name: </td>
+                                <td>@image.FileName</td>
+                            </tr>
+                            <tr>
+                                <td style="width:max-content; text-align:right">Location: </td>
+                                <td>@image.Location</td>
+                            </tr>
+                            @if (image.Rank > 0)
+                            {
+                                <tr>
+                                    <td style="width:max-content; text-align:right">Average Rank: </td>
+                                    <td style="color:gold;">@image.Rank ★'s</td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+                    <span id="photo-id-@i" style="display: none;">@image.Id</span>
+                </div>
             }
         }
         else
@@ -60,27 +59,27 @@
 }
 @if (count > 1)
 {
-<div class="pagination" style="text-align:center">
-    @if (currentPage > 1)
-    {
-        galleryUrl = baseUrl + $"?pageId={currentPage - 1}";
-        <a href="@galleryUrl">&laquo;</a>
-    }
-    @for (int p = 1; p <= count; p++)
-    {
-        galleryUrl = baseUrl + $"?pageId={p}";
-        string aClass = "";
-
-        @if (p == currentPage)
+    <div class="pagination" style="text-align:center">
+        @if (currentPage > 1)
         {
-            aClass = "class=active";
+            galleryUrl = baseUrl + $"?pageId={currentPage - 1}";
+            <a href="@galleryUrl">&laquo;</a>
         }
-        <a href="@galleryUrl" @aClass>@p</a>
-    }
-    @if (currentPage < count)
-    {
-        galleryUrl = baseUrl + $"?pageId={currentPage + 1}";
-        <a href="@galleryUrl">&raquo;</a>
-    }
-</div>
+        @for (int p = 1; p <= count; p++)
+        {
+            galleryUrl = baseUrl + $"?pageId={p}";
+            string aClass = "";
+
+            @if (p == currentPage)
+            {
+                aClass = "class=active";
+            }
+            <a href="@galleryUrl" @aClass>@p</a>
+        }
+        @if (currentPage < count)
+        {
+            galleryUrl = baseUrl + $"?pageId={currentPage + 1}";
+            <a href="@galleryUrl">&raquo;</a>
+        }
+    </div>
 }

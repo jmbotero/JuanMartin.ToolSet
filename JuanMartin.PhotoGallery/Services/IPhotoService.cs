@@ -8,11 +8,16 @@ using JuanMartin.Kernel;
 using JuanMartin.Kernel.Adapters;
 using JuanMartin.Kernel.Messaging;
 using JuanMartin.Kernel.Utilities;
+using JuanMartin.PhotoGallery.Models;
 
 namespace JuanMartin.PhotoGallery.Services
 {
     public interface IPhotoService
     {
+        int LoadSession(int userId);
+        RedirectResponseModel GetRedirectInfo(string remoteHost);
+        void SetRedirectInfo(string remoteHost, string controller, string action, object model = null, string routeData = "");
+        User GetUser(string userName, string password);
         int GetGalleryPageCount(int pageSize);
         double GetAverageRanking(long id);
         IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);

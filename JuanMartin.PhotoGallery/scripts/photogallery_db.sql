@@ -59,7 +59,25 @@ CREATE TABLE IF NOT EXISTS `tblranking` (
   KEY `FK_ranking_user` (`user_id`),
   CONSTRAINT `FK_ranking_photography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`),
   CONSTRAINT `FK_ranking_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+DROP TABLE IF EXISTS `tblsession`;
+CREATE TABLE IF NOT EXISTS `tblsession` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_ id` int NOT NULL,
+  `last_page_id` int DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+DROP TABLE IF EXISTS `tblstate`;
+CREATE TABLE IF NOT EXISTS `tblstate` (
+  `remote_host` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `redirect_controller` varchar(50) NOT NULL DEFAULT '',
+  `redirect_action` varchar(50) NOT NULL DEFAULT '',
+  `redirect_model` varchar(255) DEFAULT '',
+  `redirect_routevalues` varchar(100) DEFAULT '',
+  PRIMARY KEY (`remote_host`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbluser`;
 CREATE TABLE IF NOT EXISTS `tbluser` (
@@ -125,6 +143,30 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS `uspAddSession`;
+DELIMITER //
+CREATE PROCEDURE `uspAddSession`(
+	IN `UserID` INT
+)
+BEGIN
+	DECLARE id INT;
+	
+	SELECT s.id 
+	INTO id
+	FROM tblSession s	
+ 	WHERE s.`user_ id` = UserID;
+	
+	IF NOT FOUND_ROWS() THEN 	
+		INSERT INTO tblSession(user_id) VALUE(UserID);
+		SET id=LAST_INSERT_ID();
+	ELSE
+		SET id=-1;
+	END IF;
+	
+	SELECT id;
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS `uspAddUser`;
 DELIMITER //
 CREATE PROCEDURE `uspAddUser`(
@@ -185,6 +227,26 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS `uspGetCurrentClientRedirectInfo`;
+DELIMITER //
+CREATE PROCEDURE `uspGetCurrentClientRedirectInfo`(
+	IN `RemoteHost` VARCHAR(50)
+)
+BEGIN
+	SELECT 	s.remote_host AS 'RemoteHost',
+				s.redirect_controller AS 'Controller',
+	    		s.redirect_action AS 'Action',
+	    		s.redirect_model AS 'Model',
+	    		s.redirect_routevalues AS 'QueryString'
+	FROM tblState s
+	WHERE s.remote_host = RemoteHost;
+	
+	IF NOT FOUND_ROWS() THEN 	
+		SELECT '' AS 'RemoteHost', '' AS 'Controller', '' AS 'Action', '' AS 'Model', '' AS 'QueryString';
+	END IF; 
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS `uspGetPageCount`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPageCount`(
@@ -231,6 +293,51 @@ BEGIN
 	
 	IF NOT FOUND_ROWS() THEN 	
 		SELECT -1 AS Id;
+	END IF;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspGetUser`;
+DELIMITER //
+CREATE PROCEDURE `uspGetUser`(
+	IN `UserName` VARCHAR(50),
+	IN `UserPassword` VARCHAR(255)
+)
+BEGIN
+	SELECT u.id AS 'Id', u.login AS 'Login', u._password AS 'Password', u.email AS 'Email'
+	FROM tbluser u
+	WHERE u.login = UserName
+	AND u._password = MD5(UserPassword);
+	
+ 	IF NOT FOUND_ROWS() THEN 	
+		SELECT A-1 AS 'Id', '' AS 'Login','' AS 'Password','' AS 'Email';
+	END IF;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspSetCurrentClientRedirectInfo`;
+DELIMITER //
+CREATE PROCEDURE `uspSetCurrentClientRedirectInfo`(
+	IN `RemoteHost` VARCHAR(50),
+	IN `Controller` VARCHAR(50),
+	IN `ControllerAction` VARCHAR(50),
+	IN `Model` VARCHAR(255),
+	IN `QueryString` VARCHAR(100)
+)
+BEGIN
+	SELECT *
+	FROM tblstate s
+ 	WHERE s.remote_host = RemoteHost;	
+
+	IF FOUND_ROWS() THEN 	
+		UPDATE tblstate s
+		SET s.redirect_controller = Controller,
+			 s.redirect_action = ControllerAction,
+			 s.redirect_model = Model,
+			 s.redirect_routevalues = QueryString
+	 	WHERE s.remote_host = RemoteHost;	
+	ELSE
+		INSERT INTO tblState(remote_host, redirect_controller, redirect_action, redirect_model, redirect_routevalues) VALUE(RemoteHost, Controller, ControllerAction, Model, QueryString);
 	END IF;
 END//
 DELIMITER ;
