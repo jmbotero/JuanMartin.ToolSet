@@ -15,32 +15,35 @@ namespace JuanMartin.PhotoGallery.Controllers
     {
         private readonly IPhotoService _photoService;
         private readonly IConfiguration _configuration;
-        private readonly bool _strartInGuestMode = false;
+        private readonly bool _startInGuestMode = false;
 
         public GalleryController(IPhotoService photoService, IConfiguration configuration)
         {
             _photoService = photoService;
             _configuration = configuration;
-
-            _strartInGuestMode = Convert.ToBoolean(configuration["StrartInGuestMode"]);
+            
+            _startInGuestMode = Convert.ToBoolean(configuration["StrartInGuestMode"]);
         }
+
+        [HttpGet]
         public IActionResult Index(int pageId = 1)
         {
+            int sessionId = -1;
             int sessionUserId = -1;
-
-            TempData["clientId"] = GetClientRemoteId();
-            var clientId = TempData["clientId"].ToString();
-            string queryString = HttpContext.Request.QueryString.Value;
-
-            _photoService.SetRedirectInfo(remoteHost: clientId, controller:  "Gallery",action:  "Index", routeData: queryString);
-            
-            if (!_strartInGuestMode)
+            if (Convert.ToBoolean(Startup.IsSignedIn))
             {
-                if(!HttpContext.Session.IsAvailable)
-                    RedirectToAction(controllerName: "Login", actionName: "Login");
-                else
-                    sessionUserId = HttpContext.Session.GetInt32("UserID").Value;
+                sessionId = (int)HttpContext.Session.GetInt32("SessionID").Value;
+                sessionUserId = (int)HttpContext.Session.GetInt32("UserID").Value;
             }
+            var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
+            string queryString = HttpContext.Request.QueryString.Value;
+            var redirectInfo = _photoService.SetRedirectInfo(userId: sessionUserId, remoteHost: remoteHostName, controller: "Gallery", action: "Index", queryString: queryString);
+
+            if (!_startInGuestMode && redirectInfo != null && !Convert.ToBoolean(Startup.IsSignedIn))
+                RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo.RouteData);
+
+            ViewBag.Suid = sessionUserId;
+            ViewBag.Sid = sessionId;
 
             var model = new GalleryIndexViewModel
             {
@@ -50,6 +53,8 @@ namespace JuanMartin.PhotoGallery.Controllers
             ViewBag.PageCount = _photoService.GetGalleryPageCount(PhotoService.PageSize);
             ViewBag.CurrentPage = pageId;
 
+            TempData["isSignedIn"] = Startup.IsSignedIn;
+
             return View(model);
         }
 
@@ -57,29 +62,31 @@ namespace JuanMartin.PhotoGallery.Controllers
         public IActionResult Detail(long id,  GalleryDetailViewModel galleryDetail)
         {
             int sessionUserId = -1;
-            
+            if (Convert.ToBoolean(Startup.IsSignedIn))
+                sessionUserId = (int)HttpContext.Session.GetInt32("UserID");
+
             if (galleryDetail != null && galleryDetail.SelectedRank != 0)
             {
-                var clientId = GetClientRemoteId();
+                var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
                 string queryString = HttpContext.Request.QueryString.Value;
 
-                _photoService.SetRedirectInfo(remoteHost: clientId,controller:  "Gallery",action: "Detail", model: galleryDetail, routeData: queryString);
-                if (!_strartInGuestMode)
-                {
-                    if (!HttpContext.Session.IsAvailable)
-                        RedirectToAction(controllerName: "Login", actionName: "Login");
-                    else
-                        sessionUserId = HttpContext.Session.GetInt32("UserID").Value;
-                }
+                var redirectInfo = _photoService.SetRedirectInfo(userId: sessionUserId, remoteHost: remoteHostName,controller:  "Gallery",action: "Detail", routeId: id, queryString: queryString);
+                if (redirectInfo != null && !Convert.ToBoolean(Startup.IsSignedIn))
+                    RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo.RouteData);
+
                 _photoService.UpdatePhotographyRanking(id, sessionUserId, galleryDetail.SelectedRank);
                 //throw new InvalidDataException($"wrong rank: ({galleryDetail.SelectedRank}) for {id}.");
             }
+            TempData["isSignedIn"] = Startup.IsSignedIn;
+            
             return View(PrepareDetailViewModel(id, galleryDetail.PageId));
         }
 
         [HttpGet]
         public IActionResult Detail(long id, int pageId)
         {
+            TempData["isSignedIn"] = Startup.IsSignedIn;
+
             return View(PrepareDetailViewModel(id,pageId));
         }
 
@@ -115,16 +122,5 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             return folder;
         }
-        private string GetClientRemoteId()
-        {
-            string id = HttpContext.GetServerVariable("REMOTE_HOST");
-
-            if (string.IsNullOrEmpty(id))
-                id = HttpContext.GetServerVariable("REMOTE_ADDR");
-            if (string.IsNullOrEmpty(id))
-                id = HttpContext.GetServerVariable("REMOTE_USER");
-
-            return id;
-        }
-    }
+     }
 }

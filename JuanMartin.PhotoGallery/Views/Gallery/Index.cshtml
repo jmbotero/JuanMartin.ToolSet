@@ -4,6 +4,8 @@
     var currentPage = ViewBag.CurrentPage;
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
 }
+<span>user id = '@ViewBag.Suid'</span><br />
+<span>sesssion id = '@ViewBag.Sid'</span>
 <div class="container body-content">
     <div class="gallery-content">
         @if (Model.Album != null && Model.Album.Count > 0)
@@ -32,11 +34,11 @@
                                 <td style="width:max-content; text-align:right">Location: </td>
                                 <td>@image.Location</td>
                             </tr>
-                            @if (image.Rank > 0)
+                            @if (image.AverageRank > 0)
                             {
                                 <tr>
                                     <td style="width:max-content; text-align:right">Average Rank: </td>
-                                    <td style="color:gold;">@image.Rank ★'s</td>
+                                    <td style="color:gold;">@image.AverageRank ★'s</td>
                                 </tr>
                             }
                         </table>

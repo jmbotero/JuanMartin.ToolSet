@@ -54,6 +54,18 @@ button.accept-policy {
   line-height: inherit;
 }
 
+.error-message {
+    font-weight: bold; 
+    font-size: 16px; 
+    color: red;
+}
+
+.logout-btn {
+    width: 14px;
+    height: 14px;
+    border:1px;
+    border-color: grey;
+}
 /* Sticky footer styles
 -------------------------------------------------- */
 html {

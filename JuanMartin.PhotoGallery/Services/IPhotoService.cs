@@ -9,17 +9,24 @@ using JuanMartin.Kernel.Adapters;
 using JuanMartin.Kernel.Messaging;
 using JuanMartin.Kernel.Utilities;
 using JuanMartin.PhotoGallery.Models;
+using System.Collections.Specialized;
 
 namespace JuanMartin.PhotoGallery.Services
 {
     public interface IPhotoService
     {
+        User VerifyEmail(string email);
+        void StoreActivationCode(int userId, string activationCode);
+        (int, User) VerifyActivationCode(string activationCode);
+        User UpdateUserPassword(int userID, string userName, string password);
+        User AddUser(string userName, string password, string email);
         int LoadSession(int userId);
-        RedirectResponseModel GetRedirectInfo(string remoteHost);
-        void SetRedirectInfo(string remoteHost, string controller, string action, object model = null, string routeData = "");
+        void EndSession(int sessionId);
+        RedirectResponseModel GetRedirectInfo(int userId,string remoteHost);
+        Dictionary<string, object> GenerateRouteValues(long routeId, string queryString);
+        RedirectResponseModel SetRedirectInfo(int userId,string remoteHost, string controller, string action, long routeId = -1, string queryString = "");
         User GetUser(string userName, string password);
         int GetGalleryPageCount(int pageSize);
-        double GetAverageRanking(long id);
         IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);
         Photography GetPhotographyById(long id, int userId);
         int UpdatePhotographyRanking(long id, int userId, int rank);
@@ -63,8 +70,8 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("PhotoGraphy", $"uspAddPhotoGraphy({source},'{name}','{path}','{title}')"));
-            request.AddSender("AddPhotoGraphy", typeof(Photography).ToString());
+            request.AddData(new ValueHolder("uspAddPhotoGraphy", $"uspAddPhotoGraphy({source},'{name}','{path}','{title}')"));
+            request.AddSender("PhotoGraphy", typeof(Photography).ToString());
 
             DbAdapter.Send(request);
             IRecordSet reply = (IRecordSet)DbAdapter.Receive();

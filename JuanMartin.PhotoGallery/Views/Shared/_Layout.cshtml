@@ -21,7 +21,19 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
                         </li>
-                    </ul>
+                        <li class="nav-item">
+                            @if (Convert.ToBoolean(TempData["isSignedIn"]))
+                            {
+                                <form method="post" asp-controller="Login" asp-action="Logout">
+                                    <input type="image" name="Logout" src="~/power-on.jpg" class="logout-btn">
+                                </form>
+                            }
+                            else
+                            {
+                                <img class="logout-btn" name="Logout" src="~/power-off.jpg" alt="Logout" />
+                            }
+                        </li>
+                        </ul>
                 </div>
             </div>
         </nav>

@@ -1,0 +1,23 @@
+
+Exception: Error parsing token or invalid token: @
+JuanMartin.Kernel.RuleEngine.ExpressionEvaluator.ParseToSymbol(string token) in ExpressionEvaluator.cs
++
+                throw new Exception("Error parsing token or invalid token: " + token);
+JuanMartin.Kernel.RuleEngine.ExpressionEvaluator.Parse(string expression) in ExpressionEvaluator.cs
++
+                Symbol symbol = ParseToSymbol(token);
+JuanMartin.Kernel.Adapters.AdapterMySql.ExecuteProcedure(string Name, string Command) in AdapterMySql.cs
++
+            expression.Parse(Command);
+JuanMartin.Kernel.Adapters.AdapterMySql.Send(IMessage Request) in AdapterMySql.cs
++
+                    _responseData = ExecuteProcedure(resultsName, query);
+JuanMartin.PhotoGallery.Services.PhotoService.AddUser(string userName, string password, string email) in PhotoService.cs
++
+            _dbAdapter.Send(request);
+JuanMartin.PhotoGallery.Controllers.LoginController.Register(LoginViewModel model) in LoginController.cs
++
+            var user = _photoService.AddUser(model.UserName, model.Password, model.Email);
+lambda_method55(Closure , object , object[] )
+Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor+SyncActionResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, object controller, object[] arguments)
+Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
