@@ -3,6 +3,9 @@
     var count = ViewBag.PageCount;
     var currentPage = ViewBag.CurrentPage;
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
+
+    var lastId = ViewBag.LastId;
+    var firstId = ViewBag.FirstId;
 }
 <span>user id = '@ViewBag.Suid'</span><br />
 <span>sesssion id = '@ViewBag.Sid'</span>
@@ -11,7 +14,7 @@
         @if (Model.Album != null && Model.Album.Count > 0)
         {
             int i = 0;
-
+        
             @foreach (var image in Model.Album)
             {
                 <div class="gallery-image-index-container">
@@ -20,7 +23,7 @@
                         var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
                         var url = Url.Content(path);
                     }
-                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage">
+                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@currentPage">
                         <img class="gallery-image-index" src="@url" />
                     </a>
                     @*<div class="gallery-image-index" style="background-image:url(@url)"/>*@

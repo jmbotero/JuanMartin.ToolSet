@@ -1,4 +1,5 @@
 ﻿using JuanMartin.Models.Gallery;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,8 @@ namespace JuanMartin.PhotoGallery.Models
         public int PageId { get; set; }
         public int SelectedRank { get; set; }
         public Photography Image { get; set; }
+        public List<SelectListItem> Tags { get; set; }
+        public string Tag { get; set; }
+        public string SelectedTagListAction { get; set; }
     }
 }

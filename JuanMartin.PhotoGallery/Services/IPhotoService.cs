@@ -27,10 +27,13 @@ namespace JuanMartin.PhotoGallery.Services
         RedirectResponseModel SetRedirectInfo(int userId,string remoteHost, string controller, string action, long routeId = -1, string queryString = "");
         User GetUser(string userName, string password);
         int GetGalleryPageCount(int pageSize);
+        public (long Lower, long Upper) GetPhotographyIdBounds();
         IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);
         Photography GetPhotographyById(long id, int userId);
         int UpdatePhotographyRanking(long id, int userId, int rank);
-        IEnumerable<Photography> GetPhotographiesByKeyword(string keywords, int userId, int pageId = 1);
+        int AddTag(string tag, long id);
+        int RemoveTag(string tag, long id);
+        IEnumerable<Photography> GetPhotographiesByTag(string keywords, int userId, int pageId = 1);
 
         static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
         {

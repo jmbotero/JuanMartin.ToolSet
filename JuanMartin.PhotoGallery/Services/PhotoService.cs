@@ -61,7 +61,26 @@ namespace JuanMartin.PhotoGallery.Services
             return pageCount;
         }
 
-        public IEnumerable<Photography> GetPhotographiesByKeyword(string keywords, int userId, int pageId = 1)
+        public (long Lower, long Upper) GetPhotographyIdBounds()
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetPhotographyIdBounds", $"uspGetPhotographyIdBounds()"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var lower = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Lower").Value;
+            var upper = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Upper").Value;
+
+            return (lower, upper);
+        }
+
+        public IEnumerable<Photography> GetPhotographiesByTag(string keywords, int userId, int pageId = 1)
         {
             throw new NotImplementedException();
         }
@@ -330,7 +349,7 @@ namespace JuanMartin.PhotoGallery.Services
             {
                 foreach (ValueHolder record in reply.Data.Annotations)
                 {
-                    var id = (int)record.GetAnnotation("Id").Value;
+                    var id = Convert.ToInt32(record.GetAnnotation("Id").Value);
                     var email = (string)record.GetAnnotation("Email").Value;
 
                     user = new User
@@ -440,7 +459,7 @@ namespace JuanMartin.PhotoGallery.Services
                         AverageRank = averageRank
                     };
 
-                    photography.AddKeywords(keywords);
+                    photography.ParseTags(keywords);
 
                     photographies.Add(photography);
                 }
@@ -448,6 +467,42 @@ namespace JuanMartin.PhotoGallery.Services
             }
 
             return photographies;
+        }
+
+        public int AddTag(string tag, long id)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspAddTag", $"uspAddTag('{tag}',{id})"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var Id = Convert.ToInt32(reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value);
+
+            return Id;
+        }
+
+        public int RemoveTag(string tag, long id)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspRemoveTag", $"uspRemoveTag('{tag}',{id})"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var Id = Convert.ToInt32(reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value);
+
+            return Id;
         }
     }
 }

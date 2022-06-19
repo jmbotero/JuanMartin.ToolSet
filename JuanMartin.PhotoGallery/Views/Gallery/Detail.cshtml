@@ -1,55 +1,103 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
 @{
-    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery/Index";
-    var galleryUrl = baseUrl + $"?pageId={Model.PageId}";
+    Model.Tag = ""; // start with empty text box
+
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery";
+    var galleryUrl = $"{baseUrl}/Index?pageId={Model.PageId}";
+
+    var lastId = ViewBag.LastId;
+    var firstId = ViewBag.FirstId;
+    var currentId = (Model == null && Model.Image == null) ? -1 : Model.Image.Id;
+    var previousId = ViewBag.PrevId;
+    var nextId = ViewBag.NextId;
 }
-<div class="container body-content">
-    <div class="gallery-image-detail-container">
-        <div>
-            @{
-                var path = System.IO.Path.Combine(Model.Image.Path, Model.Image.FileName).Replace(@"\", "/");
-                var url = Url.Content(path);
-            }
-            <img class="gallery-image-detail" src="@url" alt="@url" />
+@if (@ViewBag.Message != null)
+    {
+
+        <div class="error-message">
+            @ViewBag.Message
         </div>
         <br />
-        <table class="gallery-image-detail-meta">
-            <tr>
-                <td class="gallery-image-detail-meta-column-left">FileName: </td>
-                <td class="gallery-image-detail-meta-column-right">@Model.Image.FileName</td>
-            </tr>
-            <tr>
-                <td class="gallery-image-detail-meta-column-left">Location: </td>
-                <td class="gallery-image-detail-meta-column-right">@Model.Image.Location</td>
-            </tr>
-            <tr>
-                <td class="gallery-image-detail-meta-column-left">Rank: </td>
-                <td class="gallery-image-detail-meta-column-right">
-                    <span>-@Model.Image.Rank-</span>
-                    <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@Model.Image.Id" method="post">
-                        <div class="ranking">
-                            @for (int i = 1; i <= 10; i++)
-                            {
-                                string state = "";
+    }
 
-                                @if (i <= Model.Image.Rank)
-                                {
-                                    state = "checked";
-                                }
-                                <input @state type="radio" name="ranking" value="@i" id="@i" onclick="setRank();"onchange="this.form.submit();"><label for="@i">☆</label>
-                            }
-                            <input type="text" id="rank" asp-for="SelectedRank">
-                        </div>
-                    </form>
-                </td>
-            </tr>
-        </table>
-        <div class="gallery-image-detail-nav">
-            <a class="btn btn-primary" href="@galleryUrl">
-                << Back to gallery...
-            </a>
-        </div>
-    </div>
+<div class="container body-content">
+    <table>
+        <tr>
+            <td class="btn-navigation">
+                @if (previousId != -1)
+                {
+                    <a style="color: var(--site-navigation-color); font-weight: bold;" asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId">&lt;&lt;</a>
+                }
+            </td>
+            <td>
+                <div class="gallery-image-detail-container">
+                    <div>
+                        @{
+                            var path = System.IO.Path.Combine(Model.Image.Path, Model.Image.FileName).Replace(@"\", "/");
+                            var url = Url.Content(path);
+                        }
+                        <img class="gallery-image-detail" src="@url" alt="@url" />
+                    </div>
+                    <br />
+                    <table class="gallery-image-detail-meta">
+                        <tr>
+                            <td class="gallery-image-detail-meta-column-left">FileName: </td>
+                            <td class="gallery-image-detail-meta-column-right">@Model.Image.FileName</td>
+                        </tr>
+                        <tr>
+                            <td class="gallery-image-detail-meta-column-left">Location: </td>
+                            <td class="gallery-image-detail-meta-column-right">@Model.Image.Location</td>
+                        </tr>
+                        <tr>
+                            <td class="gallery-image-detail-meta-column-left">Tags: </td>
+                            <td class="gallery-image-detail-meta-column-right">
+                                <span>-@Model.SelectedTagListAction-</span>
+                                <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId" method="post">
+                                    @Html.DropDownListFor(model => model.Image.Tags, Model.Tags, new { style = "width:150px" , onclick = "GetSelectedTagText()" })<br />
+                                    @Html.TextBoxFor(model => model.Tag, new { style = "width:150px" })
+                                    <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
+                                    <button type="submit" style="border:none;" onclick="setListAction('add');"><img class="btn-list-action" src="~/plus.jpg" /></button>
+                                    <button type="submit" style="border:none;" onclick="setListAction('remove');"><img class="btn-list-action" src="~/minus.jpg"/></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="gallery-image-detail-meta-column-left">Rank: </td>
+                            <td class="gallery-image-detail-meta-column-right">
+                                @*<span>-@Model.Image.Rank-</span>*@
+                                <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId" method="post">
+                                    <div class="ranking">
+                                        @for (int i = 1; i <= 10; i++)
+                                        {
+                                            string state = "";
+
+                                            @if (i <= 11 - Model.Image.Rank)
+                                            {
+                                                state = "checked";
+                                            }
+                                            <input @state type="radio" name="ranking" value="@i" id="@i" onclick="setRank();" onchange="this.form.submit();"><label for="@i">☆</label>
+                                        }
+                                        <input type="text" id="rank" asp-for="SelectedRank">
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="gallery-image-detail-nav">
+                        <a class="btn btn-primary" href="@galleryUrl">
+                            << Back to gallery...
+                        </a>
+                    </div>
+                </div>
+            </td>
+            <td class="btn-navigation">
+                @if (nextId != -1)
+                {
+                    <a style="color: var(--site-navigation-color); font-weight: bold;" asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId">&gt;&gt;</a>
+                }
+            </td>
+        </tr>
+    </table>
 </div>
 <script>
     function setRank() {
@@ -60,6 +108,18 @@
             var rankText = document.getElementById('rank');
 
             rankText.value = rank;
+            document.getElementById('selectedTagListAction').value = "none";
         }
+    }
+
+    function setListAction(actionName) {
+        document.getElementById('selectedTagListAction').value = actionName;
+    }
+
+    function GetSelectedTagText() {
+        var tags = document.getElementById("Image_Tags");
+        var selectedText = tags.options[tags.selectedIndex].innerHTML;
+
+        document.getElementById('Tag').value = selectedText;
     }
 </script> 

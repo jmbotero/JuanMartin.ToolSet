@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `tblkeyword` (
   `id` int NOT NULL AUTO_INCREMENT,
   `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbllocation`;
 CREATE TABLE IF NOT EXISTS `tbllocation` (
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS `tblsession` (
   `start_dtm` datetime NOT NULL,
   `end_dtm` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tblstate`;
 CREATE TABLE IF NOT EXISTS `tblstate` (
@@ -129,35 +129,6 @@ BEGIN
 END//
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS `uspAddKeyword`;
-DELIMITER //
-CREATE PROCEDURE `uspAddKeyword`(
-	IN `Word` VARCHAR(50),
-	IN `LinkToPhotographyId` BIGINT
-)
-BEGIN
-	DECLARE id INT;
-	
-	SELECT k.id 
-	INTO id
-	FROM tblkeyword k
- 	WHERE k.word = Word;
-	
-	IF NOT FOUND_ROWS() THEN 	
-		INSERT INTO tblkeyword(word) VALUE(LOWER(Word));
-		SET id=LAST_INSERT_ID();
-	ELSE
-		SET id=-1;
-	END IF;
-	
-	IF(LinkToPhotographyId<>-1) THEN
-		INSERT INTO tblPhotographykeywords(keyword_id, photography_id) VALUE(id, LinkToPhotographyId);
-	END IF;
-	
-	SELECT id;
-END//
-DELIMITER ;
-
 DROP PROCEDURE IF EXISTS `uspAddPhotography`;
 DELIMITER //
 CREATE PROCEDURE `uspAddPhotography`(
@@ -194,6 +165,52 @@ BEGIN
 	
 	INSERT INTO tblSession(user_id, start_dtm) VALUE(UserID, CURRENT_TIMESTAMP());
 	SET id=LAST_INSERT_ID();
+	
+	SELECT id;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspAddTag`;
+DELIMITER //
+CREATE PROCEDURE `uspAddTag`(
+	IN `Word` VARCHAR(50),
+	IN `PhotographyId` BIGINT
+)
+BEGIN
+	DECLARE id INT;
+	
+	SELECT p.id 
+	FROM tblphotography p
+ 	WHERE p.id = PhotographyId;
+	
+	IF FOUND_ROWS() THEN 	
+		SELECT k.id 
+		INTO id
+		FROM tblkeyword k
+	 	WHERE k.word = Word;
+		
+		IF NOT FOUND_ROWS() THEN 	
+			INSERT INTO tblkeyword(word) VALUE(LOWER(Word));
+			SET id=LAST_INSERT_ID();
+		ELSE
+			SET id = -2;
+		END IF;
+		
+		IF(PhotographyId<>-1) THEN
+			SELECT *
+			FROM tblphotographykeywords pk
+			WHERE pk.keyword_id = id
+			AND pk.photography_id = PhotographyId;
+			
+			IF NOT FOUND_ROWS() THEN 	
+				SET FOREIGN_KEY_CHECKS = 0;
+				INSERT INTO tblPhotographykeywords(keyword_id, photography_id) VALUE(id, PhotographyId);
+				SET FOREIGN_KEY_CHECKS = 1;
+			END IF;
+		END IF;
+	ELSE
+		SET id = -1;
+	END IF;
 	
 	SELECT id;
 END//
@@ -266,6 +283,7 @@ BEGIN
 
 	SELECT v.* 
 	FROM (SELECT @p1:=UserID p) parm , vwphotographywithranking v
+	ORDER BY v.Id ASC
 	LIMIT rec_take
 	OFFSET rec_skip;
 END//
@@ -312,6 +330,15 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS `uspGetPhotographyIdBounds`;
+DELIMITER //
+CREATE PROCEDURE `uspGetPhotographyIdBounds`()
+BEGIN
+   SELECT MIN(p.id) AS 'Lower', MAX(p.id) AS 'Upper'
+	FROM tblphotography p;
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS `uspGetPotography`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPotography`(
@@ -345,6 +372,35 @@ BEGIN
  	IF NOT FOUND_ROWS() THEN 	
 		SELECT -1 AS 'Id', '' AS 'Login','' AS 'Password','' AS 'Email';
 	END IF;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspRemoveTag`;
+DELIMITER //
+CREATE PROCEDURE `uspRemoveTag`(
+	IN `Word` VARCHAR(50),
+	IN `PhotographyId` BIGINT
+)
+BEGIN
+	DECLARE id INT;
+
+	SET id=-1;
+
+	IF(PhotographyId<>-1) THEN
+		SELECT k.id
+		INTO id
+		FROM tblkeyword k
+	 	WHERE k.word = Word;
+	 	
+		IF FOUND_ROWS() THEN 	
+			DELETE k.*
+			FROM tblphotographykeywords k
+		 	WHERE k.keyword_id=id
+		 	AND k.photography_id = PhotographyId;
+		END IF;
+		
+	END IF;	
+	SELECT id;
 END//
 DELIMITER ;
 
@@ -384,7 +440,7 @@ CREATE PROCEDURE `uspStoreActivationCode`(
 	IN `ActivationCode` VARCHAR(36)
 )
 BEGIN
-	INSERT INTO tblPassrdReset(user_id ,activation_code,  request_dtm) VALUE(UserID, ActivationCode, CURRENT_TIMESTAMP());
+	INSERT INTO tblPasswordReset(user_id ,activation_code,  request_dtm) VALUE(UserID, ActivationCode, CURRENT_TIMESTAMP());
 END//
 DELIMITER ;
 
@@ -456,7 +512,7 @@ BEGIN
  	WHERE u.login = Login
  	AND u.id = UserID;
 
-		SELECT id AS 'Id', login AS 'Login', UserPassword AS 'Password', email AS 'Email';
+		SELECT id AS 'Id', login AS 'Login', '' AS 'Password', email AS 'Email';
 	ELSE
 		SELECT -1 AS 'Id', '' AS 'Login','' AS 'Password','' AS 'Email';
 	END IF;
@@ -495,11 +551,15 @@ BEGIN
 	 	WHERE u.id = userId;
 
 		IF TIMESTAMPDIFF(MINUTE,requestDtm, verifyDtm) > 10 THEN
+			DELETE r.*
+			FROM tblpasswordreset r
+			WHERE  r.activation_code = ActivationCode;
+	
 			SET errorCode = -2; /* code expired */
 		END IF;
 	END IF;
 	
-	SELECT uerId AS 'Id', login AS 'Login', errorCode AS 'ErrorCode';
+	SELECT userId AS 'Id', login AS 'Login', errorCode AS 'ErrorCode';
 END//
 DELIMITER ;
 

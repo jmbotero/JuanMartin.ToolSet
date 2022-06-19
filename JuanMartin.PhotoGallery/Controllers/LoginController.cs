@@ -44,7 +44,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             {
                 //Send email for reset password
                 string resetCode = Guid.NewGuid().ToString();
-                HttpUtility.SendEmail(user.Email, PasswordResetLink(HttpContext, resetCode), _configuration);
+                HttpUtility.SendVerificationEmail(user.Email, PasswordResetLink(HttpContext, resetCode), _configuration);
                 _photoService.StoreActivationCode(user.UserId, resetCode);
                 message = "Reset password link has been sent to the specifiied email.";
             }
@@ -104,19 +104,22 @@ namespace JuanMartin.PhotoGallery.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult ResetPassword(ResetPasswordViewModel model)
         {
-            string message;
+            string message = "";
             if (ModelState.IsValid)
             {
-                var user = _photoService.UpdateUserPassword(model.UserId, model.UserName, model.NewPassword);
+                if (model.NewPassword == model.ConfirmPassword)
+                {
+                    var user = _photoService.UpdateUserPassword(model.UserId, model.UserName, model.NewPassword);
 
-                if (user != null)
-                    message = $"New password for {user.UserName} updated successfully!";
-                else
-                    message = "Database error: password was not updated.";
+                    if (user != null)
+                        message = $"New password for {user.UserName} updated successfully!";
+                    else
+                        message = "Database error: password was not updated.";
+                }
             }
             else
             {
-                message = "Error: model state is invalid.";
+                message = "Password reset failed.";
             }
 
             ViewBag.Message = message;

@@ -1,4 +1,7 @@
-﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+﻿:root {
+    --site-navigation-color: dodgerblue; /* #1e90ff */
+}
+/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
 
 a.navbar-brand {
@@ -13,12 +16,26 @@ a {
 }
 
 .btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
-  font-size: 10px;
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: bold;
+    color: #fff;
+    background-color: var(--site-navigation-color); /*#1b6ec2;*/
+    border-color: #1861ac;
+    font-size: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+}
+
+.btn-list-action {
+/*    
+    color: #fff;
+    background-color: var(--site-navigation-color);
+    font-size: 15px;
+    font-stretch: ultra-expanded;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+*/ 
+    border: none;  
+    width: 16px;
+    height: 16px;
 }
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
@@ -60,7 +77,7 @@ button.accept-policy {
     color: red;
 }
 
-.logout-btn {
+.btn-logout {
     width: 14px;
     height: 14px;
     border:1px;
@@ -115,7 +132,7 @@ body {
 }
 
 .gallery-image-detail-container {
-    width: 220px;
+    width: max-content;
 }
 
 .gallery-image-detail {
@@ -148,6 +165,21 @@ body {
 .gallery-image-detail-nav {
     padding-left: 15px;
     padding-right: 15px;
+}
+
+.btn-navigation {
+    color: #fff;
+    border-color: #1861ac;
+    font-size: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    vertical-align: middle;
+    display: inline-block;
+    transform: scale(2,3); /* W3C */
+    -webkit-transform: scale(2,3); /* Safari and Chrome */
+    -moz-transform: scale(2,3); /* Firefox */
+    -ms-transform: scale(2,3); /* IE 9 */
+    -o-transform: scale(2,3); /* Opera */
 }
 
 .body-content {
@@ -203,11 +235,11 @@ body {
     border: 1px solid #ddd; /* Gray */
     font-size: 22px;
 }
-.pagination a.active {
-    background-color: lawngreen;
-    color: white;
-    border-radius: 5px;
-}
+    .pagination a.active {
+        background-color: var(--site-navigation-color);
+        color: white;
+        border-radius: 5px;
+    }
 .pagination a:hover:not(.active) {
     background-color: #ddd;  /* white with a shade */
     border-radius: 5px;

@@ -21,25 +21,23 @@ namespace JuanMartin.PhotoGallery.Controllers
             return id;
         }
 
-        public static void SendEmail(string mailTo, string passwordResetLink, IConfiguration configuration)
+        public static void SendVerificationEmail(string mailTo, string passwordResetLink, IConfiguration configuration)
         {
             var toEmail = new MailAddress(mailTo);
             var fromEmail = new MailAddress(configuration.GetSection("SmtpClient")["SenderEmailId"], "JuanMarttin.PhotoGallery");
-            var fromEmailPassword = configuration.GetSection("SmtpClient")["OutgoingEmailAccountPassword"]; 
-
-            SmtpClient smtp = new()
+            var fromEmailPassword = configuration.GetSection("SmtpClient")["OutgoingEmailAccountPassword"];
+            //throw new Exception($"{configuration.GetSection("SmtpClient")["HostName"]}");
+            SmtpClient smtp = new(host: configuration.GetSection("SmtpClient")["HostName"],
+                port: Convert.ToInt32(configuration.GetSection("SmtpClient")["SmtpPort"]))
             {
-                Host = configuration.GetSection("SmtpClient")["Hostame"],
-                Port = Convert.ToInt32(configuration.GetSection("SmtpClient")["SmtpPort"]),
                 EnableSsl = true,
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(fromEmail.Address, fromEmailPassword)
             };
-
             string subject = "Reset Password";
-            string body = "Hi,<br/>br/>We got request for reset your account password. Please click on the below link to reset your password" +
-                "<br/><br/><a href=" + passwordResetLink + ">Reset Password link</a>";
+            string body = "Hi,<br/><br/>We got request for reset your account password. Please click on the below link to reset your password" +
+                "<br/><br/>Click this <a href=" + passwordResetLink + ">reset password link</a>";
 
             using var message = new MailMessage(fromEmail, toEmail)
             {

@@ -25,12 +25,12 @@
                             @if (Convert.ToBoolean(TempData["isSignedIn"]))
                             {
                                 <form method="post" asp-controller="Login" asp-action="Logout">
-                                    <input type="image" name="Logout" src="~/power-on.jpg" class="logout-btn">
+                                    <input type="image" name="Logout" src="~/power-on.jpg" class="btn-logout">
                                 </form>
                             }
                             else
                             {
-                                <img class="logout-btn" name="Logout" src="~/power-off.jpg" alt="Logout" />
+                                <img class="btn-logout" name="Logout" src="~/power-off.jpg" alt="Logout" />
                             }
                         </li>
                         </ul>
