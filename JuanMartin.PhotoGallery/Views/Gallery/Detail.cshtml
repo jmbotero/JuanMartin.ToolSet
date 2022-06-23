@@ -1,7 +1,5 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
 @{
-    Model.Tag = ""; // start with empty text box
-
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery";
     var galleryUrl = $"{baseUrl}/Index?pageId={Model.PageId}";
 
@@ -12,14 +10,13 @@
     var nextId = ViewBag.NextId;
 }
 @if (@ViewBag.Message != null)
-    {
+{
 
-        <div class="error-message">
-            @ViewBag.Message
-        </div>
-        <br />
-    }
-
+    <div class="error-message">
+        @ViewBag.Message
+    </div>
+    <br />
+}
 <div class="container body-content">
     <table>
         <tr>
@@ -51,13 +48,19 @@
                         <tr>
                             <td class="gallery-image-detail-meta-column-left">Tags: </td>
                             <td class="gallery-image-detail-meta-column-right">
-                                <span>-@Model.SelectedTagListAction-</span>
-                                <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId" method="post">
-                                    @Html.DropDownListFor(model => model.Image.Tags, Model.Tags, new { style = "width:150px" , onclick = "GetSelectedTagText()" })<br />
-                                    @Html.TextBoxFor(model => model.Tag, new { style = "width:150px" })
+                                @*<span>-@Model.SelectedTagListAction-</span>*@
+                                <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId" method="post">
+                                    <select id="tagList"size="2" onclick="GetSelectedTagText(this)" style="width:150px">
+                                        @foreach (var tag in Model.Image.Tags)
+                                        {
+                                            <option>@tag</option>
+                                        }
+                                    </select><br />
+                                    <input style="display: none;" type="text" asp-for="Tag">
                                     <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
-                                    <button type="submit" style="border:none;" onclick="setListAction('add');"><img class="btn-list-action" src="~/plus.jpg" /></button>
-                                    <button type="submit" style="border:none;" onclick="setListAction('remove');"><img class="btn-list-action" src="~/minus.jpg"/></button>
+                                    <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
+                                    <button type="submit" style="border:none;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.jpg" /></button>
+                                    <button type="submit" style="border:none;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.jpg" /></button>
                                 </form>
                             </td>
                         </tr>
@@ -75,7 +78,7 @@
                                             {
                                                 state = "checked";
                                             }
-                                            <input @state type="radio" name="ranking" value="@i" id="@i" onclick="setRank();" onchange="this.form.submit();"><label for="@i">☆</label>
+                                            <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
                                         }
                                         <input type="text" id="rank" asp-for="SelectedRank">
                                     </div>
@@ -99,27 +102,3 @@
         </tr>
     </table>
 </div>
-<script>
-    function setRank() {
-        var getSelectedValue = document.querySelector('input[name="ranking"]:checked');
-
-        if (getSelectedValue != null) {
-            var rank = 11 - parseInt(getSelectedValue.value);
-            var rankText = document.getElementById('rank');
-
-            rankText.value = rank;
-            document.getElementById('selectedTagListAction').value = "none";
-        }
-    }
-
-    function setListAction(actionName) {
-        document.getElementById('selectedTagListAction').value = actionName;
-    }
-
-    function GetSelectedTagText() {
-        var tags = document.getElementById("Image_Tags");
-        var selectedText = tags.options[tags.selectedIndex].innerHTML;
-
-        document.getElementById('Tag').value = selectedText;
-    }
-</script> 

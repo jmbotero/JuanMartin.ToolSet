@@ -19,13 +19,6 @@ CREATE FUNCTION `p1`() RETURNS int
 return @p1//
 DELIMITER ;
 
-DROP TABLE IF EXISTS `tblkeyword`;
-CREATE TABLE IF NOT EXISTS `tblkeyword` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 DROP TABLE IF EXISTS `tbllocation`;
 CREATE TABLE IF NOT EXISTS `tbllocation` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -54,13 +47,13 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   KEY `FK_photography_locations` (`location_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-DROP TABLE IF EXISTS `tblphotographykeywords`;
-CREATE TABLE IF NOT EXISTS `tblphotographykeywords` (
+DROP TABLE IF EXISTS `tblphotographytags`;
+CREATE TABLE IF NOT EXISTS `tblphotographytags` (
   `photography_id` bigint DEFAULT NULL,
-  `keyword_id` int DEFAULT NULL,
-  KEY `FK_keyword` (`keyword_id`),
+  `tag_id` int DEFAULT NULL,
   KEY `FK_keyword_photography` (`photography_id`),
-  CONSTRAINT `FK_keyword` FOREIGN KEY (`keyword_id`) REFERENCES `tblkeyword` (`id`),
+  KEY `FK_keyword` (`tag_id`) USING BTREE,
+  CONSTRAINT `FK_keyword` FOREIGN KEY (`tag_id`) REFERENCES `tbltag` (`id`),
   CONSTRAINT `FK_keyword_photography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -75,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `tblranking` (
   KEY `FK_ranking_user` (`user_id`),
   CONSTRAINT `FK_ranking_photography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`),
   CONSTRAINT `FK_ranking_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tblsession`;
 CREATE TABLE IF NOT EXISTS `tblsession` (
@@ -84,11 +77,11 @@ CREATE TABLE IF NOT EXISTS `tblsession` (
   `start_dtm` datetime NOT NULL,
   `end_dtm` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tblstate`;
 CREATE TABLE IF NOT EXISTS `tblstate` (
-  `user_id` int NOT NULL,
+  `user_id` int DEFAULT '-1',
   `remote_host` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `redirect_controller` varchar(50) NOT NULL DEFAULT '',
   `redirect_action` varchar(50) NOT NULL DEFAULT '',
@@ -96,6 +89,13 @@ CREATE TABLE IF NOT EXISTS `tblstate` (
   `redirect_routevalues` varchar(100) DEFAULT '',
   PRIMARY KEY (`remote_host`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+DROP TABLE IF EXISTS `tbltag`;
+CREATE TABLE IF NOT EXISTS `tbltag` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbluser`;
 CREATE TABLE IF NOT EXISTS `tbluser` (
@@ -178,38 +178,42 @@ CREATE PROCEDURE `uspAddTag`(
 )
 BEGIN
 	DECLARE id INT;
+	DECLARE ImageExists INT;
+	DECLARE linkExists INT;
 	
-	SELECT p.id 
-	FROM tblphotography p
- 	WHERE p.id = PhotographyId;
-	
-	IF FOUND_ROWS() THEN 	
+	SET imageExists = EXISTS(
+	            SELECT p.filename 
+					FROM tblphotography p
+				 	WHERE p.id = PhotographyId);
+					 
+	IF (imageExists = 1) THEN 	
 		SELECT k.id 
 		INTO id
-		FROM tblkeyword k
+		FROM tbltag k
 	 	WHERE k.word = Word;
 		
 		IF NOT FOUND_ROWS() THEN 	
-			INSERT INTO tblkeyword(word) VALUE(LOWER(Word));
+			INSERT INTO tbltag(word) VALUE(LOWER(Word));
 			SET id=LAST_INSERT_ID();
 		ELSE
 			SET id = -2;
 		END IF;
 		
-		IF(PhotographyId<>-1) THEN
-			SELECT *
-			FROM tblphotographykeywords pk
-			WHERE pk.keyword_id = id
-			AND pk.photography_id = PhotographyId;
+		IF(PhotographyId<>-1 AND id > 0) THEN
+			SET linkExists = EXISTS(
+					SELECT pk.tag_id
+					FROM tblphotographytags pk
+					WHERE pk.tag_id = id
+					AND pk.photography_id = PhotographyId);
 			
-			IF NOT FOUND_ROWS() THEN 	
+			IF (linkExists = 0) THEN 	
 				SET FOREIGN_KEY_CHECKS = 0;
-				INSERT INTO tblPhotographykeywords(keyword_id, photography_id) VALUE(id, PhotographyId);
+				INSERT INTO tblPhotographytags(tag_id, photography_id) VALUE(id, PhotographyId);
 				SET FOREIGN_KEY_CHECKS = 1;
+			ELSE
+				SET id = -1;
 			END IF;
 		END IF;
-	ELSE
-		SET id = -1;
 	END IF;
 	
 	SELECT id;
@@ -239,6 +243,20 @@ BEGIN
 	END IF;
 	
 	SELECT id;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `uspConnectUserAndRemoteHost`;
+DELIMITER //
+CREATE PROCEDURE `uspConnectUserAndRemoteHost`(
+	IN `UserID` INT,
+	IN `RemoteHost` VARCHAR(50)
+)
+BEGIN
+	UPDATE tblState s
+	SET s.user_id = UserID
+	WHERE s.remote_host = RemoteHost
+	AND s.user_id = -1;
 END//
 DELIMITER ;
 
@@ -302,8 +320,7 @@ BEGIN
 	    		s.redirect_route_id AS 'RouteID',
 	    		s.redirect_routevalues AS 'QueryString'
 	FROM tblState s
-	WHERE s.remote_host = RemoteHost
-	AND s.user_id = UserID;
+	WHERE s.remote_host = RemoteHost;
 	
 	IF NOT FOUND_ROWS() THEN 	
 		SELECT '' AS 'RemoteHost', '' AS 'Controller', '' AS 'Action', -1 AS 'RouteID', '' AS 'QueryString';
@@ -383,20 +400,37 @@ CREATE PROCEDURE `uspRemoveTag`(
 )
 BEGIN
 	DECLARE id INT;
+	DECLARE linkExists INT;
 
 	SET id=-1;
 
 	IF(PhotographyId<>-1) THEN
 		SELECT k.id
 		INTO id
-		FROM tblkeyword k
+		FROM tbltag k
 	 	WHERE k.word = Word;
 	 	
 		IF FOUND_ROWS() THEN 	
 			DELETE k.*
-			FROM tblphotographykeywords k
-		 	WHERE k.keyword_id=id
+			FROM tblphotographytags k
+		 	WHERE k.tag_id=id
 		 	AND k.photography_id = PhotographyId;
+	 	
+			SET linkExists = EXISTS(
+				SELECT pk.tag_id
+				FROM tblphotographytags pk
+				JOIN tblTag t
+				ON t.id = pk.tag_id
+				WHERE t.word = Word
+				AND pk.photography_id = PhotographyId);
+			
+			IF (linkExists = 0) THEN
+				DELETE t.*
+				FROM tblTag t
+				WHERE t.word = Word;
+			END IF;
+		ELSE
+			SET id = -1;
 		END IF;
 		
 	END IF;	
@@ -586,11 +620,11 @@ CREATE TABLE `vwphotographydetails` (
 	`Location` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Keywords` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
+	`Tags` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
 ) ENGINE=MyISAM;
 
-DROP VIEW IF EXISTS `vwphotographykeywords`;
-CREATE TABLE `vwphotographykeywords` (
+DROP VIEW IF EXISTS `vwphotographytags`;
+CREATE TABLE `vwphotographytags` (
 	`PicId` BIGINT(19) NULL,
 	`WordId` INT(10) NULL,
 	`Wordlist` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
@@ -604,22 +638,22 @@ CREATE TABLE `vwphotographywithranking` (
 	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Source` INT(10) NOT NULL,
 	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Keywords` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Tags` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Rank` BIGINT(19) NOT NULL,
 	`AverageRank` FLOAT NOT NULL
 ) ENGINE=MyISAM;
 
 DROP VIEW IF EXISTS `vwphotographydetails`;
 DROP TABLE IF EXISTS `vwphotographydetails`;
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `pic`.`id` AS `Id`,`pic`.`filename` AS `Filename`,`loc`.`reference` AS `Location`,`pic`.`_path` AS `Path`,`pic`.`title` AS `Title`,`vw`.`Wordlist` AS `Keywords` from ((`tblphotography` `pic` left join `tbllocation` `loc` on((`loc`.`id` = `pic`.`location_id`))) left join `vwphotographykeywords` `vw` on((`vw`.`PicId` = `pic`.`id`)));
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `pic`.`id` AS `Id`,`pic`.`filename` AS `Filename`,`loc`.`reference` AS `Location`,`pic`.`_path` AS `Path`,`pic`.`title` AS `Title`,`vw`.`Wordlist` AS `Tags` from ((`tblphotography` `pic` left join `tbllocation` `loc` on((`loc`.`id` = `pic`.`location_id`))) left join `vwphotographytags` `vw` on((`vw`.`PicId` = `pic`.`id`)));
 
-DROP VIEW IF EXISTS `vwphotographykeywords`;
-DROP TABLE IF EXISTS `vwphotographykeywords`;
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographykeywords` AS select `pic`.`id` AS `PicId`,`word`.`id` AS `WordId`,group_concat(distinct `word`.`word` separator ',') AS `Wordlist` from ((`tblphotography` `pic` left join `tblphotographykeywords` `picwords` on((`picwords`.`photography_id` = `pic`.`id`))) left join `tblkeyword` `word` on((`word`.`id` = `picwords`.`keyword_id`)));
+DROP VIEW IF EXISTS `vwphotographytags`;
+DROP TABLE IF EXISTS `vwphotographytags`;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographytags` AS select `pic`.`id` AS `PicId`,`word`.`id` AS `WordId`,group_concat(distinct `word`.`word` separator ',') AS `Wordlist` from ((`tblphotography` `pic` left join `tblphotographytags` `picwords` on((`picwords`.`photography_id` = `pic`.`id`))) left join `tbltag` `word` on((`word`.`id` = `picwords`.`tag_id`)));
 
 DROP VIEW IF EXISTS `vwphotographywithranking`;
 DROP TABLE IF EXISTS `vwphotographywithranking`;
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographywithranking` AS select `pic`.`Id` AS `Id`,`pic`.`Filename` AS `Filename`,ifnull(`pic`.`Location`,'') AS `Location`,`pic`.`Path` AS `Path`,(case when (locate('slide',`pic`.`Path`) > 0) then 1 else 0 end) AS `Source`,`pic`.`Title` AS `Title`,ifnull(`pic`.`Keywords`,'') AS `Keywords`,ifnull(`r`.`_rank`,0) AS `Rank`,ifnull(`udfGetAverageRank`(`pic`.`Id`),0) AS `AverageRank` from (`vwphotographydetails` `pic` left join `tblranking` `r` on(((`r`.`user_id` = `p1`()) and (`r`.`photography_id` = `pic`.`Id`))));
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographywithranking` AS select `pic`.`Id` AS `Id`,`pic`.`Filename` AS `Filename`,ifnull(`pic`.`Location`,'') AS `Location`,`pic`.`Path` AS `Path`,(case when (locate('slide',`pic`.`Path`) > 0) then 1 else 0 end) AS `Source`,`pic`.`Title` AS `Title`,ifnull(`pic`.`Tags`,'') AS `Tags`,ifnull(`r`.`_rank`,0) AS `Rank`,ifnull(`udfGetAverageRank`(`pic`.`Id`),0) AS `AverageRank` from (`vwphotographydetails` `pic` left join `tblranking` `r` on(((`r`.`user_id` = `p1`()) and (`r`.`photography_id` = `pic`.`Id`))));
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

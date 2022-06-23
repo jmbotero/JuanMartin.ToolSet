@@ -80,7 +80,7 @@ namespace JuanMartin.PhotoGallery.Services
             return (lower, upper);
         }
 
-        public IEnumerable<Photography> GetPhotographiesByTag(string keywords, int userId, int pageId = 1)
+        public IEnumerable<Photography> GetPhotographiesByTag(string tags, int userId, int pageId = 1)
         {
             throw new NotImplementedException();
         }
@@ -106,6 +106,9 @@ namespace JuanMartin.PhotoGallery.Services
 
         public int UpdatePhotographyRanking(long id, int userId, int rank)
         {
+            if (userId == -1)
+                return -1;
+
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -261,8 +264,9 @@ namespace JuanMartin.PhotoGallery.Services
 
         public RedirectResponseModel SetRedirectInfo(int userId,string remoteHost, string controller, string action, long routeId = -1, string queryString = "")
         {
-            if (userId == -1)
+            if(userId==-1)
                 return null;
+
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -292,12 +296,26 @@ namespace JuanMartin.PhotoGallery.Services
         /// <returns></returns>
         public Dictionary<string, object> GenerateRouteValues(long routeId, string queryString)
         {
+            if (string.IsNullOrEmpty(queryString))
+                return null;
+
             NameValueCollection parsedValues = new();
+            var querystringDic = new Dictionary<string, object>();
 
             if (queryString.Length > 1)
+            {
                 parsedValues = System.Web.HttpUtility.ParseQueryString(queryString);
-
-            Dictionary<string, object> querystringDic = parsedValues.AllKeys.ToDictionary(k => k, k => (object)parsedValues[k]);
+                if (parsedValues != null)
+                {
+                    foreach (var key in parsedValues.AllKeys)
+                    {
+                        if (key == null) continue;
+                        object value = (object)parsedValues[key];
+                        querystringDic.Add(key, value);
+                    }
+                    //querystringDic = parsedValues.AllKeys.ToDictionary(k => k, k => (object)parsedValues[k]);
+                }
+            }
 
             if (routeId > 0 && parsedValues["id"] == null)
                 querystringDic.Add("id", routeId);
@@ -444,7 +462,7 @@ namespace JuanMartin.PhotoGallery.Services
                     var location = (string)record.GetAnnotation("Location").Value;
                     var rank = (long)record.GetAnnotation("Rank").Value;
                     var averageRank = (double)record.GetAnnotation("AverageRank").Value;
-                    var keywords = (string)record.GetAnnotation("Keywords").Value;
+                    var tags = (string)record.GetAnnotation("Tags").Value;
 
                     var photography = new Photography
                     {
@@ -459,7 +477,7 @@ namespace JuanMartin.PhotoGallery.Services
                         AverageRank = averageRank
                     };
 
-                    photography.ParseTags(keywords);
+                    photography.ParseTags(tags);
 
                     photographies.Add(photography);
                 }
@@ -503,6 +521,19 @@ namespace JuanMartin.PhotoGallery.Services
             var Id = Convert.ToInt32(reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value);
 
             return Id;
+        }
+
+        public void ConnectUserAndRemoteHost(int userId, string remoteHost)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspConnectUserAndRemoteHost", $"uspConnectUserAndRemoteHost({userId},'{remoteHost}')"));
+            request.AddSender("User", typeof(User).ToString());
+
+            _dbAdapter.Send(request);
         }
     }
 }

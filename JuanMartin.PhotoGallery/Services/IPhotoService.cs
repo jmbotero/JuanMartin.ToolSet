@@ -25,6 +25,7 @@ namespace JuanMartin.PhotoGallery.Services
         RedirectResponseModel GetRedirectInfo(int userId,string remoteHost);
         Dictionary<string, object> GenerateRouteValues(long routeId, string queryString);
         RedirectResponseModel SetRedirectInfo(int userId,string remoteHost, string controller, string action, long routeId = -1, string queryString = "");
+        void ConnectUserAndRemoteHost(int userId, string remoteHost);
         User GetUser(string userName, string password);
         int GetGalleryPageCount(int pageSize);
         public (long Lower, long Upper) GetPhotographyIdBounds();

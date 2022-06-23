@@ -1,2 +1,37 @@
 ﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
 <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script>
+    function setRank() {
+        var getSelectedValue = document.querySelector('input[name="ranking"]:checked');
+
+        if (getSelectedValue != null) {
+            var rank = 11 - parseInt(getSelectedValue.value);
+            var rankText = document.getElementById('rank');
+
+            rankText.value = rank;
+            document.getElementById('selectedTagListAction').value = "none";
+        }
+    }
+
+    function clearTag() {
+        document.getElementById('Tag').value = "";
+    }
+
+    function setListAction(actionName) {
+        document.getElementById('selectedTagListAction').value = actionName;
+        clearTag();
+    }
+
+    function setTag(element) {
+        var selectedText = element.value;
+
+        alert(selectedText);
+        document.getElementById('Tag').value = selectedText;
+    }
+
+    function GetSelectedTagText(element) {
+        var selectedText = element.options[element.selectedIndex].text;
+        document.getElementById('Tag').value = selectedText;
+        document.getElementById('hiddenTag').value = selectedText;
+    }
+</script> 

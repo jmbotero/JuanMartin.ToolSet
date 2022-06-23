@@ -6,10 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
@@ -148,7 +144,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             if (user.UserId == -2)
                 ViewBag.Message = "User already exists, please try a different user name.";
             if (user.UserId > 0)    //userCreated = true;
-                RedirectToAction("Gallery", "Index");
+                return RedirectToAction("Gallery", "Index");
             if (user.UserId == -1)
                 ViewBag.Message = "Error occurred in backend while creating user, please contact the site owner.";
 
@@ -201,9 +197,13 @@ namespace JuanMartin.PhotoGallery.Controllers
 
         private void StartNewSession(JuanMartin.Models.Gallery.User u)
         {
-            var sessionId = _photoService.LoadSession(u.UserId);
+            int userId = u.UserId;
+            var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
+
+            var sessionId = _photoService.LoadSession(userId);
             HttpContext.Session.SetInt32("SessionID", sessionId);
-            HttpContext.Session.SetInt32("UserID", u.UserId);
+            HttpContext.Session.SetInt32("UserID",userId);
+            _photoService.ConnectUserAndRemoteHost(userId, remoteHostName);
             Startup.IsSignedIn = "true";
         }
 

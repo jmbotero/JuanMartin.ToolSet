@@ -33,7 +33,7 @@
                                 <img class="btn-logout" name="Logout" src="~/power-off.jpg" alt="Logout" />
                             }
                         </li>
-                        </ul>
+                    </ul>
                 </div>
             </div>
         </nav>
@@ -52,6 +52,41 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        function SetRank() {
+            var getSelectedValue = document.querySelector('input[name="ranking"]:checked');
+
+            if (getSelectedValue != null) {
+                var rank = 11 - parseInt(getSelectedValue.value);
+                var rankText = document.getElementById('rank');
+
+                rankText.value = rank;
+                document.getElementById('selectedTagListAction').value = "none";
+            }
+        }
+
+        function ClearTag() {
+            document.getElementById('Tag').value = "";
+        }
+
+        function SetListAction(actionName) {
+            document.getElementById('selectedTagListAction').value = actionName;
+        }
+
+        function SetTag(element) {
+            var selectedText = element.value;
+
+            alert(selectedText);
+            document.getElementById('Tag').value = selectedText;
+        }
+
+        function GetSelectedTagText(element) {
+            var selectedText = element.options[element.selectedIndex].text;
+            document.getElementById('Tag').value = selectedText;
+            document.getElementById('hiddenTag').value = selectedText;
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

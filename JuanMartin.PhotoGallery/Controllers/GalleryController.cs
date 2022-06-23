@@ -17,32 +17,32 @@ namespace JuanMartin.PhotoGallery.Controllers
     {
         private readonly IPhotoService _photoService;
         private readonly IConfiguration _configuration;
-        private readonly bool _startInGuestMode = false;
+        private readonly bool _guestModeEnabled = false;
 
         public GalleryController(IPhotoService photoService, IConfiguration configuration)
         {
             _photoService = photoService;
             _configuration = configuration;
             
-            _startInGuestMode = Convert.ToBoolean(configuration["StrartInGuestMode"]);
+            _guestModeEnabled = Convert.ToBoolean(configuration["GuestModeEnabled"]);
         }
 
         [HttpGet]
         public IActionResult Index(int pageId = 1)
         {
             int sessionId = -1;
-            int sessionUserId = -1;
             if (Convert.ToBoolean(Startup.IsSignedIn))
             {
                 sessionId = (int)HttpContext.Session.GetInt32("SessionID").Value;
-                sessionUserId = (int)HttpContext.Session.GetInt32("UserID").Value;
             }
-            var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
-            string queryString = HttpContext.Request.QueryString.Value;
-            var redirectInfo = _photoService.SetRedirectInfo(userId: sessionUserId, remoteHost: remoteHostName, controller: "Gallery", action: "Index", queryString: queryString);
 
-            if (!_startInGuestMode && redirectInfo != null && !Convert.ToBoolean(Startup.IsSignedIn))
-                RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo.RouteData);
+            SetViewRedirectInfo("Gallery", "Index", out int sessionUserId, out RedirectResponseModel redirectInfo);
+
+            if (!_guestModeEnabled)
+            {
+                if (!Convert.ToBoolean(Startup.IsSignedIn))
+                    return RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo?.RouteData);
+            }
 
             ViewBag.Suid = sessionUserId;
             ViewBag.Sid = sessionId;
@@ -62,35 +62,34 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
 
         [HttpPost]
-        public IActionResult Detail(long id, long firstId, long lastId,   GalleryDetailViewModel galleryDetail)
+        public IActionResult Detail(long id, long firstId, long lastId,   GalleryDetailViewModel model)
         {
             string message = "";
-            galleryDetail.PageId = SetGalleryNavigationIds(id, firstId, lastId);
-            
-            int sessionUserId = -1;
-            if (Convert.ToBoolean(Startup.IsSignedIn))
-                sessionUserId = (int)HttpContext.Session.GetInt32("UserID");
+            model.PageId = SetGalleryNavigationIds(id, firstId, lastId);
 
+            SetViewRedirectInfo("Gallery", "Detail", out int sessionUserId, out RedirectResponseModel redirectInfo, id);
+
+            //throw new InvalidDataException($"user {sessionUserId}/{Startup.IsSignedIn} {model.SelectedTagListAction} tag: ({model.Tag}) for {id}.");
             //process submitted tag
-            if (galleryDetail != null && !string.IsNullOrEmpty(galleryDetail.Tag))
+            if (model != null && !string.IsNullOrEmpty(model.Tag))
             {
-                var tag = galleryDetail.Tag.Trim();
-                switch (galleryDetail.SelectedTagListAction)
+                var tag = model.Tag.Trim();
+                //throw new InvalidDataException($"user {sessionUserId}/{Startup.IsSignedIn} {model.SelectedTagListAction} tag: ({tag}) for {id}.");
+                switch (model.SelectedTagListAction)
                 {
                     case "add":
                         {
-                            //throw new Exception($"add ({tag}) for {id}.");
                             var s = _photoService.AddTag(tag, id);
                             switch (s)
                             {
                                 case -1:
-                                    message = $"Error inserting '{tag}' for {id} in database.";
+                                    message = $"Error inserting tag '{tag}' for image {id} in database.";
                                     break;
                                 case -2:
                                     message = $"Tag '{tag}' is already associated to this image ({id}).";
                                     break;
                                 default:
-                                    galleryDetail.Image.Tags.Add(tag);
+                                    model.Image.Tags.Add(tag);
                                     break;
                             }
 
@@ -100,9 +99,9 @@ namespace JuanMartin.PhotoGallery.Controllers
                         {
                             var s = _photoService.RemoveTag(tag, id);
                             if (s != -1)
-                                galleryDetail.Image.Tags.Remove(tag);
-                             else
-                                message = $"Error deleting '{tag}' for {id} in database.";
+                                model.Image.Tags.Remove(tag);
+                            else
+                                message = $"Error deleting tag '{tag}' for image {id} in database.";
                             break;
                         }
                     default:
@@ -110,33 +109,35 @@ namespace JuanMartin.PhotoGallery.Controllers
                 }
             }
             // process submitted rank.
-            //                if (galleryDetail.SelectedTagListAction == "none")
-            if (galleryDetail != null && galleryDetail.SelectedRank != 0)
+            if (model != null && model.SelectedRank != 0)
             {
-                var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
-                string queryString = HttpContext.Request.QueryString.Value;
-               
-                var redirectInfo = _photoService.SetRedirectInfo(userId: sessionUserId, remoteHost: remoteHostName,controller:  "Gallery",action: "Detail", routeId: id, queryString: queryString);
-                if (redirectInfo != null && !Convert.ToBoolean(Startup.IsSignedIn))
-                    RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo.RouteData);
-
-                var rank = galleryDetail.SelectedRank;
-                    //throw new InvalidDataException($"wrong rank: ({rank}) for {id}.");
+                if (!Convert.ToBoolean(Startup.IsSignedIn))
+                {
+                    //throw new InvalidDataException($"logged in {Convert.ToBoolean(Startup.IsSignedIn)}.");
+                    return RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo?.RouteData);
+                }
+                var rank = model.SelectedRank;
                 var s = _photoService.UpdatePhotographyRanking(id, sessionUserId, rank);
 
                 if (s == -1)
-                    message = $"Error inserting '{rank}' for {id} in database.";
+                {
+                    //throw new InvalidDataException($"user {sessionUserId}/{Startup.IsSignedIn} wrong rank: ({galleryDetail.SelectedRank}) for {id}.");
+                    message = $"Error inserting rank={rank} for image {id} in database.";
+                }
             }
+
             TempData["isSignedIn"] = Startup.IsSignedIn;
             ViewBag.Message = message;
 
-            return View(PrepareDetailViewModel(id, galleryDetail.PageId));
+            return View(PrepareDetailViewModel(id, model.PageId));
         }
 
         [HttpGet]
         public IActionResult Detail(long id, long firstId,  long lastId, int pageId)
         {
-            pageId = SetGalleryNavigationIds(id, firstId, lastId);
+            SetGalleryNavigationIds(id, firstId, lastId);
+            SetViewRedirectInfo("Gallery", "Detail", out _, out _, id);
+
             TempData["isSignedIn"] = Startup.IsSignedIn;
             return View(PrepareDetailViewModel(id, pageId));
         }
@@ -145,6 +146,18 @@ namespace JuanMartin.PhotoGallery.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        private void SetViewRedirectInfo(string controlerName, string actionName,  out int sessionUserId, out RedirectResponseModel redirectInfo, long routeId = -1)
+        {
+            sessionUserId = -1;
+            if (Convert.ToBoolean(Startup.IsSignedIn))
+                sessionUserId = (int)HttpContext.Session.GetInt32("UserID");
+
+            var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
+            string queryString = HttpContext.Request.QueryString.Value;
+            redirectInfo = _photoService.SetRedirectInfo(userId: sessionUserId, remoteHost: remoteHostName, controller: controlerName, action: actionName, routeId: routeId, queryString: queryString);
+            //throw new Exception($"{actionName}: {remoteHostName},{queryString},{id}");
         }
 
         private void GetPhotographyIdBounds(IPhotoService photoService)
@@ -162,8 +175,10 @@ namespace JuanMartin.PhotoGallery.Controllers
             ViewBag.LastId = lastId;
             ViewBag.NextId = (id == lastId) ? -1 : id + 1;
             ViewBag.PrevId = (id == firstId) ? -1 : id - 1;
+            
+            int pageId = (int)(id / PhotoService.PageSize) + 1;
 
-            return (int)(id / PhotoService.PageSize) + 1; //pageId
+            return pageId;
         }
 
 
@@ -184,7 +199,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             {
                 Image = image,
                 PageId = pageId,
-                Tags = SetTagsforDisplay(image.Tags)
+                //Tags = SetTagsforDisplay(image.Tags)
             };
            
             return model;
