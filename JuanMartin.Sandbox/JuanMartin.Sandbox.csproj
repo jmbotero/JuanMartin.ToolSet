@@ -43,8 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Objects\PhotoService.cs" />
+    <Compile Include="Objects\RedirectResponseModel.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="P88.cs" />
+    <Compile Include="Objects\P88.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -54,6 +56,10 @@
     <ProjectReference Include="..\..\JuanMartin.Kernel\JuanMartin.Kernel\JuanMartin.Kernel.csproj">
       <Project>{4515e3a1-f6b3-4af5-ae75-bb9e214ec349}</Project>
       <Name>JuanMartin.Kernel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\JuanMartin.Models\JuanMartin.Models\JuanMartin.Models.csproj">
+      <Project>{6b59de41-40f5-41c0-98cd-3393d463c757}</Project>
+      <Name>JuanMartin.Models</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\JuanMartin.Utilities\JuanMartin.Utilities\JuanMartin.Utilities.csproj">
       <Project>{ddcbaa7c-5961-491f-8861-32003e400304}</Project>

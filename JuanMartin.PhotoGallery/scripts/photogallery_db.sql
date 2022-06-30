@@ -19,6 +19,15 @@ CREATE FUNCTION `p1`() RETURNS int
 return @p1//
 DELIMITER ;
 
+DROP TABLE IF EXISTS `tblaudit`;
+CREATE TABLE IF NOT EXISTS `tblaudit` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `event_dtm` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `message` varchar(250) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 DROP TABLE IF EXISTS `tbllocation`;
 CREATE TABLE IF NOT EXISTS `tbllocation` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -45,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   `location_id` int DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `FK_photography_locations` (`location_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tblphotographytags`;
 CREATE TABLE IF NOT EXISTS `tblphotographytags` (
@@ -77,17 +86,17 @@ CREATE TABLE IF NOT EXISTS `tblsession` (
   `start_dtm` datetime NOT NULL,
   `end_dtm` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tblstate`;
 CREATE TABLE IF NOT EXISTS `tblstate` (
-  `user_id` int DEFAULT '-1',
   `remote_host` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `user_id` int NOT NULL DEFAULT '-1',
   `redirect_controller` varchar(50) NOT NULL DEFAULT '',
   `redirect_action` varchar(50) NOT NULL DEFAULT '',
   `redirect_route_id` int DEFAULT '0',
   `redirect_routevalues` varchar(100) DEFAULT '',
-  PRIMARY KEY (`remote_host`)
+  PRIMARY KEY (`remote_host`,`user_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbltag`;
@@ -95,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `tbltag` (
   `id` int NOT NULL AUTO_INCREMENT,
   `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `tbluser`;
 CREATE TABLE IF NOT EXISTS `tbluser` (
@@ -129,12 +138,23 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS `uspAddAuditMessage`;
+DELIMITER //
+CREATE PROCEDURE `uspAddAuditMessage`(
+	IN `UserID` INT,
+	IN `Message` VARCHAR(250)
+)
+BEGIN
+	INSERT INTO tblaudit(user_id, event_dtm, message) VALUES(UserID, CURRENT_TIMESTAMP(), Message);
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS `uspAddPhotography`;
 DELIMITER //
 CREATE PROCEDURE `uspAddPhotography`(
-	IN `Source` INT,
-	IN `Filename` VARCHAR(50),
-	IN `Path` VARCHAR(255),
+	IN `ImageSource` INT,
+	IN `FileName` VARCHAR(50),
+	IN `FilePath` VARCHAR(255),
 	IN `Title` VARCHAR(100)
 )
 BEGIN
@@ -144,10 +164,10 @@ BEGIN
 	SELECT pic.id 
 	INTO id
 	FROM tblphotography pic
- 	WHERE pic.filename = Filename;
+ 	WHERE pic.filename = FileName;
 	
 	IF NOT FOUND_ROWS() THEN 	
-		INSERT INTO tblPhotography (_source,filename, _path, title) VALUE('Source',Filename, 'Path', Title);
+		INSERT INTO tblPhotography (_source,filename, _path, title) VALUE(ImageSource,FileName, FilePath, Title);
 		SET id=LAST_INSERT_ID();
 	END IF;	
 
@@ -173,12 +193,13 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS `uspAddTag`;
 DELIMITER //
 CREATE PROCEDURE `uspAddTag`(
+	IN `UserID` INT,
 	IN `Word` VARCHAR(50),
 	IN `PhotographyId` BIGINT
 )
 BEGIN
 	DECLARE id INT;
-	DECLARE ImageExists INT;
+	DECLARE imageExists INT;
 	DECLARE linkExists INT;
 	
 	SET imageExists = EXISTS(
@@ -216,6 +237,9 @@ BEGIN
 		END IF;
 	END IF;
 	
+	IF(id > 0) THEN
+		CALL uspAddAuditMessage(UserID, CONCAT('Add tag ''',Word, ''' for (',PhotographyId,')'));
+	END IF;
 	SELECT id;
 END//
 DELIMITER ;
@@ -253,10 +277,14 @@ CREATE PROCEDURE `uspConnectUserAndRemoteHost`(
 	IN `RemoteHost` VARCHAR(50)
 )
 BEGIN
-	UPDATE tblState s
-	SET s.user_id = UserID
-	WHERE s.remote_host = RemoteHost
-	AND s.user_id = -1;
+	IF (UserID = -1) THEN
+		UPDATE tblState s
+		SET s.user_id = ABS(UserID)
+		WHERE s.remote_host = RemoteHost
+		AND s.user_id = -1;
+	ELSEIF (UserID < 0) THEN
+		DELETE FROM tblstate s WHERE  s.remote_host = RemoteHost AND s.user_id = UserID;
+	END IF;	
 END//
 DELIMITER ;
 
@@ -307,27 +335,6 @@ BEGIN
 END//
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS `uspGetCurrentClientRedirectInfo`;
-DELIMITER //
-CREATE PROCEDURE `uspGetCurrentClientRedirectInfo`(
-	IN `RemoteHost` VARCHAR(50),
-	IN `UserID` INT
-)
-BEGIN
-	SELECT 	s.remote_host AS 'RemoteHost',
-				s.redirect_controller AS 'Controller',
-	    		s.redirect_action AS 'Action',
-	    		s.redirect_route_id AS 'RouteID',
-	    		s.redirect_routevalues AS 'QueryString'
-	FROM tblState s
-	WHERE s.remote_host = RemoteHost;
-	
-	IF NOT FOUND_ROWS() THEN 	
-		SELECT '' AS 'RemoteHost', '' AS 'Controller', '' AS 'Action', -1 AS 'RouteID', '' AS 'QueryString';
-	END IF; 
-END//
-DELIMITER ;
-
 DROP PROCEDURE IF EXISTS `uspGetPageCount`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPageCount`(
@@ -347,11 +354,31 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS `uspGetPhotographiesByTags`;
+DELIMITER //
+CREATE PROCEDURE `uspGetPhotographiesByTags`(
+	IN `UserID` INT,
+	IN `Wordlist` VARCHAR(150),
+	IN `CurrentPage` INT,
+	IN `PageSize` INT
+)
+    NO SQL
+BEGIN
+	SET @rec_take = PageSize;
+	SET @rec_skip = (CurrentPage - 1) * PageSize;
+
+	SET @qry = CONCAT('SELECT v.* FROM tblphotographytags pt JOIN vwphotographywithranking v ON v.id = pt.photography_id JOIN tbltag t ON t.id = pt.tag_id WHERE t.word REGEXP ''', Wordlist, '''  ORDER BY v.Id ASC LIMIT ', @rec_take, ' OFFSET ',@rec_skip);
+	PREPARE stmt FROM @qry;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS `uspGetPhotographyIdBounds`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPhotographyIdBounds`()
 BEGIN
-   SELECT MIN(p.id) AS 'Lower', MAX(p.id) AS 'Upper'
+   SELECT IFNULL(MIN(p.id),0) AS 'Lower', IFNULL(MAX(p.id),0) AS 'Upper'
 	FROM tblphotography p;
 END//
 DELIMITER ;
@@ -392,9 +419,32 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS `uspGetUserRedirectInfo`;
+DELIMITER //
+CREATE PROCEDURE `uspGetUserRedirectInfo`(
+	IN `RemoteHost` VARCHAR(50),
+	IN `UserID` INT
+)
+BEGIN
+	SELECT 	s.remote_host AS 'RemoteHost',
+				s.redirect_controller AS 'Controller',
+	    		s.redirect_action AS 'Action',
+	    		s.redirect_route_id AS 'RouteID',
+	    		s.redirect_routevalues AS 'QueryString'
+	FROM tblState s
+	WHERE s.remote_host = RemoteHost
+	AND s.user_id = UserID;
+	
+	IF NOT FOUND_ROWS() THEN 	
+		SELECT '' AS 'RemoteHost', '' AS 'Controller', '' AS 'Action', -1 AS 'RouteID', '' AS 'QueryString';
+	END IF; 
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS `uspRemoveTag`;
 DELIMITER //
 CREATE PROCEDURE `uspRemoveTag`(
+	IN `UserID` INT,
 	IN `Word` VARCHAR(50),
 	IN `PhotographyId` BIGINT
 )
@@ -432,15 +482,19 @@ BEGIN
 		ELSE
 			SET id = -1;
 		END IF;
-		
 	END IF;	
+	
+		IF(id > 0) THEN
+		CALL uspAddAuditMessage(UserID, CONCAT('Remove tag ''',Word,'''  for (',PhotographyId,')'));
+	END IF;
+
 	SELECT id;
 END//
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS `uspSetCurrentClientRedirectInfo`;
+DROP PROCEDURE IF EXISTS `uspSetUserRedirectInfo`;
 DELIMITER //
-CREATE PROCEDURE `uspSetCurrentClientRedirectInfo`(
+CREATE PROCEDURE `uspSetUserRedirectInfo`(
 	IN `UserID` INT,
 	IN `RemoteHost` VARCHAR(50),
 	IN `Controller` VARCHAR(50),
@@ -449,21 +503,7 @@ CREATE PROCEDURE `uspSetCurrentClientRedirectInfo`(
 	IN `QueryString` VARCHAR(100)
 )
 BEGIN
-	SELECT *
-	FROM tblstate s
- 	WHERE s.remote_host = RemoteHost;	
-
-	IF FOUND_ROWS() THEN 	
-		UPDATE tblstate s
-		SET s.user_id = UserID,
-			 s.redirect_controller = Controller,
-			 s.redirect_action = ControllerAction,
-			 s.redirect_route_id = RouteID,
-			 s.redirect_routevalues = QueryString
-	 	WHERE s.remote_host = RemoteHost;	
-	ELSE
-		INSERT INTO tblstate(user_id,remote_host, redirect_controller, redirect_action, redirect_route_id, redirect_routevalues) VALUE(UserID,RemoteHost, Controller, ControllerAction, RouteID, QueryString);
-	END IF;
+	REPLACE INTO tblstate(remote_host, user_id, redirect_controller, redirect_action, redirect_route_id, redirect_routevalues) VALUES(RemoteHost, UserID, Controller, ControllerAction, RouteID, QueryString);
 END//
 DELIMITER ;
 
@@ -518,6 +558,10 @@ BEGIN
 		END IF;
 	END IF;
 	
+		IF(id > 0) THEN
+		CALL uspAddAuditMessage(UserID, CONCAT('Set rank = ',UserRank, ' for (',PhotographyId,')'));
+	END IF;
+
 	SELECT id;
 END//
 DELIMITER ;

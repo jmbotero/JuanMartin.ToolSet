@@ -4,6 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JuanMartin.Kernel.Utilities;
+using JuanMartin.Models.Gallery;
+using JuanMartin.Kernel.Messaging;
+using JuanMartin.Kernel;
+using JuanMartin.Kernel.Adapters;
+using JuanMartin.Sandbox.Objects;
+using System.IO;
 
 namespace JuanMartin.Sandbox
 {
@@ -11,10 +17,7 @@ namespace JuanMartin.Sandbox
     {
         public static void Main(string[] args)
         {
-            if (args is null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
+            PhohoGallery();
             UtilityHelper.Measure(() => SimpleForeach(), true, "Foreach loop:");
             UtilityHelper.Measure(() => ParallelForeach(   ), true, "Parallel Foreach loop:");
             UtilityHelper.Measure(() =>
@@ -28,6 +31,26 @@ namespace JuanMartin.Sandbox
 
             Console.WriteLine("Complete <Press any key to continue...>");
             Console.ReadKey();
+        }
+
+        private static void PhohoGallery()
+        {
+            //PhotoService.ConnectUserAndRemoteHost(1, "::1");
+            //var at = PhotoService.AddTag("bear", 19);
+            //var sri = PhotoService.SetRedirectInfo(1, "::1", "Gallery", "Index", 12, "?pageId=3");
+            //var au = PhotoService.AddUser("juanm", "yala", "jbotero@hotmail.com");
+            //var upr = PhotoService.UpdatePhotographyRanking(1, 9, 6);
+            //var pc = PhotoService.GetGalleryPageCount(8);
+            //var gph = PhotoService.GetAllPhotographies(1, 1).ToList();
+
+            var count = 2;
+            var searchQuery = "bear,city";
+            PhotoService.AddAuditMessage(1, $"Search for ({searchQuery}) returned {count} results.");
+
+            //var connectionString = "server=localhost; port=3306; database=photogallery; user=root; password=yala; Persist Security Info=True; Connect Timeout=300";
+            //var path = @"C:\GitRepositories\JuanMartin.ToolSet\JuanMartin.PhotoGallery\wwwroot\photos.lnk";
+            //PhotoService.LoadPhotographies(new AdapterMySql(connectionString), path, ".jpg", true);
+
         }
 
         private static void ProductSumNumbers(int number)

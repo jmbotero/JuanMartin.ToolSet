@@ -50,7 +50,7 @@
                             <td class="gallery-image-detail-meta-column-right">
                                 @*<span>-@Model.SelectedTagListAction-</span>*@
                                 <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId" method="post">
-                                    <select id="tagList"size="2" onclick="GetSelectedTagText(this)" style="width:150px">
+                                    <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px">
                                         @foreach (var tag in Model.Image.Tags)
                                         {
                                             <option>@tag</option>
@@ -61,6 +61,9 @@
                                     <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
                                     <button type="submit" style="border:none;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.jpg" /></button>
                                     <button type="submit" style="border:none;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.jpg" /></button>
+                                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+Use textbox to specify an image
+to add or  remove."/>
                                 </form>
                             </td>
                         </tr>
@@ -80,6 +83,8 @@
                                             }
                                             <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
                                         }
+                                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+Numbeer of stars equals image rating." />
                                         <input type="text" id="rank" asp-for="SelectedRank">
                                     </div>
                                 </form>

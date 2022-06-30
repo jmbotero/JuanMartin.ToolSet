@@ -80,11 +80,6 @@ namespace JuanMartin.PhotoGallery.Services
             return (lower, upper);
         }
 
-        public IEnumerable<Photography> GetPhotographiesByTag(string tags, int userId, int pageId = 1)
-        {
-            throw new NotImplementedException();
-        }
-
         public Photography GetPhotographyById(long photographyId, int userId)
         {
 
@@ -227,7 +222,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetCurrentClientRedirectInfo", $"uspGetCurrentClientRedirectInfo('{remoteHost}',{userId})"));
+            request.AddData(new ValueHolder("uspGetUserRedirectInfo", $"uspGetUserRedirectInfo('{remoteHost}',{userId})"));
             request.AddSender("RedirectRequestModel", typeof(RedirectResponseModel).ToString());
 
             _dbAdapter.Send(request);
@@ -264,14 +259,11 @@ namespace JuanMartin.PhotoGallery.Services
 
         public RedirectResponseModel SetRedirectInfo(int userId,string remoteHost, string controller, string action, long routeId = -1, string queryString = "")
         {
-            if(userId==-1)
-                return null;
-
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
-            request.AddData(new ValueHolder("uspSetCurrentClientRedirectInfo", $"uspSetCurrentClientRedirectInfo({userId},'{remoteHost}','{controller}','{action}',{routeId},'{queryString}')"));
+            request.AddData(new ValueHolder("uspSetUserRedirectInfo", $"uspSetUserRedirectInfo('{userId}','{remoteHost}','{controller}','{action}',{routeId},'{queryString}')"));
             request.AddSender("RedirectRequestModel", typeof(RedirectResponseModel).ToString());
 
             _dbAdapter.Send(request);
@@ -348,7 +340,7 @@ namespace JuanMartin.PhotoGallery.Services
             return user;
         }
 
-        public User UpdateUserPassword(int userID, string userName, string password)
+        public User UpdateUserPassword(int userId, string userName, string password)
         {
             User user = null;
 
@@ -357,7 +349,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspUpdateUserPassword", $"uspUpdateUserPassword({userID},'{userName}','{password}')"));
+            request.AddData(new ValueHolder("uspUpdateUserPassword", $"uspUpdateUserPassword({userId},'{userName}','{password}')"));
             request.AddSender("User", typeof(User).ToString());
 
             _dbAdapter.Send(request);
@@ -487,14 +479,14 @@ namespace JuanMartin.PhotoGallery.Services
             return photographies;
         }
 
-        public int AddTag(string tag, long id)
+        public int AddTag(int userId, string tag, long id)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspAddTag", $"uspAddTag('{tag}',{id})"));
+            request.AddData(new ValueHolder("uspAddTag", $"uspAddTag('{userId}','{tag}',{id})"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -505,14 +497,14 @@ namespace JuanMartin.PhotoGallery.Services
             return Id;
         }
 
-        public int RemoveTag(string tag, long id)
+        public int RemoveTag(int userId,  string tag, long id)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspRemoveTag", $"uspRemoveTag('{tag}',{id})"));
+            request.AddData(new ValueHolder("uspRemoveTag", $"uspRemoveTag('{userId}','{tag}',{id})"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -534,6 +526,36 @@ namespace JuanMartin.PhotoGallery.Services
             request.AddSender("User", typeof(User).ToString());
 
             _dbAdapter.Send(request);
+        }
+
+        public void AddAuditMessage(int userId, string meessage)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspAddAuditMessage", $"uspAddAuditMessage('{userId}','{meessage}')"));
+            request.AddSender("User", typeof(User).ToString());
+
+            _dbAdapter.Send(request);
+        }
+
+        public IEnumerable<Photography> GetPhotographiesByTags(int userId, string tags, int pageId = 1)
+        {
+            //throw new ApplicationException($"uspGetPhotographiesByTags('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')");
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetPhotographiesByTags", $"uspGetPhotographiesByTags('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            return MapPhotographyListFromDatabaseReplyToEntityModel(userId, reply);
         }
     }
 }

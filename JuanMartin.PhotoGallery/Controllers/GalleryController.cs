@@ -10,6 +10,7 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using System;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Routing;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
@@ -35,7 +36,6 @@ namespace JuanMartin.PhotoGallery.Controllers
             {
                 sessionId = (int)HttpContext.Session.GetInt32("SessionID").Value;
             }
-
             SetViewRedirectInfo("Gallery", "Index", out int sessionUserId, out RedirectResponseModel redirectInfo);
 
             if (!_guestModeEnabled)
@@ -62,6 +62,50 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
 
         [HttpPost]
+        public IActionResult Index(int pageId, string searchQuery)
+        {
+            var model = new GalleryIndexViewModel
+            {
+                Album = new List<Photography>()
+            };
+
+            int sessionUserId = -1;
+            if (Convert.ToBoolean(Startup.IsSignedIn))
+            {
+                sessionUserId = (int)HttpContext.Session.GetInt32("UserID");
+            }
+
+            if (string.IsNullOrEmpty(searchQuery))
+            {
+                return DisplayGallery(sessionUserId);
+            }
+            else
+            {
+                string message = "";
+
+                if (searchQuery.Contains(' '))
+                    message = "Search query must not contain spaces!";
+                else
+                {
+                    searchQuery = searchQuery.Replace(',', '|');
+                    model.Album = (List<Photography>)_photoService.GetPhotographiesByTags(sessionUserId, searchQuery, pageId);
+                }
+                TempData["isSignedIn"] = Startup.IsSignedIn;
+                ViewBag.Message = message;
+
+                var count = model.Album.Count;
+                searchQuery = searchQuery.Replace("|", ",");
+                _photoService.AddAuditMessage(sessionUserId, $"Search for ({searchQuery}) returned {count} results.");
+                ViewBag.InfoMessage = $">> {count} results for images with tags  in ({searchQuery}).";
+
+                ViewBag.PageCount = (int)(count /  PhotoService.PageSize) + 1;
+                ViewBag.CurrentPage = pageId;
+
+                return View(model);
+            }
+        }
+
+        [HttpPost]
         public IActionResult Detail(long id, long firstId, long lastId,   GalleryDetailViewModel model)
         {
             string message = "";
@@ -69,7 +113,11 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             SetViewRedirectInfo("Gallery", "Detail", out int sessionUserId, out RedirectResponseModel redirectInfo, id);
 
-            //throw new InvalidDataException($"user {sessionUserId}/{Startup.IsSignedIn} {model.SelectedTagListAction} tag: ({model.Tag}) for {id}.");
+            if (!Convert.ToBoolean(Startup.IsSignedIn))
+            {
+                //throw new InvalidDataException($"logged in {Convert.ToBoolean(Startup.IsSignedIn)}.");
+                return RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo?.RouteData);
+            }
             //process submitted tag
             if (model != null && !string.IsNullOrEmpty(model.Tag))
             {
@@ -79,7 +127,7 @@ namespace JuanMartin.PhotoGallery.Controllers
                 {
                     case "add":
                         {
-                            var s = _photoService.AddTag(tag, id);
+                            var s = _photoService.AddTag(sessionUserId, tag, id);
                             switch (s)
                             {
                                 case -1:
@@ -97,7 +145,7 @@ namespace JuanMartin.PhotoGallery.Controllers
                         }
                     case "remove":
                         {
-                            var s = _photoService.RemoveTag(tag, id);
+                            var s = _photoService.RemoveTag(sessionUserId, tag, id);
                             if (s != -1)
                                 model.Image.Tags.Remove(tag);
                             else
@@ -111,11 +159,6 @@ namespace JuanMartin.PhotoGallery.Controllers
             // process submitted rank.
             if (model != null && model.SelectedRank != 0)
             {
-                if (!Convert.ToBoolean(Startup.IsSignedIn))
-                {
-                    //throw new InvalidDataException($"logged in {Convert.ToBoolean(Startup.IsSignedIn)}.");
-                    return RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo?.RouteData);
-                }
                 var rank = model.SelectedRank;
                 var s = _photoService.UpdatePhotographyRanking(id, sessionUserId, rank);
 
@@ -218,5 +261,22 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             return folder;
         }
-     }
+
+        /// <summary>
+        /// Duplicate in login controller!
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        private ActionResult DisplayGallery(int userId)
+        {
+            var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
+
+            var redirect = _photoService.GetRedirectInfo(userId, remoteHostName);
+            TempData["isSignedIn"] = Startup.IsSignedIn;
+            if (redirect != null && redirect.RemoteHost != "")
+                return RedirectToAction(controllerName: redirect.Controller, actionName: redirect.Action, routeValues: new RouteValueDictionary(redirect.RouteData));
+            else
+                return RedirectToAction(controllerName: "Gallery", actionName: "Index");
+        }
+    }
 }

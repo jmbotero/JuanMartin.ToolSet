@@ -7,14 +7,33 @@
     var lastId = ViewBag.LastId;
     var firstId = ViewBag.FirstId;
 }
-<span>user id = '@ViewBag.Suid'</span><br />
-<span>sesssion id = '@ViewBag.Sid'</span>
+@if (@ViewBag.Message != null)
+{
+
+    <div class="error-message">
+        @ViewBag.Message
+    </div>
+    <br />
+}
+<div id="debugInfo" style="color:red; font-size:8px;">
+    <span>user id = '@ViewBag.Suid'</span>
+    <br />
+    <span>sesssion id = '@ViewBag.Sid'</span>
+</div>
+@if (@ViewBag.InfoMessage != null)
+{
+
+    <div class="info-message">
+        @ViewBag.InfoMessage
+    </div>
+    <br />
+}
 <div class="container body-content">
     <div class="gallery-content">
         @if (Model.Album != null && Model.Album.Count > 0)
         {
             int i = 0;
-        
+
             @foreach (var image in Model.Album)
             {
                 <div class="gallery-image-index-container">

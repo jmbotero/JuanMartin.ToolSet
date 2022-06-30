@@ -11,30 +11,44 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Gallery" asp-action="Index">JuanMartin.PhotoGallery</a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            @if (Convert.ToBoolean(TempData["isSignedIn"]))
-                            {
-                                <form method="post" asp-controller="Login" asp-action="Logout">
-                                    <input type="image" name="Logout" src="~/power-on.jpg" class="btn-logout">
-                                </form>
-                            }
-                            else
-                            {
-                                <img class="btn-logout" name="Logout" src="~/power-off.jpg" alt="Logout" />
-                            }
-                        </li>
-                    </ul>
-                </div>
+                <table>
+                    <tr>
+                        <td style="width:80%;">
+                            <a class="navbar-brand" asp-area="" asp-controller="Gallery" asp-action="Index">JuanMartin.PhotoGallery</a>
+                            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                                    aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                                <ul class="navbar-nav flex-grow-1">
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        @if (Convert.ToBoolean(TempData["isSignedIn"]))
+                                        {
+                                            <form method="post" asp-controller="Login" asp-action="Logout">
+                                                <input type="image" name="Logout" src="~/power-on.jpg" class="btn-logout">
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <img class="btn-logout" name="Logout" src="~/power-off.jpg" alt="Logout" />
+                                        }
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td style="width: fit-content;">
+                            <form method="post" asp-controller="Gallery" asp-action="Index" asp-route-pageId="1" class="search nosubmit">
+                                <input type="search" id="searchQuery" name="searchQuery" placeholder="Search gallery ..." class="search nosubmit">
+                                <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Search query must be one
+or a comma separated list of
+tags possibly used in images." />
+                            </form>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </nav>
     </header>
@@ -52,40 +66,6 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        function SetRank() {
-            var getSelectedValue = document.querySelector('input[name="ranking"]:checked');
-
-            if (getSelectedValue != null) {
-                var rank = 11 - parseInt(getSelectedValue.value);
-                var rankText = document.getElementById('rank');
-
-                rankText.value = rank;
-                document.getElementById('selectedTagListAction').value = "none";
-            }
-        }
-
-        function ClearTag() {
-            document.getElementById('Tag').value = "";
-        }
-
-        function SetListAction(actionName) {
-            document.getElementById('selectedTagListAction').value = actionName;
-        }
-
-        function SetTag(element) {
-            var selectedText = element.value;
-
-            alert(selectedText);
-            document.getElementById('Tag').value = selectedText;
-        }
-
-        function GetSelectedTagText(element) {
-            var selectedText = element.options[element.selectedIndex].text;
-            document.getElementById('Tag').value = selectedText;
-            document.getElementById('hiddenTag').value = selectedText;
-        }
-    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

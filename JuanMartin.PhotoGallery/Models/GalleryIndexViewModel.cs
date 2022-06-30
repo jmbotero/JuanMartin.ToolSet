@@ -10,6 +10,5 @@ namespace JuanMartin.PhotoGallery.Models
     {
         public const int UserID = 1;
         public List<Photography> Album { get; set; }
-        public string SearchQuery { get; set; }
     }
 }

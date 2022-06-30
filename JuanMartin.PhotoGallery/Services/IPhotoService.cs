@@ -15,10 +15,11 @@ namespace JuanMartin.PhotoGallery.Services
 {
     public interface IPhotoService
     {
+        void AddAuditMessage(int useerId, string meessage);
         User VerifyEmail(string email);
         void StoreActivationCode(int userId, string activationCode);
         (int, User) VerifyActivationCode(string activationCode);
-        User UpdateUserPassword(int userID, string userName, string password);
+        User UpdateUserPassword(int userId, string userName, string password);
         User AddUser(string userName, string password, string email);
         int LoadSession(int userId);
         void EndSession(int sessionId);
@@ -30,11 +31,11 @@ namespace JuanMartin.PhotoGallery.Services
         int GetGalleryPageCount(int pageSize);
         public (long Lower, long Upper) GetPhotographyIdBounds();
         IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);
+        IEnumerable<Photography> GetPhotographiesByTags(int userId, string query, int pageId = 1);
         Photography GetPhotographyById(long id, int userId);
         int UpdatePhotographyRanking(long id, int userId, int rank);
-        int AddTag(string tag, long id);
-        int RemoveTag(string tag, long id);
-        IEnumerable<Photography> GetPhotographiesByTag(string keywords, int userId, int pageId = 1);
+        int AddTag(int userId, string tag, long id);
+        int RemoveTag(int userId, string tag, long id);
 
         static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
         {

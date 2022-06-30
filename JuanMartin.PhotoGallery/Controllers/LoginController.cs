@@ -140,29 +140,34 @@ namespace JuanMartin.PhotoGallery.Controllers
         public ActionResult Register(LoginViewModel model)
         {
             var user = _photoService.AddUser(model.UserName, model.Password, model.Email);
+            var userId = user.UserId;
 
-            if (user.UserId == -2)
+            if (userId == -2)
                 ViewBag.Message = "User already exists, please try a different user name.";
-            if (user.UserId > 0)    //userCreated = true;
-                return RedirectToAction("Gallery", "Index");
-            if (user.UserId == -1)
+           else  if (userId == -1)
                 ViewBag.Message = "Error occurred in backend while creating user, please contact the site owner.";
 
             StartNewSession(user);
-            TempData["isSignedIn"] = Startup.IsSignedIn;
-            return View(model);
+
+            if (userId > 0)    //userCreated = true;
+                return DisplayGallery(userId);
+            else
+            {
+                TempData["isSignedIn"] = Startup.IsSignedIn;
+                return View(model);
+            }
         }
 
         [HttpPost]
         public ActionResult Logout()
         {
             int sessionId = (int)HttpContext.Session.GetInt32("SessionID");
+            int sessionUserId = (int)HttpContext.Session.GetInt32("UserID");
             _photoService.EndSession(sessionId);
             HttpContext.Session.Clear();
             Startup.IsSignedIn = "false";
 
-            TempData["isSignedIn"] = Startup.IsSignedIn;
-            return RedirectToAction(controllerName: "Gallery", actionName: "Index");
+            return DisplayGallery(sessionUserId);
 
         }
         public ActionResult Login()
@@ -227,10 +232,23 @@ namespace JuanMartin.PhotoGallery.Controllers
             var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
 
             var redirect = _photoService.GetRedirectInfo(userId, remoteHostName);
+            TempData["isSignedIn"] = Startup.IsSignedIn;
             if (redirect != null && redirect.RemoteHost != "")
                 return RedirectToAction(controllerName: redirect.Controller, actionName: redirect.Action, routeValues: new RouteValueDictionary(redirect.RouteData));
             else
                 return RedirectToAction(controllerName: "Gallery", actionName: "Index");
         }
+
+        //private ActionResult DisplayGallery(int userId, HttpContext httpContext, IPhotoService photoService, Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataDictionary tempData)
+        //{
+        //    var remoteHostName = HttpUtility.GetClientRemoteId(httpContext);
+
+        //    var redirect = photoService.GetRedirectInfo(userId, remoteHostName);
+        //    tempData["isSignedIn"] = Startup.IsSignedIn;
+        //    if (redirect != null && redirect.RemoteHost != "")
+        //        return RedirectToAction(controllerName: redirect.Controller, actionName: redirect.Action, routeValues: new RouteValueDictionary(redirect.RouteData));
+        //    else
+        //        return RedirectToAction(controllerName: "Gallery", actionName: "Index");
+        //}
     }
 }
