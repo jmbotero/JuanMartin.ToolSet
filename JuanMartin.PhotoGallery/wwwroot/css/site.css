@@ -163,19 +163,31 @@ body {
     padding-right: 15px;
 }
 
+.btn-prev-next {
+    display: block;
+    height: 50px;
+    width: 30px;
+    border: none;
+    vertical-align: middle;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* with font stretch */
 .btn-navigation {
-    color: #fff;
-    border-color: #1861ac;
+    color: var(--site-navigation-color);
+    border: none;
     font-size: 10px;
     font-family: Arial, Helvetica, sans-serif;
     font-weight: bold;
     vertical-align: middle;
     display: inline-block;
-    transform: scale(2,3); /* W3C */
-    -webkit-transform: scale(2,3); /* Safari and Chrome */
-    -moz-transform: scale(2,3); /* Firefox */
-    -ms-transform: scale(2,3); /* IE 9 */
-    -o-transform: scale(2,3); /* Opera */
+    transform: scale(3,5); /* W3C */
+    -webkit-transform: scale(3,5); /* Safari and Chrome */
+    -moz-transform: scale(3,5); /* Firefox */
+    -ms-transform: scale(3,5); /* IE 9 */
+    -o-transform: scale(3,5); /* Opera */
 }
 
 .btn-list-action {

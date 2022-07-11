@@ -1,48 +1,48 @@
 vwphotographydetails
 
-SELECT 	pic.id AS `Id`,
-			pic.filename AS `Filename`,
+SELECT 	p.id AS `Id`,
+			p.filename AS `Filename`,
 			loc.`reference` AS `Location`,
-			pic._path AS `Path`,
-			pic.title AS `Title`,
-			vw.Wordlist AS `Keywords`
-FROM tblphotography pic
+			p._path AS `Path`,
+			p.title AS `Title`,
+			vw.Taglist AS `tags`
+FROM tblphotography p
 LEFT JOIN tbllocation loc
-	ON loc.id = pic.location_id
-LEFT JOIN vwphotographykeywords Vw
-	ON vw.PicId = pic.id;
+	ON loc.id = p.location_id
+LEFT JOIN vwphotographytags vw
+	ON vw.photography_id = p.id;
 	
 	
-vwphotographykeywords
+vwphotographytags
 
-SELECT 	pic.id AS `PicId`,
-			word.id AS `WordId`, 
-			GROUP_CONCAT(DISTINCT word.word SEPARATOR ',') AS `Wordlist`
-FROM tblphotography pic
-LEFT JOIN tblphotographykeywords picwords 
-		ON picwords.photography_id = pic.id
-LEFT JOIN tblkeyword word 
-	ON word.id = picwords.keyword_id;
+SELECT 	p.id AS `photography_id`,
+			GROUP_CONCAT(DISTINCT t.word SEPARATOR ',') AS `Taglist`
+FROM tblphotography p
+INNER JOIN tblphotographytags pt 
+		ON pt.photography_id = p.id
+INNER JOIN tbltag t	
+	ON t.id = pt.tag_id
+GROUP BY p.id;
 	
-vwphotographywithranking
-
 create function p1() returns INTEGER DETERMINISTIC NO SQL return @p1;
 
-SELECT 	pic.Id,
-			pic.Filename,
-			IFNULL(pic.Location,'') AS 'Location',
-			pic.Path AS 'Path',
-			CASE WHEN LOCATE('slide',pic.Path) > 0
+vwphotographywithranking
+
+SELECT 	p.Id,
+			p.Filename,
+			IFNULL(p.Location,'') AS 'Location',
+			p.Path AS 'Path',
+			CASE WHEN LOCATE('slide',p.Path) > 0
 			 THEN 1 /* Photography.PhysicalSource.slide */
 			 ELSE 0 /* Photography.PhysicalSource.negative */
 			END AS 'Source',
-			pic.Title,
-			IFNULL(pic.Keywords,'') AS 'Keywords',
+			p.Title,
+			IFNULL(p.tags,'') AS 'tags',
 			IFNULL(r._rank,0) AS 'Rank',
-			IFNULL(udfGetAverageRank(pic.Id),0) AS 'AverageRank'
-FROM vwPhotographyDetails pic
+			IFNULL(udfGetAverageRank(p.Id),0) AS 'AverageRank'
+FROM vwPhotographyDetails p
 LEFT JOIN tblRanking r
-ON r.user_id = p1())
-AND r.photography_id=pic.id;;
+ON r.user_id = p1()
+AND r.photography_id = p.id;
 
 select v.* from (select @p1:=1 p) parm , vwphotographywithranking v;

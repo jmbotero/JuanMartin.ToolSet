@@ -61,14 +61,15 @@ namespace JuanMartin.PhotoGallery.Services
             return pageCount;
         }
 
-        public (long Lower, long Upper) GetPhotographyIdBounds()
+        public (long Lower, long Upper, long RowCount) GetPhotographyIdBounds(string searchQuery)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetPhotographyIdBounds", $"uspGetPhotographyIdBounds()"));
+            var hasQuery = string.IsNullOrEmpty(searchQuery) ? 0 : 1;
+            request.AddData(new ValueHolder("uspGetPhotographyIdBounds", $"uspGetPhotographyIdBounds('{hasQuery}','{searchQuery}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -76,8 +77,9 @@ namespace JuanMartin.PhotoGallery.Services
 
             var lower = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Lower").Value;
             var upper = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Upper").Value;
+            var rowCount = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("RowCount").Value;
 
-            return (lower, upper);
+            return (lower, upper,rowCount);
         }
 
         public Photography GetPhotographyById(long photographyId, int userId)

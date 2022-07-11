@@ -42,9 +42,12 @@ namespace JuanMartin.Sandbox
             //var upr = PhotoService.UpdatePhotographyRanking(1, 9, 6);
             //var pc = PhotoService.GetGalleryPageCount(8);
             //var gph = PhotoService.GetAllPhotographies(1, 1).ToList();
+            var searchQuery = "bear,city";
+            (long l, long u) = PhotoService.GetPhotographyIdBounds(searchQuery);
+            (l, u) = PhotoService.GetPhotographyIdBounds("tree");
+            (l, u) = PhotoService.GetPhotographyIdBounds("");
 
             var count = 2;
-            var searchQuery = "bear,city";
             PhotoService.AddAuditMessage(1, $"Search for ({searchQuery}) returned {count} results.");
 
             //var connectionString = "server=localhost; port=3306; database=photogallery; user=root; password=yala; Persist Security Info=True; Connect Timeout=300";

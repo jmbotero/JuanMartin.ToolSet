@@ -178,6 +178,30 @@ namespace JuanMartin.Sandbox.Objects
 
             return Id;
         }
+        public static (long Lower, long Upper) GetPhotographyIdBounds(string searchQuery)
+        {
+            if (!string.IsNullOrEmpty(searchQuery))
+                searchQuery = searchQuery.Replace(',', '|'); // prepare search for use as regular expression
+            else
+                searchQuery = "";
+
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new Message("Command", System.Data.CommandType.StoredProcedure.ToString());
+            var hasQuery = string.IsNullOrEmpty(searchQuery) ? 0 : 1;
+            request.AddData(new ValueHolder("uspGetPhotographyIdBounds", $"uspGetPhotographyIdBounds('{hasQuery}','{searchQuery}')"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var lower = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Lower").Value;
+            var upper = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Upper").Value;
+
+            return (lower, upper);
+        }
 
         public static void AddAuditMessage(int userId, string meessage)
         {

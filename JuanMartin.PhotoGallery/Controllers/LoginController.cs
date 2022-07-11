@@ -127,7 +127,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         public ActionResult OnPasswordUdateSuccess(int id)
         {
             StartNewSession(id);
-            return DisplayGallery(id);
+            return ViewGalleryIndex(id);
         }
 
         [HttpGet]
@@ -150,7 +150,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             StartNewSession(user);
 
             if (userId > 0)    //userCreated = true;
-                return DisplayGallery(userId);
+                return ViewGalleryIndex(userId);
             else
             {
                 TempData["isSignedIn"] = Startup.IsSignedIn;
@@ -167,7 +167,9 @@ namespace JuanMartin.PhotoGallery.Controllers
             HttpContext.Session.Clear();
             Startup.IsSignedIn = "false";
 
-            return DisplayGallery(sessionUserId);
+            _photoService.AddAuditMessage(sessionUserId, $"User logged out, ended session({sessionId}).");
+
+            return ViewGalleryIndex(sessionUserId);
 
         }
         public ActionResult Login()
@@ -187,8 +189,11 @@ namespace JuanMartin.PhotoGallery.Controllers
                 if (u != null)
                 {
                     StartNewSession(u);
+                    int sessionId = (int)HttpContext.Session.GetInt32("SessionID");
 
-                    return DisplayGallery(u.UserId);
+                    _photoService.AddAuditMessage(u.UserId, $"User logged in, started session ({sessionId}).");
+
+                    return ViewGalleryIndex(u.UserId);
                 }
                 else if (u == null || u.UserId == -1)
                 {
@@ -227,7 +232,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             return $"{baseUrl}/Login/ResetPassword/{resetCode}";
         }
 
-        private ActionResult DisplayGallery(int userId)
+        private ActionResult ViewGalleryIndex(int userId)
         {
             var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
 

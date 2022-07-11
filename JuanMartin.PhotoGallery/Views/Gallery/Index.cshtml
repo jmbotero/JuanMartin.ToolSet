@@ -4,8 +4,12 @@
     var currentPage = ViewBag.CurrentPage;
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
 
-    var lastId = ViewBag.LastId;
-    var firstId = ViewBag.FirstId;
+    var lastId = (ViewBag.LastId is null) ? -1 : ViewBag.LastId;
+    var firstId = (ViewBag.FirstId is null) ? -1 : ViewBag.FirstId;
+    var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
+
+    // persist values
+    var queryString = $"&firstId={firstId}&lastId={lastId}&searchQuery={searchQuery}";
 }
 @if (@ViewBag.Message != null)
 {
@@ -42,7 +46,7 @@
                         var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
                         var url = Url.Content(path);
                     }
-                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@currentPage">
+                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@currentPage" asp-route-searchQuery="@searchQuery">
                         <img class="gallery-image-index" src="@url" />
                     </a>
                     @*<div class="gallery-image-index" style="background-image:url(@url)"/>*@
@@ -86,12 +90,12 @@
     <div class="pagination" style="text-align:center">
         @if (currentPage > 1)
         {
-            galleryUrl = baseUrl + $"?pageId={currentPage - 1}";
+            galleryUrl = baseUrl + $"?pageId={currentPage - 1}" + queryString;
             <a href="@galleryUrl">&laquo;</a>
         }
         @for (int p = 1; p <= count; p++)
         {
-            galleryUrl = baseUrl + $"?pageId={p}";
+            galleryUrl = baseUrl + $"?pageId={p}" + queryString;
             string aClass = "";
 
             @if (p == currentPage)
@@ -102,7 +106,7 @@
         }
         @if (currentPage < count)
         {
-            galleryUrl = baseUrl + $"?pageId={currentPage + 1}";
+            galleryUrl = baseUrl + $"?pageId={currentPage + 1}" + queryString;
             <a href="@galleryUrl">&raquo;</a>
         }
     </div>

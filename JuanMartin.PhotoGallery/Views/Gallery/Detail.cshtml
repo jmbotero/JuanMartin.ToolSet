@@ -1,13 +1,22 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
 @{
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery";
-    var galleryUrl = $"{baseUrl}/Index?pageId={Model.PageId}";
 
-    var lastId = ViewBag.LastId;
-    var firstId = ViewBag.FirstId;
-    var currentId = (Model == null && Model.Image == null) ? -1 : Model.Image.Id;
-    var previousId = ViewBag.PrevId;
-    var nextId = ViewBag.NextId;
+    var pageId = (Model is null) ? 1 : Model.PageId;
+    var lastId = (ViewBag.LastId is null) ? -1 : ViewBag.LastId;
+    var firstId = (ViewBag.FirstId is null) ? -1 : ViewBag.FirstId;
+    var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
+
+    var currentId = (Model.Image is null) ? -1 : Model.Image.Id;
+    if (currentId == -1)
+        ViewBag.Message = "Image is not available";
+
+    var previousId = (ViewBag.PrevId is null) ? -1 : ViewBag.PrevId;
+    var nextId = (ViewBag.NextId is null) ? -1 : ViewBag.NextId;
+
+    // persist values
+    var queryString = $"?pageId={pageId}&firstId={firstId}&lastId={lastId}&searchQuery={searchQuery}";
+    var galleryUrl = $"{baseUrl}/Index" + queryString;
 }
 @if (@ViewBag.Message != null)
 {
@@ -18,16 +27,17 @@
     <br />
 }
 <div class="container body-content">
-    <table>
-        <tr>
-            <td class="btn-navigation">
-                @if (previousId != -1)
-                {
-                    <a style="color: var(--site-navigation-color); font-weight: bold;" asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId">&lt;&lt;</a>
-                }
-            </td>
-            <td>
-                <div class="gallery-image-detail-container">
+    <div class="gallery-image-detail-container">
+        <table>
+            <tr>
+                <td>
+                    @if (previousId != -1)
+                    {
+                        <a class="btn-navigation" asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">&lt;&lt;</a>
+                    }
+                </td>
+                <td style="width : 10px;"></td>
+                <td>
                     <div>
                         @{
                             var path = System.IO.Path.Combine(Model.Image.Path, Model.Image.FileName).Replace(@"\", "/");
@@ -35,75 +45,76 @@
                         }
                         <img class="gallery-image-detail" src="@url" alt="@url" />
                     </div>
-                    <br />
-                    <table class="gallery-image-detail-meta">
-                        <tr>
-                            <td class="gallery-image-detail-meta-column-left">FileName: </td>
-                            <td class="gallery-image-detail-meta-column-right">@Model.Image.FileName</td>
-                        </tr>
-                        <tr>
-                            <td class="gallery-image-detail-meta-column-left">Location: </td>
-                            <td class="gallery-image-detail-meta-column-right">@Model.Image.Location</td>
-                        </tr>
-                        <tr>
-                            <td class="gallery-image-detail-meta-column-left">Tags: </td>
-                            <td class="gallery-image-detail-meta-column-right">
-                                @*<span>-@Model.SelectedTagListAction-</span>*@
-                                <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId" method="post">
-                                    <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px">
-                                        @foreach (var tag in Model.Image.Tags)
-                                        {
-                                            <option>@tag</option>
-                                        }
-                                    </select><br />
-                                    <input style="display: none;" type="text" asp-for="Tag">
-                                    <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
-                                    <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
-                                    <button type="submit" style="border:none;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.jpg" /></button>
-                                    <button type="submit" style="border:none;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.jpg" /></button>
-                                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+                </td>
+                <td style="width : 10px;"></td>a
+                <td>
+                    @if (nextId != -1)
+                    {
+                        <a class="btn-navigation" asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">&gt;&gt;</a>
+                    }
+                </td>
+            </tr>
+        </table>
+        <br />
+        <table class="gallery-image-detail-meta">
+            <tr>
+                <td class="gallery-image-detail-meta-column-left">FileName: </td>
+                <td class="gallery-image-detail-meta-column-right">@Model.Image.FileName</td>
+            </tr>
+            <tr>
+                <td class="gallery-image-detail-meta-column-left">Location: </td>
+                <td class="gallery-image-detail-meta-column-right">@Model.Image.Location</td>
+            </tr>
+            <tr>
+                <td class="gallery-image-detail-meta-column-left">Tags: </td>
+                <td class="gallery-image-detail-meta-column-right">
+                    @*<span>-@Model.SelectedTagListAction-</span>*@
+                    <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                        <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px">
+                            @foreach (var tag in Model.Image.Tags)
+                            {
+                                <option>@tag</option>
+                            }
+                        </select><br />
+                        <input style="display: none;" type="text" asp-for="Tag">
+                        <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
+                        <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
+                        <button type="submit" style="border:none;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.jpg" /></button>
+                        <button type="submit" style="border:none;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.jpg" /></button>
+                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
 Use textbox to specify an image
-to add or  remove."/>
-                                </form>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="gallery-image-detail-meta-column-left">Rank: </td>
-                            <td class="gallery-image-detail-meta-column-right">
-                                @*<span>-@Model.Image.Rank-</span>*@
-                                <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId" method="post">
-                                    <div class="ranking">
-                                        @for (int i = 1; i <= 10; i++)
-                                        {
-                                            string state = "";
+to add or  remove." />
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td class="gallery-image-detail-meta-column-left">Rank: </td>
+                <td class="gallery-image-detail-meta-column-right">
+                    @*<span>-@Model.Image.Rank-</span>*@
+                    <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                        <div class="ranking">
+                            @for (int i = 1; i <= 10; i++)
+                            {
+                                string state = "";
 
-                                            @if (i <= 11 - Model.Image.Rank)
-                                            {
-                                                state = "checked";
-                                            }
-                                            <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
-                                        }
-                                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+                                @if (i <= 11 - Model.Image.Rank)
+                                {
+                                    state = "checked";
+                                }
+                                <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
+                            }
+                            <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
 Numbeer of stars equals image rating." />
-                                        <input type="text" id="rank" asp-for="SelectedRank">
-                                    </div>
-                                </form>
-                            </td>
-                        </tr>
-                    </table>
-                    <div class="gallery-image-detail-nav">
-                        <a class="btn btn-primary" href="@galleryUrl">
-                            << Back to gallery...
-                        </a>
-                    </div>
-                </div>
-            </td>
-            <td class="btn-navigation">
-                @if (nextId != -1)
-                {
-                    <a style="color: var(--site-navigation-color); font-weight: bold;" asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@Model.PageId">&gt;&gt;</a>
-                }
-            </td>
-        </tr>
-    </table>
+                            <input type="text" id="rank" asp-for="SelectedRank">
+                        </div>
+                    </form>
+                </td>
+            </tr>
+        </table>
+        <div class="gallery-image-detail-nav">
+            <a class="btn btn-primary" href="@galleryUrl">
+                << Back to gallery...
+            </a>
+        </div>
+    </div>
 </div>

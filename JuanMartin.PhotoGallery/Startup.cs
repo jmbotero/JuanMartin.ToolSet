@@ -40,8 +40,8 @@ namespace JuanMartin.PhotoGallery
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            var path = Directory.GetCurrentDirectory() + @"\wwwroot\photos.lnk";
-            PhotoService.LoadPhotographies(new AdapterMySql(ConnectionString), path, ".jpg", true);
+            //var path = Directory.GetCurrentDirectory() + @"\wwwroot\photos.lnk";
+            //PhotoService.LoadPhotographies(new AdapterMySql(ConnectionString), path, ".jpg", true);
 
             if (env.IsDevelopment())
             {

@@ -9,6 +9,9 @@ namespace JuanMartin.PhotoGallery.Models
 {
     public class GalleryDetailViewModel
     {
+        public long FistId { get; set; }
+        public long LastId { get; set; }
+        public string SearchQuery { get; set; }
         public int PageId { get; set; }
         public int SelectedRank { get; set; }
         public Photography Image { get; set; }
