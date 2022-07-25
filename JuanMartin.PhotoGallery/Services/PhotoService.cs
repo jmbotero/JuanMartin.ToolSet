@@ -61,6 +61,21 @@ namespace JuanMartin.PhotoGallery.Services
             return pageCount;
         }
 
+        public IRecordSet ExecuteSqlStatement(string statement)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.Text.ToString());
+
+            request.AddData(new ValueHolder("GetPhotographies", statement));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            
+            return (IRecordSet)_dbAdapter.Receive();
+        }
+
         public (long Lower, long Upper, long RowCount) GetPhotographyIdBounds(string searchQuery)
         {
             if (_dbAdapter == null)
@@ -530,14 +545,14 @@ namespace JuanMartin.PhotoGallery.Services
             _dbAdapter.Send(request);
         }
 
-        public void AddAuditMessage(int userId, string meessage)
+        public void AddAuditMessage(int userId, string meessage, string source = "", int isError = 0)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspAddAuditMessage", $"uspAddAuditMessage('{userId}','{meessage}')"));
+            request.AddData(new ValueHolder("uspAddAuditMessage", $"uspAddAuditMessage('{userId}','{meessage}','{source}','{isError}'"));
             request.AddSender("User", typeof(User).ToString());
 
             _dbAdapter.Send(request);

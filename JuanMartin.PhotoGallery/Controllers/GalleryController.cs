@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
@@ -116,7 +117,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         public IActionResult Detail(long id, long firstId, long lastId, string searchQuery,  GalleryDetailViewModel model)
         {
             string message = "";
-            int newPageId = SetGalleryNavigationIds(id, firstId, lastId);
+            int newPageId = SetGalleryNavigationIds(id, firstId, lastId, searchQuery);
 
             SetViewRedirectInfo("Gallery", "Detail", out int sessionUserId, out RedirectResponseModel redirectInfo, id);
 
@@ -149,7 +150,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         [HttpGet]
         public IActionResult Detail(long id, long firstId,  long lastId, int pageId, string searchQuery)
         {
-            int newPageId  = SetGalleryNavigationIds(id, firstId, lastId);
+            int newPageId  = SetGalleryNavigationIds(id, firstId, lastId, searchQuery);
             SetViewRedirectInfo("Gallery", "Detail", out _, out _, id);
 
             TempData["isSignedIn"] = Startup.IsSignedIn;
@@ -165,6 +166,21 @@ namespace JuanMartin.PhotoGallery.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
+            int sessionUserId = -1;
+            if (Convert.ToBoolean(Startup.IsSignedIn))
+            {
+                sessionUserId = (int)HttpContext.Session.GetInt32("UserID");
+            }
+            var exceptionDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            if (exceptionDetails is not null)
+            {
+                var message = exceptionDetails.Error.Message;
+                var source = exceptionDetails.Path;
+
+                _photoService.AddAuditMessage(sessionUserId, message, source, 1);
+
+                ViewBag.ErrorMessage = $"Path {source} threw an exception: '{message}'.";
+            }
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
@@ -276,13 +292,20 @@ namespace JuanMartin.PhotoGallery.Controllers
             return rowCount;
         }
 
-        private int SetGalleryNavigationIds(long id, long firstId, long lastId)
+        private int SetGalleryNavigationIds(long id, long firstId, long lastId, string searchQuery)
         {
             ViewBag.FirstId = firstId;
             ViewBag.LastId = lastId;
-            ViewBag.NextId = (id == lastId) ? -1 : id + 1;
-            ViewBag.PrevId = (id == firstId) ? -1 : id - 1;
-            
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                ViewBag.NextId = -1;
+                ViewBag.PrevId = -1;
+            }
+            else
+            {
+                ViewBag.NextId = (id == lastId) ? -1 : id + 1;
+                ViewBag.PrevId = (id == 1 || id == firstId) ? -1 : id - 1;
+            }
             int pageId = (int)(id / PhotoService.PageSize) + 1;
 
             // correct border cases

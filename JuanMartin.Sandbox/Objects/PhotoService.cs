@@ -14,9 +14,54 @@ namespace JuanMartin.Sandbox.Objects
 {
     public class PhotoService
     {
+        
+        public static string Databese => "gallery";
+
+        public static IRecordSet ExecuteSqlStatement(string statement)
+        {
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new Message("Command", System.Data.CommandType.Text.ToString());
+
+            request.AddData(new ValueHolder("ExecuteSqlStatement", statement));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in reply.Data.Annotations)
+                {
+                    var id = (long)record.GetAnnotation("Id").Value;
+                    var source = Convert.ToInt32(record.GetAnnotation("Source").Value);
+                    var path = (string)record.GetAnnotation("Path").Value;
+                    var fileName = (string)record.GetAnnotation("Filename").Value;
+                    var title = (string)record.GetAnnotation("Title").Value;
+                    var location = (string)record.GetAnnotation("Location").Value;
+                }
+            }
+
+            return reply;
+        }
+
+        public static void ProcessRecordset(IRecordSet recordSet)
+        {
+            if (recordSet.Data != null && recordSet.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in recordSet.Data.Annotations)
+                {
+                    var id = (long)record.GetAnnotation("Id").Value;
+
+                }
+            }
+        }
+    
         public static void ConnectUserAndRemoteHost(int userId, string remoteHost)
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -30,7 +75,7 @@ namespace JuanMartin.Sandbox.Objects
 
         public static IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1)
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             var photographies = new List<Photography>();
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection nnnot set.");
@@ -78,7 +123,7 @@ namespace JuanMartin.Sandbox.Objects
         }
         public static int GetGalleryPageCount(int pageSize)
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection nnnot set.");
 
@@ -96,7 +141,7 @@ namespace JuanMartin.Sandbox.Objects
         }
         public static int UpdatePhotographyRanking(long id, int userId, int rank)
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection nnnot set.");
 
@@ -115,7 +160,7 @@ namespace JuanMartin.Sandbox.Objects
         }
         public static User AddUser(string userName, string password, string email)
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -140,7 +185,7 @@ namespace JuanMartin.Sandbox.Objects
         }
         public static RedirectResponseModel SetRedirectInfo(int userId, string remoteHost, string controller, string action, long routeId = -1, string queryString = "")
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -162,7 +207,7 @@ namespace JuanMartin.Sandbox.Objects
 
         public static int AddTag(string tag, long id)
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -185,7 +230,7 @@ namespace JuanMartin.Sandbox.Objects
             else
                 searchQuery = "";
 
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -205,7 +250,7 @@ namespace JuanMartin.Sandbox.Objects
 
         public static void AddAuditMessage(int userId, string meessage)
         {
-            AdapterMySql _dbAdapter = new AdapterMySql("localhost", "photogallery", "root", "yala");
+            AdapterMySql _dbAdapter = new AdapterMySql("localhost", Databese, "root", "yala");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
@@ -219,7 +264,7 @@ namespace JuanMartin.Sandbox.Objects
         public static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
         {
             var photographies = new List<Photography>();
-            //AdapterMySql dbAdapter = new(Startup.ConnectionString);//("localhost", "photogallery", "root", "yala");
+            //AdapterMySql dbAdapter = new(Startup.ConnectionString);//("localhost", Databese, "root", "yala");
             var files = UtilityFile.GetAllFiles(directory, directoryIsLink);
 
             // paginate and exclude uaccepted etensions

@@ -15,7 +15,7 @@ namespace JuanMartin.PhotoGallery.Services
 {
     public interface IPhotoService
     {
-        void AddAuditMessage(int useerId, string meessage);
+        void AddAuditMessage(int useerId, string meessage, string source = "", int isError = 0);
         User VerifyEmail(string email);
         void StoreActivationCode(int userId, string activationCode);
         (int, User) VerifyActivationCode(string activationCode);
@@ -36,6 +36,8 @@ namespace JuanMartin.PhotoGallery.Services
         int UpdatePhotographyRanking(long id, int userId, int rank);
         int AddTag(int userId, string tag, long id);
         int RemoveTag(int userId, string tag, long id);
+
+        IRecordSet ExecuteSqlStatement(string statement);
 
         static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
         {

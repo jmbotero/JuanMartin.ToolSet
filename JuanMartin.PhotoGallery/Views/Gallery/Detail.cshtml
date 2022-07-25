@@ -33,7 +33,9 @@
                 <td>
                     @if (previousId != -1)
                     {
-                        <a class="btn-navigation" asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">&lt;&lt;</a>
+                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
+                            <img alt="previous" src="~/previous.png" class="btn-prev-next"/>
+                        </a>
                     }
                 </td>
                 <td style="width : 10px;"></td>
@@ -46,11 +48,13 @@
                         <img class="gallery-image-detail" src="@url" alt="@url" />
                     </div>
                 </td>
-                <td style="width : 10px;"></td>a
+                <td style="width : 10px;"></td>
                 <td>
                     @if (nextId != -1)
                     {
-                        <a class="btn-navigation" asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">&gt;&gt;</a>
+                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
+                        <img alt="next" src="~/next.png" class="btn-prev-next" />
+                    </a>
                     }
                 </td>
             </tr>

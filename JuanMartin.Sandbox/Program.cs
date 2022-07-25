@@ -42,7 +42,15 @@ namespace JuanMartin.Sandbox
             //var upr = PhotoService.UpdatePhotographyRanking(1, 9, 6);
             //var pc = PhotoService.GetGalleryPageCount(8);
             //var gph = PhotoService.GetAllPhotographies(1, 1).ToList();
-            var searchQuery = "bear,city";
+            var searchQuery = "city";
+
+            //int userId = 1,limit = 8, offset = 8;
+            //var s = $"SELECT v.* FROM (SELECT @p1:={userId} p) parm ,tblphotographytags pt JOIN vwphotographywithranking v ON v.id = pt.photography_id JOIN tbltag t ON t.id = pt.tag_id WHERE t.word REGEXP '{searchQuery.Replace(',','|')}'  ORDER BY v.Id ASC LIMIT {limit} OFFSET {offset}";
+            ////s = "SELECT IFNULL(MIN(p.id),0) AS 'Lower', IFNULL(MAX(p.id),0) AS 'Upper', COUNT(*) AS 'RowCount' FROM tblphotography p ORDER BY p.id ASC";
+
+            //var r = PhotoService.ExecuteSqlStatement(s);
+            //PhotoService.ProcessRecordset(r);
+
             (long l, long u) = PhotoService.GetPhotographyIdBounds(searchQuery);
             (l, u) = PhotoService.GetPhotographyIdBounds("tree");
             (l, u) = PhotoService.GetPhotographyIdBounds("");
