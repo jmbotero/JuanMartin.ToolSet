@@ -8,7 +8,8 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 DROP DATABASE IF EXISTS `gallery`;
-CREATE DATABASE IF NOT EXISTS `gallery` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE IF NOT EXISTS `gallery`
+DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT ENCRYPTION='N';
 USE `gallery`;
 
 DROP FUNCTION IF EXISTS `p1`;
@@ -58,6 +59,22 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   KEY `FK_photography_locations` (`location_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+DROP TABLE IF EXISTS `tbltag`;
+CREATE TABLE IF NOT EXISTS `tbltag` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+DROP TABLE IF EXISTS `tbluser`;
+CREATE TABLE IF NOT EXISTS `tbluser` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `login` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `_password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 DROP TABLE IF EXISTS `tblphotographytags`;
 CREATE TABLE IF NOT EXISTS `tblphotographytags` (
   `photography_id` bigint DEFAULT NULL,
@@ -101,22 +118,6 @@ CREATE TABLE IF NOT EXISTS `tblstate` (
   `event_dtm` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`remote_host`,`user_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-DROP TABLE IF EXISTS `tbltag`;
-CREATE TABLE IF NOT EXISTS `tbltag` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-DROP TABLE IF EXISTS `tbluser`;
-CREATE TABLE IF NOT EXISTS `tbluser` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `login` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `_password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP FUNCTION IF EXISTS `udfGetAverageRank`;
 DELIMITER //
@@ -727,13 +728,13 @@ CREATE TABLE `vwphotographywithranking` (
 	`AverageRank` FLOAT NOT NULL
 ) ENGINE=MyISAM;
 
-DROP VIEW IF EXISTS `vwphotographydetails`;
-DROP TABLE IF EXISTS `vwphotographydetails`;
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `p`.`id` AS `Id`,`p`.`filename` AS `Filename`,`loc`.`reference` AS `Location`,`p`.`_path` AS `Path`,`p`.`title` AS `Title`,`vw`.`Taglist` AS `Tags` from ((`tblphotography` `p` left join `tbllocation` `loc` on((`loc`.`id` = `p`.`location_id`))) left join `vwphotographytags` `vw` on((`vw`.`photography_id` = `p`.`id`)));
-
 DROP VIEW IF EXISTS `vwphotographytags`;
 DROP TABLE IF EXISTS `vwphotographytags`;
 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographytags` AS select `p`.`id` AS `photography_id`,group_concat(distinct `t`.`word` separator ',') AS `Taglist` from ((`tblphotography` `p` join `tblphotographytags` `pt` on((`pt`.`photography_id` = `p`.`id`))) join `tbltag` `t` on((`t`.`id` = `pt`.`tag_id`))) group by `p`.`id`;
+
+DROP VIEW IF EXISTS `vwphotographydetails`;
+DROP TABLE IF EXISTS `vwphotographydetails`;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `p`.`id` AS `Id`,`p`.`filename` AS `Filename`,`loc`.`reference` AS `Location`,`p`.`_path` AS `Path`,`p`.`title` AS `Title`,`vw`.`Taglist` AS `Tags` from ((`tblphotography` `p` left join `tbllocation` `loc` on((`loc`.`id` = `p`.`location_id`))) left join `vwphotographytags` `vw` on((`vw`.`photography_id` = `p`.`id`)));
 
 DROP VIEW IF EXISTS `vwphotographywithranking`;
 DROP TABLE IF EXISTS `vwphotographywithranking`;
