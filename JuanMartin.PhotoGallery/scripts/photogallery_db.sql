@@ -699,35 +699,6 @@ BEGIN
 END//
 DELIMITER ;
 
-DROP VIEW IF EXISTS `vwphotographydetails`;
-CREATE TABLE `vwphotographydetails` (
-	`Id` BIGINT(19) NOT NULL,
-	`Filename` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Location` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Tags` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
-) ENGINE=MyISAM;
-
-DROP VIEW IF EXISTS `vwphotographytags`;
-CREATE TABLE `vwphotographytags` (
-	`photography_id` BIGINT(19) NOT NULL,
-	`Taglist` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
-) ENGINE=MyISAM;
-
-DROP VIEW IF EXISTS `vwphotographywithranking`;
-CREATE TABLE `vwphotographywithranking` (
-	`Id` BIGINT(19) NOT NULL,
-	`Filename` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Location` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Source` INT(10) NOT NULL,
-	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Tags` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
-	`Rank` BIGINT(19) NOT NULL,
-	`AverageRank` FLOAT NOT NULL
-) ENGINE=MyISAM;
-
 DROP VIEW IF EXISTS `vwphotographytags`;
 DROP TABLE IF EXISTS `vwphotographytags`;
 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographytags` AS select `p`.`id` AS `photography_id`,group_concat(distinct `t`.`word` separator ',') AS `Taglist` from ((`tblphotography` `p` join `tblphotographytags` `pt` on((`pt`.`photography_id` = `p`.`id`))) join `tbltag` `t` on((`t`.`id` = `pt`.`tag_id`))) group by `p`.`id`;

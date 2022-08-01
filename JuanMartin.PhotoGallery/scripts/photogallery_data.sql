@@ -1,3 +1,4 @@
+SET foreign_key_checks = 0;
 
 REPLACE INTO `tblaudit` (`id`, `user_id`, `event_dtm`, `message`) VALUES
 	(6, 1, '2022-06-30 16:35:28', 'Add tag \'bear\' for (2)'),
@@ -164,3 +165,4 @@ REPLACE INTO `tbluser` (`id`, `login`, `_password`, `email`) VALUES
 	(1, 'juan', 'dc681250f7549ba735dcf6b5d13685c3', 'jbotero@hotmail.com'),
 	(2, 'juanm', 'dc681250f7549ba735dcf6b5d13685c3', 'jbotero@hotmail.com');
 
+SET foreign_key_checks = 1;
