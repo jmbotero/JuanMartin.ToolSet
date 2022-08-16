@@ -1,4 +1,11 @@
 SET foreign_key_checks = 0;
+TRUNCATE TABLE `tblaudit`;
+TRUNCATE TABLE `tblphotography`; 
+TRUNCATE TABLE `tblranking`; 
+TRUNCATE TABLE `tblsession`; 
+TRUNCATE TABLE `tblstate`;
+TRUNCATE TABLE `tbltag`;
+TRUNCATE TABLE `tbluser`;
 
 REPLACE INTO `tblaudit` (`id`, `user_id`, `event_dtm`, `message`) VALUES
 	(6, 1, '2022-06-30 16:35:28', 'Add tag \'bear\' for (2)'),

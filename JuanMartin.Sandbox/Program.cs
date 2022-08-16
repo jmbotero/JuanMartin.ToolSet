@@ -17,7 +17,7 @@ namespace JuanMartin.Sandbox
     {
         public static void Main(string[] args)
         {
-            PhohoGallery();
+            PhotoGallery();
             UtilityHelper.Measure(() => SimpleForeach(), true, "Foreach loop:");
             UtilityHelper.Measure(() => ParallelForeach(   ), true, "Parallel Foreach loop:");
             UtilityHelper.Measure(() =>
@@ -33,7 +33,7 @@ namespace JuanMartin.Sandbox
             Console.ReadKey();
         }
 
-        private static void PhohoGallery()
+        private static void PhotoGallery()
         {
             //PhotoService.ConnectUserAndRemoteHost(1, "::1");
             //var at = PhotoService.AddTag("bear", 19);
@@ -51,16 +51,16 @@ namespace JuanMartin.Sandbox
             //var r = PhotoService.ExecuteSqlStatement(s);
             //PhotoService.ProcessRecordset(r);
 
-            (long l, long u) = PhotoService.GetPhotographyIdBounds(searchQuery);
-            (l, u) = PhotoService.GetPhotographyIdBounds("tree");
-            (l, u) = PhotoService.GetPhotographyIdBounds("");
+            //(long l, long u) = PhotoService.GetPhotographyIdBounds(searchQuery);
+            //(l, u) = PhotoService.GetPhotographyIdBounds("tree");
+            //(l, u) = PhotoService.GetPhotographyIdBounds("");
 
-            var count = 2;
-            PhotoService.AddAuditMessage(1, $"Search for ({searchQuery}) returned {count} results.");
+            //var count = 2;
+            //PhotoService.AddAuditMessage(1, $"Search for ({searchQuery}) returned {count} results.");
 
-            //var connectionString = "server=localhost; port=3306; database=photogallery; user=root; password=yala; Persist Security Info=True; Connect Timeout=300";
-            //var path = @"C:\GitRepositories\JuanMartin.ToolSet\JuanMartin.PhotoGallery\wwwroot\photos.lnk";
-            //PhotoService.LoadPhotographies(new AdapterMySql(connectionString), path, ".jpg", true);
+            var connectionString = "server=localhost; port=3306; database=gallery; user=root; password=yala; Persist Security Info=True; Connect Timeout=300";
+            var path = @"C:\GitHub\JuanMartin.ToolSet\JuanMartin.PhotoGallery\wwwroot\photos.lnk";
+            PhotoService.LoadPhotographies(new AdapterMySql(connectionString), path, ".jpg,.JPG", true);
 
         }
 

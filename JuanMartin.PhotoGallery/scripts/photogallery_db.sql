@@ -1,3 +1,10 @@
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               8.0.30 - MySQL Community Server - GPL
+-- Server OS:                    Win64
+-- HeidiSQL Version:             12.0.0.6468
+-- --------------------------------------------------------
+
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
@@ -7,11 +14,13 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+
+-- Dumping database structure for gallery
 DROP DATABASE IF EXISTS `gallery`;
-CREATE DATABASE IF NOT EXISTS `gallery`
-DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT ENCRYPTION='N';
+CREATE DATABASE IF NOT EXISTS `gallery` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `gallery`;
 
+-- Dumping structure for function gallery.p1
 DROP FUNCTION IF EXISTS `p1`;
 DELIMITER //
 CREATE FUNCTION `p1`() RETURNS int
@@ -20,6 +29,7 @@ CREATE FUNCTION `p1`() RETURNS int
 return @p1//
 DELIMITER ;
 
+-- Dumping structure for table gallery.tblaudit
 DROP TABLE IF EXISTS `tblaudit`;
 CREATE TABLE IF NOT EXISTS `tblaudit` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -29,16 +39,22 @@ CREATE TABLE IF NOT EXISTS `tblaudit` (
   `message` varchar(250) NOT NULL,
   `_source` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tbllocation
 DROP TABLE IF EXISTS `tbllocation`;
 CREATE TABLE IF NOT EXISTS `tbllocation` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ddd` float DEFAULT NULL,
-  `reference` varchar(50) DEFAULT NULL,
+  `_reference` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tblpasswordreset
 DROP TABLE IF EXISTS `tblpasswordreset`;
 CREATE TABLE IF NOT EXISTS `tblpasswordreset` (
   `user_id` int NOT NULL,
@@ -47,6 +63,9 @@ CREATE TABLE IF NOT EXISTS `tblpasswordreset` (
   PRIMARY KEY (`activation_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tblphotography
 DROP TABLE IF EXISTS `tblphotography`;
 CREATE TABLE IF NOT EXISTS `tblphotography` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -59,22 +78,9 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   KEY `FK_photography_locations` (`location_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-DROP TABLE IF EXISTS `tbltag`;
-CREATE TABLE IF NOT EXISTS `tbltag` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-- Data exporting was unselected.
 
-DROP TABLE IF EXISTS `tbluser`;
-CREATE TABLE IF NOT EXISTS `tbluser` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `login` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `_password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+-- Dumping structure for table gallery.tblphotographytags
 DROP TABLE IF EXISTS `tblphotographytags`;
 CREATE TABLE IF NOT EXISTS `tblphotographytags` (
   `photography_id` bigint DEFAULT NULL,
@@ -85,6 +91,9 @@ CREATE TABLE IF NOT EXISTS `tblphotographytags` (
   CONSTRAINT `FK_keyword_photography` FOREIGN KEY (`photography_id`) REFERENCES `tblphotography` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tblranking
 DROP TABLE IF EXISTS `tblranking`;
 CREATE TABLE IF NOT EXISTS `tblranking` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -98,6 +107,9 @@ CREATE TABLE IF NOT EXISTS `tblranking` (
   CONSTRAINT `FK_ranking_user` FOREIGN KEY (`user_id`) REFERENCES `tbluser` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tblsession
 DROP TABLE IF EXISTS `tblsession`;
 CREATE TABLE IF NOT EXISTS `tblsession` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -105,8 +117,11 @@ CREATE TABLE IF NOT EXISTS `tblsession` (
   `start_dtm` datetime NOT NULL,
   `end_dtm` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tblstate
 DROP TABLE IF EXISTS `tblstate`;
 CREATE TABLE IF NOT EXISTS `tblstate` (
   `remote_host` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -119,6 +134,31 @@ CREATE TABLE IF NOT EXISTS `tblstate` (
   PRIMARY KEY (`remote_host`,`user_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tbltag
+DROP TABLE IF EXISTS `tbltag`;
+CREATE TABLE IF NOT EXISTS `tbltag` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tbluser
+DROP TABLE IF EXISTS `tbluser`;
+CREATE TABLE IF NOT EXISTS `tbluser` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `login` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `_password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for function gallery.udfGetAverageRank
 DROP FUNCTION IF EXISTS `udfGetAverageRank`;
 DELIMITER //
 CREATE FUNCTION `udfGetAverageRank`(
@@ -142,6 +182,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspAddAuditMessage
 DROP PROCEDURE IF EXISTS `uspAddAuditMessage`;
 DELIMITER //
 CREATE PROCEDURE `uspAddAuditMessage`(
@@ -155,6 +196,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspAddPhotography
 DROP PROCEDURE IF EXISTS `uspAddPhotography`;
 DELIMITER //
 CREATE PROCEDURE `uspAddPhotography`(
@@ -181,6 +223,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspAddSession
 DROP PROCEDURE IF EXISTS `uspAddSession`;
 DELIMITER //
 CREATE PROCEDURE `uspAddSession`(
@@ -196,6 +239,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspAddTag
 DROP PROCEDURE IF EXISTS `uspAddTag`;
 DELIMITER //
 CREATE PROCEDURE `uspAddTag`(
@@ -250,6 +294,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspAddUser
 DROP PROCEDURE IF EXISTS `uspAddUser`;
 DELIMITER //
 CREATE PROCEDURE `uspAddUser`(
@@ -276,6 +321,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspConnectUserAndRemoteHost
 DROP PROCEDURE IF EXISTS `uspConnectUserAndRemoteHost`;
 DELIMITER //
 CREATE PROCEDURE `uspConnectUserAndRemoteHost`(
@@ -296,6 +342,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspEndSession
 DROP PROCEDURE IF EXISTS `uspEndSession`;
 DELIMITER //
 CREATE PROCEDURE `uspEndSession`(
@@ -321,6 +368,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspExecuteSqlStatement
 DROP PROCEDURE IF EXISTS `uspExecuteSqlStatement`;
 DELIMITER //
 CREATE PROCEDURE `uspExecuteSqlStatement`(
@@ -335,6 +383,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspGetAllPhotographies
 DROP PROCEDURE IF EXISTS `uspGetAllPhotographies`;
 DELIMITER //
 CREATE PROCEDURE `uspGetAllPhotographies`(
@@ -351,12 +400,13 @@ BEGIN
 
 	SELECT v.* 
 	FROM (SELECT @p1:=UserID p) parm , vwphotographywithranking v
-	ORDER BY v.Id ASC
+	ORDER BY v.AverageRank DESC, v.Id DESC
 	LIMIT rec_take
 	OFFSET rec_skip;
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspGetPageCount
 DROP PROCEDURE IF EXISTS `uspGetPageCount`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPageCount`(
@@ -376,9 +426,10 @@ BEGIN
 END//
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS `uspGetPhotographiesByTags`;
+-- Dumping structure for procedure gallery.uspGetPhotographiesBySearch
+DROP PROCEDURE IF EXISTS `uspGetPhotographiesBySearch`;
 DELIMITER //
-CREATE PROCEDURE `uspGetPhotographiesByTags`(
+CREATE PROCEDURE `uspGetPhotographiesBySearch`(
 	IN `UserID` INT,
 	IN `Wordlist` VARCHAR(150),
 	IN `CurrentPage` INT,
@@ -389,37 +440,46 @@ BEGIN
 	SET @rec_take = PageSize;
 	SET @rec_skip = (CurrentPage - 1) * PageSize;
 
-	SET @qry = CONCAT('SELECT v.* FROM (SELECT @p1:=',UserID,' p) parm , tblphotographytags pt JOIN vwphotographywithranking v ON v.id = pt.photography_id JOIN tbltag t ON t.id = pt.tag_id WHERE t.word REGEXP ''', Wordlist, '''  ORDER BY v.Id ASC LIMIT ', @rec_take, ' OFFSET ',@rec_skip);
+	SET @qry = CONCAT('SELECT DISTINCT v.* FROM (SELECT @p1:=',UserID,' p) parm , tblphotographytags pt JOIN vwphotographywithranking v ON v.id = pt.photography_id JOIN tbltag t ON t.id = pt.tag_id WHERE t.word REGEXP ''', Wordlist, ''' OR v.Location REGEXP ''', Wordlist, ''' ORDER BY v.AverageRank DESC,v.Id DESC LIMIT ', @rec_take, ' OFFSET ',@rec_skip);
 	PREPARE stmt FROM @qry;
 	EXECUTE stmt;
 	DEALLOCATE PREPARE stmt;
 END//
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS `uspGetPhotographyIdBounds`;
+-- Dumping structure for procedure gallery.uspGetPhotographyIdsList
+DROP PROCEDURE IF EXISTS `uspGetPhotographyIdsList`;
 DELIMITER //
-CREATE PROCEDURE `uspGetPhotographyIdBounds`(
+CREATE PROCEDURE `uspGetPhotographyIdsList`(
+	IN `UserID` INT,
 	IN `HasQuery` INT,
 	IN `SearchQuery` VARCHAR(150)
 )
+    NO SQL
+    SQL SECURITY INVOKER
 BEGIN
 	IF (HasQuery = 0) THEN
-	   SELECT IFNULL(MIN(p.id),0) AS 'Lower', IFNULL(MAX(p.id),0) AS 'Upper', COUNT(*) AS 'RowCount'
-		FROM tblphotography p
-		ORDER BY p.id ASC;
+	   SELECT GROUP_CONCAT(sub.Id) AS 'Ids', COUNT(*) AS 'RowCount'
+	   FROM(SELECT v.*
+		FROM  (SELECT @p1:=UserID p) parm , vwphotographywithranking v
+		ORDER BY v.AverageRank DESC,v.Id DESC) sub;
 	ELSE
-		SELECT IFNULL(MIN(v.id),0) AS 'Lower', IFNULL(MAX(v.id),0) AS 'Upper', COUNT(*) AS 'RowCount' 
-		FROM tblphotographytags pt 
+	   SELECT GROUP_CONCAT(sub.Id) AS 'Ids', COUNT(*) AS 'RowCount'
+	   FROM(SELECT v.*
+		FROM (SELECT @p1:=UserID p) parm ,tblphotographytags pt 
 		JOIN vwphotographywithranking v 
 			ON v.id = pt.photography_id
 		JOIN tbltag t 
 			ON t.id = pt.tag_id 
 		WHERE t.word REGEXP SearchQuery
-		ORDER BY v.Id ASC;
+			OR v.Location REGEXP SearchQuery
+		GROUP BY v.Id
+		ORDER BY v.AverageRank DESC,v.Id DESC) sub;
 	END IF;
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspGetPotography
 DROP PROCEDURE IF EXISTS `uspGetPotography`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPotography`(
@@ -438,6 +498,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspGetUser
 DROP PROCEDURE IF EXISTS `uspGetUser`;
 DELIMITER //
 CREATE PROCEDURE `uspGetUser`(
@@ -456,6 +517,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspGetUserRedirectInfo
 DROP PROCEDURE IF EXISTS `uspGetUserRedirectInfo`;
 DELIMITER //
 CREATE PROCEDURE `uspGetUserRedirectInfo`(
@@ -479,6 +541,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspRemoveTag
 DROP PROCEDURE IF EXISTS `uspRemoveTag`;
 DELIMITER //
 CREATE PROCEDURE `uspRemoveTag`(
@@ -530,6 +593,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspSetUserRedirectInfo
 DROP PROCEDURE IF EXISTS `uspSetUserRedirectInfo`;
 DELIMITER //
 CREATE PROCEDURE `uspSetUserRedirectInfo`(
@@ -545,6 +609,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspStoreActivationCode
 DROP PROCEDURE IF EXISTS `uspStoreActivationCode`;
 DELIMITER //
 CREATE PROCEDURE `uspStoreActivationCode`(
@@ -556,6 +621,53 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspUpdatePhotographyDetails
+DROP PROCEDURE IF EXISTS `uspUpdatePhotographyDetails`;
+DELIMITER //
+CREATE PROCEDURE `uspUpdatePhotographyDetails`(
+	IN `UserId` INT,
+	IN `PhotographyId` BIGINT,
+	IN `Location` VARCHAR(50)
+)
+    NO SQL
+BEGIN
+	DECLARE id INT;
+	DECLARE imageExists INT;
+	DECLARE linkExists INT;
+	
+	SET imageExists = EXISTS(
+	            SELECT p.filename 
+					FROM tblphotography p
+				 	WHERE p.id = PhotographyId);
+
+	SET id = -1;
+					 
+	IF (imageExists = 1) THEN 	
+		SELECT l.id 
+		INTO id
+		FROM tblLocation l
+	 	WHERE l._reference = Location;
+		
+		IF NOT FOUND_ROWS() THEN 	
+			INSERT INTO tblLocation(_reference) VALUE(Location);
+			SET id=LAST_INSERT_ID();
+		END IF;
+		
+		IF(PhotographyId<>-1 AND id > 0) THEN
+			UPDATE tblphotography p
+				SET p.location_id = id
+			WHERE p.id = PhotographyId;
+		END IF;
+	END IF;
+	
+	IF(id > 0) THEN
+		CALL uspAddAuditMessage(UserID, CONCAT('Update location ''', Location , ''' (', id , ') for photography (', PhotographyId ,')'),'uspUpdatePhotographyDetails',0);
+	END IF;
+	SELECT id;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspUpdateRanking
 DROP PROCEDURE IF EXISTS `uspUpdateRanking`;
 DELIMITER //
 CREATE PROCEDURE `uspUpdateRanking`(
@@ -604,6 +716,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspUpdateUserPassword
 DROP PROCEDURE IF EXISTS `uspUpdateUserPassword`;
 DELIMITER //
 CREATE PROCEDURE `uspUpdateUserPassword`(
@@ -641,6 +754,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspVerifyActivationCode
 DROP PROCEDURE IF EXISTS `uspVerifyActivationCode`;
 DELIMITER //
 CREATE PROCEDURE `uspVerifyActivationCode`(
@@ -683,6 +797,7 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspVerifyEmail
 DROP PROCEDURE IF EXISTS `uspVerifyEmail`;
 DELIMITER //
 CREATE PROCEDURE `uspVerifyEmail`(
@@ -699,15 +814,56 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for view gallery.vwphotographydetails
+DROP VIEW IF EXISTS `vwphotographydetails`;
+-- Creating temporary table to overcome VIEW dependency errors
+CREATE TABLE `vwphotographydetails` (
+	`Id` BIGINT(19) NOT NULL,
+	`Filename` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Location` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Tags` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
+) ENGINE=MyISAM;
+
+-- Dumping structure for view gallery.vwphotographytags
 DROP VIEW IF EXISTS `vwphotographytags`;
+-- Creating temporary table to overcome VIEW dependency errors
+CREATE TABLE `vwphotographytags` (
+	`photography_id` BIGINT(19) NOT NULL,
+	`Taglist` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
+) ENGINE=MyISAM;
+
+-- Dumping structure for view gallery.vwphotographywithranking
+DROP VIEW IF EXISTS `vwphotographywithranking`;
+-- Creating temporary table to overcome VIEW dependency errors
+CREATE TABLE `vwphotographywithranking` (
+	`Id` BIGINT(19) NOT NULL,
+	`Filename` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Location` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Source` INT(10) NOT NULL,
+	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Tags` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Rank` BIGINT(19) NOT NULL,
+	`AverageRank` FLOAT NOT NULL
+) ENGINE=MyISAM;
+
+-- Dumping structure for view gallery.vwphotographydetails
+DROP VIEW IF EXISTS `vwphotographydetails`;
+-- Removing temporary table and create final VIEW structure
+DROP TABLE IF EXISTS `vwphotographydetails`;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `p`.`id` AS `Id`,`p`.`filename` AS `Filename`,`loc`.`_reference` AS `Location`,`p`.`_path` AS `Path`,`p`.`title` AS `Title`,`vw`.`Taglist` AS `Tags` from ((`tblphotography` `p` left join `tbllocation` `loc` on((`loc`.`id` = `p`.`location_id`))) left join `vwphotographytags` `vw` on((`vw`.`photography_id` = `p`.`id`)));
+
+-- Dumping structure for view gallery.vwphotographytags
+DROP VIEW IF EXISTS `vwphotographytags`;
+-- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `vwphotographytags`;
 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographytags` AS select `p`.`id` AS `photography_id`,group_concat(distinct `t`.`word` separator ',') AS `Taglist` from ((`tblphotography` `p` join `tblphotographytags` `pt` on((`pt`.`photography_id` = `p`.`id`))) join `tbltag` `t` on((`t`.`id` = `pt`.`tag_id`))) group by `p`.`id`;
 
-DROP VIEW IF EXISTS `vwphotographydetails`;
-DROP TABLE IF EXISTS `vwphotographydetails`;
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `p`.`id` AS `Id`,`p`.`filename` AS `Filename`,`loc`.`reference` AS `Location`,`p`.`_path` AS `Path`,`p`.`title` AS `Title`,`vw`.`Taglist` AS `Tags` from ((`tblphotography` `p` left join `tbllocation` `loc` on((`loc`.`id` = `p`.`location_id`))) left join `vwphotographytags` `vw` on((`vw`.`photography_id` = `p`.`id`)));
-
+-- Dumping structure for view gallery.vwphotographywithranking
 DROP VIEW IF EXISTS `vwphotographywithranking`;
+-- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `vwphotographywithranking`;
 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographywithranking` AS select `p`.`Id` AS `Id`,`p`.`Filename` AS `Filename`,ifnull(`p`.`Location`,'') AS `Location`,`p`.`Path` AS `Path`,(case when (locate('slide',`p`.`Path`) > 0) then 1 else 0 end) AS `Source`,`p`.`Title` AS `Title`,ifnull(`p`.`Tags`,'') AS `Tags`,ifnull(`r`.`_rank`,0) AS `Rank`,ifnull(`udfGetAverageRank`(`p`.`Id`),0) AS `AverageRank` from (`vwphotographydetails` `p` left join `tblranking` `r` on(((`r`.`user_id` = `p1`()) and (`r`.`photography_id` = `p`.`Id`))));
 

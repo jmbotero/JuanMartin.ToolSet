@@ -16,6 +16,7 @@ namespace JuanMartin.PhotoGallery.Services
         private readonly IExchangeRequestReply _dbAdapter;
 
         public const int PageSize = 8;
+        public const int BlockSize = 5;  // # pages in a block
 
         public PhotoService()
         {
@@ -76,7 +77,7 @@ namespace JuanMartin.PhotoGallery.Services
             return (IRecordSet)_dbAdapter.Receive();
         }
 
-        public (long Lower, long Upper, long RowCount) GetPhotographyIdBounds(string searchQuery)
+        public (string GalleryIdsList, long RowCount) uspGetPhotographyIdsList(int userID, string searchQuery)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
@@ -84,17 +85,16 @@ namespace JuanMartin.PhotoGallery.Services
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
             var hasQuery = string.IsNullOrEmpty(searchQuery) ? 0 : 1;
-            request.AddData(new ValueHolder("uspGetPhotographyIdBounds", $"uspGetPhotographyIdBounds('{hasQuery}','{searchQuery}')"));
+            request.AddData(new ValueHolder("uspGetPhotographyIdsList", $"uspGetPhotographyIdsList('{userID}','{hasQuery}','{searchQuery}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
             IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
 
-            var lower = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Lower").Value;
-            var upper = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("Upper").Value;
+            var galleryIdsList = (string)reply.Data.GetAnnotationByValue(1).GetAnnotation("Ids").Value;
             var rowCount = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("RowCount").Value;
 
-            return (lower, upper,rowCount);
+            return ($",{galleryIdsList},",rowCount);
         }
 
         public Photography GetPhotographyById(long photographyId, int userId)
@@ -137,6 +137,27 @@ namespace JuanMartin.PhotoGallery.Services
 
             return rankingId;
         }
+        public int UpdatePhotographyDetails(long id, int userId, string location)
+        {
+            if (userId == -1)
+                return -1;
+
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspUpdatePhotographyDetails", $"uspUpdatePhotographyDetails('{userId}','{id}','{location}')"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            // be sure record.GetAnnotation("...") exists and is not null
+            var locationId = (int)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
+
+            return locationId;
+                                                                                                                                    }
 
         public User GetUser(string userName, string password)
         {
@@ -558,15 +579,15 @@ namespace JuanMartin.PhotoGallery.Services
             _dbAdapter.Send(request);
         }
 
-        public IEnumerable<Photography> GetPhotographiesByTags(int userId, string tags, int pageId = 1)
+        public IEnumerable<Photography> GetPhotographiesBySearch(int userId, string tags, int pageId = 1)
         {
-            //throw new ApplicationException($"uspGetPhotographiesByTags('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')");
+            //throw new ApplicationException($"uspGetPhotographiesBySearch('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetPhotographiesByTags", $"uspGetPhotographiesByTags('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')"));
+            request.AddData(new ValueHolder("uspGetPhotographiesBySearch", $"uspGetPhotographiesBySearch('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);

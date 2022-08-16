@@ -12,6 +12,9 @@ using System;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Diagnostics;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using MySqlX.XDevAPI;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
@@ -30,8 +33,8 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index(string searchQuery, int pageId = 1)
-        {
+        public IActionResult Index(string searchQuery, int pageId = 1, int blockId = 1)
+            {
             if (string.IsNullOrEmpty(searchQuery))  // case asp.net mvc name matching does not  work use request querystring
                 searchQuery = HttpContext.Request.Query["searchQuery"].ToString();
 
@@ -74,13 +77,14 @@ namespace JuanMartin.PhotoGallery.Controllers
                     Album = (List<Photography>)_photoService.GetAllPhotographies(sessionUserId, pageId)
                 };
 
+                GetPhotographyIdsList(sessionUserId, _photoService, searchQuery);
                 ViewBag.CurrentPage = pageId;
-                var count = GetPhotographyIdBounds(_photoService, searchQuery);
-                ViewBag.PageCount = (int)(count / PhotoService.PageSize) + 1;
+                ViewBag.BlockId = blockId;
+                ViewBag.BlockSize = PhotoService.BlockSize;
             }
             else
             {
-                model = ProcessSearchQuery(pageId, searchQuery, model, sessionUserId);
+                model = ProcessSearchQuery(pageId, blockId, searchQuery, model, sessionUserId);
                 //throw new InvalidDataException($"page {pageId} of {searchQuery} with{model.PhotographyCount} images.");
             }
 
@@ -89,7 +93,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
 
         [HttpPost]
-        public IActionResult Index(int pageId, string searchQuery)
+        public IActionResult Index(int pageId, int blockId, string searchQuery)
         {
             int sessionUserId = -1;
             if (Convert.ToBoolean(Startup.IsSignedIn))
@@ -105,7 +109,8 @@ namespace JuanMartin.PhotoGallery.Controllers
             }
             else
             {
-                model = ProcessSearchQuery(pageId, searchQuery, model, sessionUserId);
+                model = ProcessSearchQuery(pageId, blockId, searchQuery, model, sessionUserId);
+
                 _photoService.AddAuditMessage(sessionUserId, $"Search for ({searchQuery}) returned {model.PhotographyCount} results.");
 
                 TempData["isSignedIn"] = Startup.IsSignedIn;
@@ -114,10 +119,10 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
 
         [HttpPost]
-        public IActionResult Detail(long id, long firstId, long lastId, string searchQuery,  GalleryDetailViewModel model)
+        public IActionResult Detail(long id, string searchQuery,  GalleryDetailViewModel model)
         {
             string message = "";
-            int newPageId = SetGalleryNavigationIds(id, firstId, lastId, searchQuery);
+            int pageId = (int)(id / PhotoService.PageSize) + 1;
 
             SetViewRedirectInfo("Gallery", "Detail", out int sessionUserId, out RedirectResponseModel redirectInfo, id);
 
@@ -127,6 +132,10 @@ namespace JuanMartin.PhotoGallery.Controllers
                 return RedirectToAction(controllerName: "Login", actionName: "Login", routeValues: redirectInfo?.RouteData);
             }
 
+            if (model != null && !string.IsNullOrEmpty(model.Location))
+            {
+                _photoService.UpdatePhotographyDetails(id,sessionUserId,model.Location);
+            }
             if (model != null && !string.IsNullOrEmpty(model.Tag))
             {
                 message = ProcessSubmittedTag(id, model, message, sessionUserId);
@@ -139,28 +148,28 @@ namespace JuanMartin.PhotoGallery.Controllers
             TempData["isSignedIn"] = Startup.IsSignedIn;
             ViewBag.Message = message;
 
-            // perirst firstId, LastId, searchQuery for redirects
-            ViewBag.FirstId = firstId;
-            ViewBag.LastId = lastId;
+            var galleryIdList = HttpContext.Session.GetString("galleryIdList");
+            ViewBag.GalleryIdList = galleryIdList;
+            // perirst searchQuery for redirects
             ViewBag.SearchQuery = searchQuery;
 
-            return View(PrepareDetailViewModel(id, firstId, lastId,searchQuery, newPageId));
+            return View(PrepareDetailViewModel(id, searchQuery, pageId));
         }
 
         [HttpGet]
-        public IActionResult Detail(long id, long firstId,  long lastId, int pageId, string searchQuery)
+        public IActionResult Detail(long id, int pageId, string searchQuery)
         {
-            int newPageId  = SetGalleryNavigationIds(id, firstId, lastId, searchQuery);
+            int newPageId = (int)(id / PhotoService.PageSize) + 1;
             SetViewRedirectInfo("Gallery", "Detail", out _, out _, id);
-
+            
             TempData["isSignedIn"] = Startup.IsSignedIn;
 
-            // perirst firstId, LastId, searchQuery for redirects
-            ViewBag.FirstId = firstId;
-            ViewBag.LastId = lastId;
+            var galleryIdList = HttpContext.Session.GetString("galleryIdList");
+            ViewBag.GalleryIdList = galleryIdList;
+            // perirst searchQuery for redirects
             ViewBag.SearchQuery = searchQuery;
 
-            return View(PrepareDetailViewModel(id, firstId, lastId, searchQuery, newPageId));
+            return View(PrepareDetailViewModel(id, searchQuery, newPageId));
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -184,7 +193,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        private GalleryIndexViewModel  ProcessSearchQuery(int pageId, string searchQuery, GalleryIndexViewModel model, int sessionUserId)
+        private GalleryIndexViewModel  ProcessSearchQuery(int pageId, int blockId, string searchQuery, GalleryIndexViewModel model, int sessionUserId)
         {
             string message = "";
 
@@ -193,16 +202,17 @@ namespace JuanMartin.PhotoGallery.Controllers
             else
             {
                 searchQuery = searchQuery.Replace(',', '|'); // prepare search for use as regular expression
-                model.Album = (List<Photography>)_photoService.GetPhotographiesByTags(sessionUserId, searchQuery, pageId);
+                model.Album = (List<Photography>)_photoService.GetPhotographiesBySearch(sessionUserId, searchQuery, pageId);
             }
             ViewBag.Message = message;
 
-            var count = GetPhotographyIdBounds(_photoService, searchQuery);
+            var count = GetPhotographyIdsList(sessionUserId, _photoService, searchQuery);
             searchQuery = searchQuery.Replace("|", ",");
             ViewBag.InfoMessage = $">> {count} results for images with tags  in ({searchQuery}).";
             model.PhotographyCount = count;
-            ViewBag.PageCount = (int)(count / PhotoService.PageSize) + 1;
             ViewBag.CurrentPage = pageId;
+            ViewBag.BlockId = blockId;
+            ViewBag.BlockSize = PhotoService.BlockSize;
 
             // perirst searchQuery for redirects
             ViewBag.SearchQuery = searchQuery;
@@ -277,64 +287,41 @@ namespace JuanMartin.PhotoGallery.Controllers
             //throw new Exception($"{actionName}: {remoteHostName},{queryString},{id}");
         }
 
-        private long GetPhotographyIdBounds(IPhotoService photoService, string searchQuery)
+        private int GetPhotographyIdsList(int userID, IPhotoService photoService, string searchQuery)
         {
             if (!string.IsNullOrEmpty(searchQuery))
                 searchQuery = searchQuery.Replace(',', '|'); // prepare search for use as regular expression
             else
                 searchQuery = "";
 
-            (long lower, long upper,long rowCount) = photoService.GetPhotographyIdBounds(searchQuery);
+            (string galleryIdList, long rowCount) = photoService.uspGetPhotographyIdsList(userID, searchQuery);
 
-            ViewBag.FirstId = lower;
-            ViewBag.LastId = upper;
-            
-            return rowCount;
+            HttpContext.Session.SetString("galleryIdList", galleryIdList);
+            ViewBag.PageCount = (int)(rowCount / PhotoService.PageSize) + 1;
+
+            return (int)rowCount;
         }
 
-        private int SetGalleryNavigationIds(long id, long firstId, long lastId, string searchQuery)
+        private int SetGalleryNavigationIds(long id)
         {
-            ViewBag.FirstId = firstId;
-            ViewBag.LastId = lastId;
-            if (!string.IsNullOrEmpty(searchQuery))
-            {
-                ViewBag.NextId = -1;
-                ViewBag.PrevId = -1;
-            }
-            else
-            {
-                ViewBag.NextId = (id == lastId) ? -1 : id + 1;
-                ViewBag.PrevId = (id == 1 || id == firstId) ? -1 : id - 1;
-            }
             int pageId = (int)(id / PhotoService.PageSize) + 1;
 
             // correct border cases
             if (id % PhotoService.PageSize == 0)
                 pageId--;
-
+            
             return pageId;
         }
 
-
-        private static List<SelectListItem> SetTagsforDisplay(List<string> tags)
-        {
-            List<SelectListItem> items = new();
-            foreach (var tag in tags)
-                items.Add(new SelectListItem { Text = tag, Selected = false });
-
-            return items;
-        }
-
-        private GalleryDetailViewModel PrepareDetailViewModel(long id, long firstId, long lastId, string searchQuery, int pageId)
+        private GalleryDetailViewModel PrepareDetailViewModel(long id, string searchQuery, int pageId)
         {
             var image = _photoService.GetPhotographyById(id, GalleryIndexViewModel.UserID);
 
             var model = new GalleryDetailViewModel
             {
                 Image = image,
+                Location = image.Location,
                 PageId = pageId,
-                FistId = firstId,
-                LastId=lastId,
                 SearchQuery=searchQuery
                 //Tags = SetTagsforDisplay(image.Tags)
             };

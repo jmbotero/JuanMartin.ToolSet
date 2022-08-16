@@ -29,11 +29,12 @@ namespace JuanMartin.PhotoGallery.Services
         void ConnectUserAndRemoteHost(int userId, string remoteHost);
         User GetUser(string userName, string password);
         int GetGalleryPageCount(int pageSize);
-        public (long Lower, long Upper, long RowCount) GetPhotographyIdBounds(string searchQuery);
+        public (string GalleryIdsList, long RowCount) uspGetPhotographyIdsList(int userID,  string searchQuery);
         IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);
-        IEnumerable<Photography> GetPhotographiesByTags(int userId, string query, int pageId = 1);
+        IEnumerable<Photography> GetPhotographiesBySearch(int userId, string query, int pageId = 1);
         Photography GetPhotographyById(long id, int userId);
         int UpdatePhotographyRanking(long id, int userId, int rank);
+        int UpdatePhotographyDetails(long id, int userId, string location);
         int AddTag(int userId, string tag, long id);
         int RemoveTag(int userId, string tag, long id);
 

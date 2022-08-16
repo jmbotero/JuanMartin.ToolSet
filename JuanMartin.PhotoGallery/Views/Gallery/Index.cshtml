@@ -1,15 +1,17 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryIndexViewModel;
+@using JuanMartin.PhotoGallery.Controllers;
+@using JuanMartin.Kernel.Extesions;
 @{
-    var count = ViewBag.PageCount;
+    var pageCount = ViewBag.PageCount;
     var currentPage = ViewBag.CurrentPage;
+    var currentBlock = ViewBag.BlockId;
+    var blockSize = ViewBag.BlockSize;
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
 
-    var lastId = (ViewBag.LastId is null) ? -1 : ViewBag.LastId;
-    var firstId = (ViewBag.FirstId is null) ? -1 : ViewBag.FirstId;
     var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
 
     // persist values
-    var queryString = $"&firstId={firstId}&lastId={lastId}&searchQuery={searchQuery}";
+    var queryString = $"&searchQuery={searchQuery}";
 }
 @if (@ViewBag.Message != null)
 {
@@ -46,7 +48,7 @@
                         var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
                         var url = Url.Content(path);
                     }
-                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-pageId="@currentPage" asp-route-searchQuery="@searchQuery">
+                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-searchQuery="@searchQuery">
                         <img class="gallery-image-index" src="@url" />
                     </a>
                     @*<div class="gallery-image-index" style="background-image:url(@url)"/>*@
@@ -84,30 +86,83 @@
 @{
     baseUrl = baseUrl + "/Gallery/Index";
     string galleryUrl = "";
+    var nextBlock = currentBlock;
+    int nextPage;
+    var blockStart = (currentBlock - 1) * blockSize + 1;
+    int blockCount = (pageCount / blockSize) + 1;
+    var listOfBlocks = Enumerable.Range(1, blockCount).Select(i => i.ToString()).ToList();
 }
-@if (count > 1)
+@if (pageCount > 1)
 {
-    <div class="pagination" style="text-align:center">
-        @if (currentPage > 1)
+        <div class="pagination">
+        @if (currentBlock > 1)
         {
-            galleryUrl = baseUrl + $"?pageId={currentPage - 1}" + queryString;
+            nextBlock = currentBlock - 1;
+            nextPage = (nextBlock - 1) * blockSize + 1;
+            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
             <a href="@galleryUrl">&laquo;</a>
         }
-        @for (int p = 1; p <= count; p++)
+        @if (currentPage > 1)
         {
-            galleryUrl = baseUrl + $"?pageId={p}" + queryString;
-            string aClass = "";
+            nextPage = currentPage - 1;
 
-            @if (p == currentPage)
-            {
-                aClass = "class=active";
-            }
-            <a href="@galleryUrl" @aClass>@p</a>
+            if (nextPage == blockStart - 1)
+                nextBlock = currentBlock - 1;
+
+            galleryUrl = baseUrl + $"?pageId={nextPage}&blocckId={nextBlock}" + queryString;
+            <a href="@galleryUrl">&lsaquo;</a>
         }
-        @if (currentPage < count)
+        @{
+            var blockEnd = blockStart + blockSize - 1;
+            if (blockEnd > pageCount)
+                blockEnd = pageCount;
+
+            for (int p = blockStart; p <= blockEnd; p++)
+            {
+                galleryUrl = baseUrl + $"?pageId={p}&blockId={currentBlock}" + queryString;
+                string aClass = "";
+
+                 if (p == currentPage)
+                {
+                    aClass = "class=active";
+                }
+                                            <a href="@galleryUrl" @aClass>@p</a>
+            }
+        }
+        @if (blockEnd < pageCount)
         {
-            galleryUrl = baseUrl + $"?pageId={currentPage + 1}" + queryString;
+            nextPage = currentPage + 1;
+            nextBlock = currentBlock + 1;
+
+            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+            <a href="@galleryUrl">&rsaquo;</a>
+
+            nextPage = (currentBlock) * blockSize + 1;                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
             <a href="@galleryUrl">&raquo;</a>
         }
+
+        <div class="small-info-message" style="color:black;">Available Blocks...</div>
+        <div id="blockList" style=" font-weight: bold;font-size: 8px;font-family: Arial, Helvetica, sans-serif;color:black;">
+            @{
+                string list = string.Empty;
+
+                foreach (var (b, index) in listOfBlocks.Enumerate())
+                {
+                    nextBlock = Convert.ToInt32(b);
+                    nextPage = (nextBlock - 1) * blockSize + 1;
+                    galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+
+                        @if (b == currentBlock.ToString())
+                    {
+                            <a href="@galleryUrl">@b</a>
+                    }
+                    else
+                    {
+                            <a href="@galleryUrl" style="color: var(--site-navigation-color);">@b</a>
+                    }
+            }
+        }
+        </div>
     </div>
-}
+}                   

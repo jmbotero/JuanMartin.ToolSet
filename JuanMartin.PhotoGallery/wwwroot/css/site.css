@@ -59,11 +59,17 @@ button.accept-policy {
   line-height: inherit;
 }
 
+
 .info-message {
     font-weight: bold;
     font-size: 22px;
     color: var(--site-navigation-color);
     font-family: Arial, Helvetica, sans-serif;
+}
+
+.small-info-message.info-message
+{
+    font-size:10px;
 }
 
 .error-message {
@@ -250,15 +256,16 @@ body {
 .pagination {
     display: inline-block;
 }
-.pagination a {
-    color: black;
-    float: left;
-    padding: 8px 16px;
-    text-decoration: none;
-    transition: background-color .3s;
-    border: 1px solid #ddd; /* Gray */
-    font-size: 22px;
-}
+    .pagination a {
+        color: black;
+        float: left;
+        padding: 8px 16px;
+        text-decoration: none;
+        transition: background-color .3s;
+        border: 1px solid #ddd; /* Gray */
+        font-size: 22px;
+        text-align: center
+    }
     .pagination a.active {
         background-color: var(--site-navigation-color);
         color: white;

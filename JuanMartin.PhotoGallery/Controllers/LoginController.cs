@@ -42,11 +42,11 @@ namespace JuanMartin.PhotoGallery.Controllers
                 string resetCode = Guid.NewGuid().ToString();
                 HttpUtility.SendVerificationEmail(user.Email, PasswordResetLink(HttpContext, resetCode), _configuration);
                 _photoService.StoreActivationCode(user.UserId, resetCode);
-                message = "Reset password link has been sent to the specifiied email.";
+                message = "Reset password link has been sent to the specified email.";
             }
             else
             {
-                message = $"No user, asosciated to {model.Email} was found.";
+                message = $"No user, associated to {model.Email} was found.";
             }
 
             ViewBag.Message = message;
@@ -197,7 +197,7 @@ namespace JuanMartin.PhotoGallery.Controllers
                 }
                 else if (u == null || u.UserId == -1)
                 {
-                    ViewBag.Message = "Incorrect usert name and/or password specified. Please try again.";
+                    ViewBag.Message = "Incorrect user name and/or password specified. Please try again.";
                 }
             } 
             TempData["isSignedIn"] = Startup.IsSignedIn;

@@ -1,21 +1,21 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
+@using JuanMartin.PhotoGallery.Controllers;
 @{
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery";
 
     var pageId = (Model is null) ? 1 : Model.PageId;
-    var lastId = (ViewBag.LastId is null) ? -1 : ViewBag.LastId;
-    var firstId = (ViewBag.FirstId is null) ? -1 : ViewBag.FirstId;
     var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
 
     var currentId = (Model.Image is null) ? -1 : Model.Image.Id;
     if (currentId == -1)
         ViewBag.Message = "Image is not available";
 
-    var previousId = (ViewBag.PrevId is null) ? -1 : ViewBag.PrevId;
-    var nextId = (ViewBag.NextId is null) ? -1 : ViewBag.NextId;
+    var galleryIdList = ViewBag.GalleryIdList;
+    var previousId = HttpUtility.GetImageId(currentId, galleryIdList, HttpUtility.ImageRelativePosition.Previous);
+    var nextId = HttpUtility.GetImageId(currentId, galleryIdList, HttpUtility.ImageRelativePosition.Next);
 
     // persist values
-    var queryString = $"?pageId={pageId}&firstId={firstId}&lastId={lastId}&searchQuery={searchQuery}";
+    var queryString = $"?pageId={pageId}&searchQuery={searchQuery}";
     var galleryUrl = $"{baseUrl}/Index" + queryString;
 }
 @if (@ViewBag.Message != null)
@@ -33,7 +33,7 @@
                 <td>
                     @if (previousId != -1)
                     {
-                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
+                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
                             <img alt="previous" src="~/previous.png" class="btn-prev-next"/>
                         </a>
                     }
@@ -52,7 +52,7 @@
                 <td>
                     @if (nextId != -1)
                     {
-                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
+                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
                         <img alt="next" src="~/next.png" class="btn-prev-next" />
                     </a>
                     }
@@ -67,13 +67,20 @@
             </tr>
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Location: </td>
-                <td class="gallery-image-detail-meta-column-right">@Model.Image.Location</td>
+                <td class="gallery-image-detail-meta-column-right">
+                    <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId"  asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                        <input style="width: 150px;" type="text" asp-for="Location" value="@Model.Image.Location">
+                        <button type="submit" style="border:none;" onclick="this.form.submit();"><img class="btn-list-action" src="~/keyboard.png" /></button>
+                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Use textbox to specify the location
+for the current image, and click keyboard icon to submit." />
+                    </form>
+                </td>
             </tr>
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Tags: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     @*<span>-@Model.SelectedTagListAction-</span>*@
-                    <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                    <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId"  asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
                         <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px">
                             @foreach (var tag in Model.Image.Tags)
                             {
@@ -90,12 +97,12 @@ Use textbox to specify an image
 to add or  remove." />
                     </form>
                 </td>
-            </tr>
+            </tr> 
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Rank: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     @*<span>-@Model.Image.Rank-</span>*@
-                    <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-fistId="@firstId" asp-route-lastId="@lastId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                    <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
                         <div class="ranking">
                             @for (int i = 1; i <= 10; i++)
                             {
@@ -108,7 +115,7 @@ to add or  remove." />
                                 <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
                             }
                             <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
-Numbeer of stars equals image rating." />
+Number of stars equals image rating." />
                             <input type="text" id="rank" asp-for="SelectedRank">
                         </div>
                     </form>
