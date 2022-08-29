@@ -5,6 +5,7 @@
 
     var pageId = (Model is null) ? 1 : Model.PageId;
     var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
+    var currentBlock = ViewBag.BlockId;
 
     var currentId = (Model.Image is null) ? -1 : Model.Image.Id;
     if (currentId == -1)
@@ -15,7 +16,7 @@
     var nextId = HttpUtility.GetImageId(currentId, galleryIdList, HttpUtility.ImageRelativePosition.Next);
 
     // persist values
-    var queryString = $"?pageId={pageId}&searchQuery={searchQuery}";
+    var queryString = $"?pageId={pageId}&BlockId={currentBlock}&searchQuery={searchQuery}";
     var galleryUrl = $"{baseUrl}/Index" + queryString;
 }
 @if (@ViewBag.Message != null)
@@ -33,7 +34,7 @@
                 <td>
                     @if (previousId != -1)
                     {
-                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
+                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@previousId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock">
                             <img alt="previous" src="~/previous.png" class="btn-prev-next"/>
                         </a>
                     }
@@ -52,7 +53,7 @@
                 <td>
                     @if (nextId != -1)
                     {
-                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId">
+                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@nextId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock">
                         <img alt="next" src="~/next.png" class="btn-prev-next" />
                     </a>
                     }
@@ -68,11 +69,11 @@
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Location: </td>
                 <td class="gallery-image-detail-meta-column-right">
-                    <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId"  asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                    <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <input style="width: 150px;" type="text" asp-for="Location" value="@Model.Image.Location">
-                        <button type="submit" style="border:none;" onclick="this.form.submit();"><img class="btn-list-action" src="~/keyboard.png" /></button>
+                        <button type="submit" style="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-list-action" src="~/plus.png" /></button>
                         <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Use textbox to specify the location
-for the current image, and click keyboard icon to submit." />
+for the current image, and click plus icon to submit." />
                     </form>
                 </td>
             </tr>
@@ -80,7 +81,7 @@ for the current image, and click keyboard icon to submit." />
                 <td class="gallery-image-detail-meta-column-left">Tags: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     @*<span>-@Model.SelectedTagListAction-</span>*@
-                    <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId"  asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                    <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId"  asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px">
                             @foreach (var tag in Model.Image.Tags)
                             {
@@ -90,8 +91,8 @@ for the current image, and click keyboard icon to submit." />
                         <input style="display: none;" type="text" asp-for="Tag">
                         <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
                         <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
-                        <button type="submit" style="border:none;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.jpg" /></button>
-                        <button type="submit" style="border:none;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.jpg" /></button>
+                        <button type="submit" style="border:none;background-color: white;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.png" /></button>
+                        <button type="submit" style="border:none;background-color: white;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.png" /></button>
                         <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
 Use textbox to specify an image
 to add or  remove." />
@@ -102,7 +103,7 @@ to add or  remove." />
                 <td class="gallery-image-detail-meta-column-left">Rank: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     @*<span>-@Model.Image.Rank-</span>*@
-                    <form asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" method="post">
+                    <form id="rank" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <div class="ranking">
                             @for (int i = 1; i <= 10; i++)
                             {

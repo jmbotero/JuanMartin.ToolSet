@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               8.0.30 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.0.0.6468
+-- HeidiSQL Version:             12.1.0.6537
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `tblaudit` (
   `message` varchar(250) NOT NULL,
   `_source` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   `location_id` int DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `FK_photography_locations` (`location_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -406,6 +406,27 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspGetLocations
+DROP PROCEDURE IF EXISTS `uspGetLocations`;
+DELIMITER //
+CREATE PROCEDURE `uspGetLocations`(
+	IN `CurrentPage` INT,
+	IN `PageSize` INT
+)
+BEGIN
+	DECLARE rec_take INT;
+	DECLARE rec_skip INT;
+	
+	SET rec_take = PageSize;
+	SET rec_skip = (CurrentPage - 1) * PageSize;
+
+	SELECT DISTINCT l._reference AS 'Location'
+	FROM tblLocation l
+	LIMIT rec_take
+	OFFSET rec_skip;
+END//
+DELIMITER ;
+
 -- Dumping structure for procedure gallery.uspGetPageCount
 DROP PROCEDURE IF EXISTS `uspGetPageCount`;
 DELIMITER //
@@ -431,19 +452,35 @@ DROP PROCEDURE IF EXISTS `uspGetPhotographiesBySearch`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPhotographiesBySearch`(
 	IN `UserID` INT,
-	IN `Wordlist` VARCHAR(150),
+	IN `SearchQuery` VARCHAR(150),
 	IN `CurrentPage` INT,
 	IN `PageSize` INT
 )
     NO SQL
 BEGIN
-	SET @rec_take = PageSize;
-	SET @rec_skip = (CurrentPage - 1) * PageSize;
+	DECLARE rec_take INT;
+	DECLARE rec_skip INT;
+	
+	SET rec_take = PageSize;
+	SET rec_skip = (CurrentPage - 1) * PageSize;
 
-	SET @qry = CONCAT('SELECT DISTINCT v.* FROM (SELECT @p1:=',UserID,' p) parm , tblphotographytags pt JOIN vwphotographywithranking v ON v.id = pt.photography_id JOIN tbltag t ON t.id = pt.tag_id WHERE t.word REGEXP ''', Wordlist, ''' OR v.Location REGEXP ''', Wordlist, ''' ORDER BY v.AverageRank DESC,v.Id DESC LIMIT ', @rec_take, ' OFFSET ',@rec_skip);
-	PREPARE stmt FROM @qry;
-	EXECUTE stmt;
-	DEALLOCATE PREPARE stmt;
+	(SELECT v.*
+	FROM (SELECT @p1:=UserID p) parm ,tblphotographytags pt 
+	JOIN vwphotographywithranking v 
+		ON v.id = pt.photography_id
+	JOIN tbltag t 
+		ON t.id = pt.tag_id 
+	WHERE t.word REGEXP SearchQuery
+	GROUP BY v.Id
+	ORDER BY v.AverageRank DESC,v.Id DESC)
+	UNION
+	(SELECT v.*
+	FROM vwphotographywithranking v 
+	WHERE v.Location REGEXP SearchQuery
+	GROUP BY v.Id
+	ORDER BY v.AverageRank DESC,v.Id DESC)
+	LIMIT rec_take
+	OFFSET rec_skip;
 END//
 DELIMITER ;
 
@@ -459,22 +496,29 @@ CREATE PROCEDURE `uspGetPhotographyIdsList`(
     SQL SECURITY INVOKER
 BEGIN
 	IF (HasQuery = 0) THEN
-	   SELECT GROUP_CONCAT(sub.Id) AS 'Ids', COUNT(*) AS 'RowCount'
+	   SELECT IFNULL(GROUP_CONCAT(sub.Id),'') AS 'Ids', COUNT(*) AS 'RowCount'
 	   FROM(SELECT v.*
 		FROM  (SELECT @p1:=UserID p) parm , vwphotographywithranking v
 		ORDER BY v.AverageRank DESC,v.Id DESC) sub;
 	ELSE
-	   SELECT GROUP_CONCAT(sub.Id) AS 'Ids', COUNT(*) AS 'RowCount'
-	   FROM(SELECT v.*
-		FROM (SELECT @p1:=UserID p) parm ,tblphotographytags pt 
-		JOIN vwphotographywithranking v 
-			ON v.id = pt.photography_id
-		JOIN tbltag t 
-			ON t.id = pt.tag_id 
-		WHERE t.word REGEXP SearchQuery
-			OR v.Location REGEXP SearchQuery
-		GROUP BY v.Id
-		ORDER BY v.AverageRank DESC,v.Id DESC) sub;
+
+	   SELECT IFNULL(GROUP_CONCAT(sub.Id),'') AS 'Ids', COUNT(*) AS 'RowCount'
+		FROM 
+			((SELECT v.*
+			FROM (SELECT @p1:=UserID p) parm ,tblphotographytags pt 
+			JOIN vwphotographywithranking v 
+				ON v.id = pt.photography_id
+			JOIN tbltag t 
+				ON t.id = pt.tag_id 
+			WHERE t.word REGEXP SearchQuery
+			GROUP BY v.Id
+			ORDER BY v.AverageRank DESC,v.Id DESC)
+			UNION
+			(SELECT v.*
+			FROM vwphotographywithranking v 
+			WHERE v.Location REGEXP SearchQuery
+			GROUP BY v.Id
+			ORDER BY v.AverageRank DESC,v.Id DESC))sub;
 	END IF;
 END//
 DELIMITER ;
@@ -495,6 +539,27 @@ BEGIN
 	IF NOT FOUND_ROWS() THEN 	
 		SELECT -1 AS Id;
 	END IF;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspGetTags
+DROP PROCEDURE IF EXISTS `uspGetTags`;
+DELIMITER //
+CREATE PROCEDURE `uspGetTags`(
+	IN `CurrentPage` INT,
+	IN `PageSize` INT
+)
+BEGIN
+	DECLARE rec_take INT;
+	DECLARE rec_skip INT;
+	
+	SET rec_take = PageSize;
+	SET rec_skip = (CurrentPage - 1) * PageSize;
+
+	SELECT DISTINCT t.word AS  'Tag'
+	FROM tbltag t
+	LIMIT rec_take
+	OFFSET rec_skip;
 END//
 DELIMITER ;
 

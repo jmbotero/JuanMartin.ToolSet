@@ -4,6 +4,7 @@ using JuanMartin.Kernel.Adapters;
 using JuanMartin.Kernel.Messaging;
 using JuanMartin.Models.Gallery;
 using JuanMartin.PhotoGallery.Models;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -15,13 +16,21 @@ namespace JuanMartin.PhotoGallery.Services
     {
         private readonly IExchangeRequestReply _dbAdapter;
 
-        public const int PageSize = 8;
-        public const int BlockSize = 5;  // # pages in a block
+        public int PageSize { get; set; }
+
+        // # pages in a block
+        public int BlockSize { get; set; }
 
         public PhotoService()
         {
             _dbAdapter = new AdapterMySql(Startup.ConnectionString);
         }
+        public PhotoService(IConfiguration configuration) : this()
+        {
+            BlockSize = Convert.ToInt32(configuration["GalleryBlockSize"]);
+            PageSize = Convert.ToInt32(configuration["GalleryPageSize"]);
+        }
+
         internal static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
         {
             IPhotoService.LoadPhotographies(dbAdapter, directory, acceptedExtensions, directoryIsLink);
@@ -34,7 +43,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("PhotoGraphies", $"uspGetAllPhotographies({pageId},{PhotoService.PageSize},{userId})"));
+            request.AddData(new ValueHolder("PhotoGraphies", $"uspGetAllPhotographies({pageId},{this.PageSize},{userId})"));
             request.AddSender("uspGetAllPhotographies", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -73,7 +82,7 @@ namespace JuanMartin.PhotoGallery.Services
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
-            
+
             return (IRecordSet)_dbAdapter.Receive();
         }
 
@@ -94,7 +103,7 @@ namespace JuanMartin.PhotoGallery.Services
             var galleryIdsList = (string)reply.Data.GetAnnotationByValue(1).GetAnnotation("Ids").Value;
             var rowCount = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("RowCount").Value;
 
-            return ($",{galleryIdsList},",rowCount);
+            return ($",{galleryIdsList},", rowCount);
         }
 
         public Photography GetPhotographyById(long photographyId, int userId)
@@ -113,7 +122,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             var photographies = MapPhotographyListFromDatabaseReplyToEntityModel(userId, reply);
 
-            return (photographies.Count==0)?null:photographies[0] ;
+            return (photographies.Count == 0) ? null : photographies[0];
         }
 
         public int UpdatePhotographyRanking(long id, int userId, int rank)
@@ -157,7 +166,7 @@ namespace JuanMartin.PhotoGallery.Services
             var locationId = (int)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
 
             return locationId;
-                                                                                                                                    }
+        }
 
         public User GetUser(string userName, string password)
         {
@@ -287,7 +296,7 @@ namespace JuanMartin.PhotoGallery.Services
                         RemoteHost = remoteHostName,
                         Controller = controller,
                         Action = action,
-                        RouteData =  queryDic
+                        RouteData = queryDic
                     };
                 }
             }
@@ -295,7 +304,7 @@ namespace JuanMartin.PhotoGallery.Services
             return requestModel;
         }
 
-        public RedirectResponseModel SetRedirectInfo(int userId,string remoteHost, string controller, string action, long routeId = -1, string queryString = "")
+        public RedirectResponseModel SetRedirectInfo(int userId, string remoteHost, string controller, string action, long routeId = -1, string queryString = "")
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
@@ -459,7 +468,7 @@ namespace JuanMartin.PhotoGallery.Services
             {
                 foreach (ValueHolder record in reply.Data.Annotations)
                 {
-                    errorCode= (int)record.GetAnnotation("ErrorCode").Value;
+                    errorCode = (int)record.GetAnnotation("ErrorCode").Value;
                     var id = (int)record.GetAnnotation("Id").Value;
                     var login = (string)record.GetAnnotation("Login").Value;
 
@@ -482,7 +491,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
             {
-                foreach(ValueHolder record in reply.Data.Annotations)
+                foreach (ValueHolder record in reply.Data.Annotations)
                 {
                     var id = (long)record.GetAnnotation("Id").Value;
                     var source = Convert.ToInt32(record.GetAnnotation("Source").Value);
@@ -535,7 +544,7 @@ namespace JuanMartin.PhotoGallery.Services
             return Id;
         }
 
-        public int RemoveTag(int userId,  string tag, long id)
+        public int RemoveTag(int userId, string tag, long id)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
@@ -579,21 +588,71 @@ namespace JuanMartin.PhotoGallery.Services
             _dbAdapter.Send(request);
         }
 
-        public IEnumerable<Photography> GetPhotographiesBySearch(int userId, string tags, int pageId = 1)
+        public IEnumerable<Photography> GetPhotographiesBySearch(int userId, string query, int pageId = 1)
         {
-            //throw new ApplicationException($"uspGetPhotographiesBySearch('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')");
+            //throw new ApplicationException($"uspGetPhotographiesBySearch('{userId}','{query}','{pageId}','{PhotoService.PageSize}')");
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetPhotographiesBySearch", $"uspGetPhotographiesBySearch('{userId}','{tags}','{pageId}','{PhotoService.PageSize}')"));
+            request.AddData(new ValueHolder("uspGetPhotographiesBySearch", $"uspGetPhotographiesBySearch('{userId}','{query}','{pageId}','{this.PageSize}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
             IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
 
             return MapPhotographyListFromDatabaseReplyToEntityModel(userId, reply);
+        }
+
+        public IEnumerable<string> GetAllTags(int pageId = 1)
+        {
+            //throw new ApplicationException($"uspGetPhotographiesBySearch('{userId}','{tags}','{pageId}','{this.PageSize}')");
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetTags", $"uspGetTags('{pageId}','{this.PageSize}')"));
+            request.AddSender("Tag", typeof(string).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in reply.Data.Annotations)
+                {
+                    var tag = (string)record.GetAnnotation("Tag").Value;
+
+                    yield return tag;
+                }
+            }
+        }
+
+        public IEnumerable<string> GetAllLocations(int pageId = 1)
+        {
+            //throw new ApplicationException($"uspGetPhotographiesBySearch('{userId}','{locations}','{pageId}','{this.PageSize}')");
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetLocations", $"uspGetLocations('{pageId}','{this.PageSize}')"));
+            request.AddSender("Location", typeof(string).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in reply.Data.Annotations)
+                {
+                    var location = (string)record.GetAnnotation("Location").Value;
+
+                    yield return location;
+                }
+            }
         }
     }
 }

@@ -38,6 +38,9 @@ namespace JuanMartin.PhotoGallery.Controllers
             if (string.IsNullOrEmpty(searchQuery))  // case asp.net mvc name matching does not  work use request querystring
                 searchQuery = HttpContext.Request.Query["searchQuery"].ToString();
 
+            (var isMobile, var device) = HttpUtility.IsMobileDevice(HttpContext);
+            ViewBag.IsMobile=isMobile.ToString();
+
             if (HttpContext.Session is null)
                 Startup.IsSignedIn = "false";
 
@@ -80,13 +83,16 @@ namespace JuanMartin.PhotoGallery.Controllers
                 GetPhotographyIdsList(sessionUserId, _photoService, searchQuery);
                 ViewBag.CurrentPage = pageId;
                 ViewBag.BlockId = blockId;
-                ViewBag.BlockSize = PhotoService.BlockSize;
+                ViewBag.BlockSize = _photoService.BlockSize;
             }
             else
             {
                 model = ProcessSearchQuery(pageId, blockId, searchQuery, model, sessionUserId);
                 //throw new InvalidDataException($"page {pageId} of {searchQuery} with{model.PhotographyCount} images.");
             }
+
+            model.Tags = _photoService.GetAllTags(pageId).OrderBy(x => x).ToList();
+            model.Locations = _photoService.GetAllLocations(pageId).OrderBy(x => x).ToList();
 
             TempData["isSignedIn"] = Startup.IsSignedIn;
             return View(model);
@@ -105,11 +111,14 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             if (string.IsNullOrEmpty(searchQuery))
             {
-                return ViewGalleryIndex(sessionUserId);
+                return RedirectViewGalleryIndex(sessionUserId);
             }
             else
             {
                 model = ProcessSearchQuery(pageId, blockId, searchQuery, model, sessionUserId);
+
+                model.Tags = _photoService.GetAllTags(pageId).OrderBy(x=>x).ToList();
+                model.Locations = _photoService.GetAllLocations(pageId).OrderBy(x => x).ToList();
 
                 _photoService.AddAuditMessage(sessionUserId, $"Search for ({searchQuery}) returned {model.PhotographyCount} results.");
 
@@ -119,10 +128,10 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
 
         [HttpPost]
-        public IActionResult Detail(long id, string searchQuery,  GalleryDetailViewModel model)
+        public IActionResult Detail(long id, int pageId, int blockId, string searchQuery,  GalleryDetailViewModel model)
         {
             string message = "";
-            int pageId = (int)(id / PhotoService.PageSize) + 1;
+            //int pageId = (int)(id / _photoService.PageSize) + 1;
 
             SetViewRedirectInfo("Gallery", "Detail", out int sessionUserId, out RedirectResponseModel redirectInfo, id);
 
@@ -150,26 +159,28 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             var galleryIdList = HttpContext.Session.GetString("galleryIdList");
             ViewBag.GalleryIdList = galleryIdList;
-            // perirst searchQuery for redirects
+            // perirst searchQuery for redirects and blockId
             ViewBag.SearchQuery = searchQuery;
+            ViewBag.BlockId = blockId;
 
             return View(PrepareDetailViewModel(id, searchQuery, pageId));
         }
 
         [HttpGet]
-        public IActionResult Detail(long id, int pageId, string searchQuery)
+        public IActionResult Detail(long id, int pageId, int blockId, string searchQuery)
         {
-            int newPageId = (int)(id / PhotoService.PageSize) + 1;
+            //int newPageId = (int)(id / _photoService.PageSize) + 1;
             SetViewRedirectInfo("Gallery", "Detail", out _, out _, id);
             
             TempData["isSignedIn"] = Startup.IsSignedIn;
 
             var galleryIdList = HttpContext.Session.GetString("galleryIdList");
             ViewBag.GalleryIdList = galleryIdList;
-            // perirst searchQuery for redirects
+            // perirst searchQuery and blockId for redirects
             ViewBag.SearchQuery = searchQuery;
+            ViewBag.BlockId = blockId;
 
-            return View(PrepareDetailViewModel(id, searchQuery, newPageId));
+            return View(PrepareDetailViewModel(id, searchQuery, pageId));
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -195,16 +206,8 @@ namespace JuanMartin.PhotoGallery.Controllers
 
         private GalleryIndexViewModel  ProcessSearchQuery(int pageId, int blockId, string searchQuery, GalleryIndexViewModel model, int sessionUserId)
         {
-            string message = "";
-
-            if (searchQuery.Contains(' '))
-                message = "Search query must not contain spaces!";
-            else
-            {
-                searchQuery = searchQuery.Replace(',', '|'); // prepare search for use as regular expression
-                model.Album = (List<Photography>)_photoService.GetPhotographiesBySearch(sessionUserId, searchQuery, pageId);
-            }
-            ViewBag.Message = message;
+            searchQuery = searchQuery.Replace(',', '|'); // prepare search for use as regular expression
+            model.Album = (List<Photography>)_photoService.GetPhotographiesBySearch(sessionUserId, searchQuery, pageId);
 
             var count = GetPhotographyIdsList(sessionUserId, _photoService, searchQuery);
             searchQuery = searchQuery.Replace("|", ",");
@@ -212,7 +215,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             model.PhotographyCount = count;
             ViewBag.CurrentPage = pageId;
             ViewBag.BlockId = blockId;
-            ViewBag.BlockSize = PhotoService.BlockSize;
+            ViewBag.BlockSize = _photoService.BlockSize;
 
             // perirst searchQuery for redirects
             ViewBag.SearchQuery = searchQuery;
@@ -297,17 +300,17 @@ namespace JuanMartin.PhotoGallery.Controllers
             (string galleryIdList, long rowCount) = photoService.uspGetPhotographyIdsList(userID, searchQuery);
 
             HttpContext.Session.SetString("galleryIdList", galleryIdList);
-            ViewBag.PageCount = (int)(rowCount / PhotoService.PageSize) + 1;
+            ViewBag.PageCount = (int)(rowCount / _photoService.PageSize) + 1;
 
             return (int)rowCount;
         }
 
         private int SetGalleryNavigationIds(long id)
         {
-            int pageId = (int)(id / PhotoService.PageSize) + 1;
+            int pageId = (int)(id / _photoService.PageSize) + 1;
 
             // correct border cases
-            if (id % PhotoService.PageSize == 0)
+            if (id % _photoService.PageSize == 0)
                 pageId--;
             
             return pageId;
@@ -348,7 +351,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        private ActionResult ViewGalleryIndex(int userId)
+        private ActionResult RedirectViewGalleryIndex(int userId)
         {
             var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
 

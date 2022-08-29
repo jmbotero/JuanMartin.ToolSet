@@ -1,6 +1,5 @@
 SET foreign_key_checks = 0;
 TRUNCATE TABLE `tblphotography`; 
-TRUNCATE TABLE `tbluser`;
 
 -- Dumping data for table gallery.tblphotography: ~2588 rows 
 INSERT INTO `tblphotography` (`id`, `_source`, `_path`, `title`, `filename`, `location_id`) VALUES

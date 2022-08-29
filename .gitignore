@@ -348,3 +348,7 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# ASP.NET content
+JuanMartin.PhotoGallery/wwwroot/photos/**/*
+JuanMartin.PhotoGallery/wwwroot/photos_*/**/*

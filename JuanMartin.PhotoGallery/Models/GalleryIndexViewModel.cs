@@ -13,5 +13,8 @@ namespace JuanMartin.PhotoGallery.Models
         public long PhotographyCount{ get; set; }
         public int PageId { get; set; }
         public int BlockId { get; set; }
+        public List<string> Tags { get; set; }
+        public List<string> Locations { get; set; }
+
     }
 }

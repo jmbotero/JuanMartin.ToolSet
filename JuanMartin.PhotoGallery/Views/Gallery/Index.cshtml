@@ -5,14 +5,56 @@
     var pageCount = ViewBag.PageCount;
     var currentPage = ViewBag.CurrentPage;
     var currentBlock = ViewBag.BlockId;
+    var nextBlock = currentBlock;
+    int nextPage;
     var blockSize = ViewBag.BlockSize;
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    baseUrl = baseUrl + "/Gallery/Index";
+    string galleryUrl = "";
 
     var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
 
     // persist values
     var queryString = $"&searchQuery={searchQuery}";
 }
+<div class="navbar">
+
+    <table>
+        <tr>
+            <td>
+                @if(Model.Locations.Count>0)
+                {
+                <div id="tagViews" class="dropdown">
+                    <button class="dropbtn">Display by Tags</button>
+                    <div class="dropdown-content">
+                        @foreach(string tag in Model.Tags)
+                        {
+                                var t = tag.Capitalize();
+                                galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={t}";
+                            <a href="@galleryUrl">@t</a>
+                        }
+                    </div>
+                </div>
+                }
+            </td>
+            <td>
+                @if(Model.Tags.Count>0)
+                {
+                <div id="locationViews" class="dropdown">
+                        <button class="dropbtn">Display by Locations</button>
+                    <div class="dropdown-content">
+                        @foreach(string location in Model.Locations)
+                        {
+                            galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={location.Capitalize()}";
+                            <a href="@galleryUrl">@location</a>
+                        }
+                    </div>
+                </div>
+                }
+            </td>
+        </tr>
+    </table>
+</div>
 @if (@ViewBag.Message != null)
 {
 
@@ -25,8 +67,8 @@
     <span>user id = '@ViewBag.Suid'</span>
     <br />
     <span>sesssion id = '@ViewBag.Sid'</span>
-</div>*@
-@if (@ViewBag.InfoMessage != null)
+    </div>
+*@@if (@ViewBag.InfoMessage != null)
 {
 
     <div class="info-message">
@@ -40,7 +82,7 @@
         {
             int i = 0;
 
-            @foreach (var image in Model.Album)
+            foreach (var image in Model.Album)
             {
                 <div class="gallery-image-index-container">
                     @{
@@ -48,7 +90,7 @@
                         var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
                         var url = Url.Content(path);
                     }
-                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-searchQuery="@searchQuery">
+                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-searchQuery="@searchQuery">
                         <img class="gallery-image-index" src="@url" />
                     </a>
                     @*<div class="gallery-image-index" style="background-image:url(@url)"/>*@
@@ -80,89 +122,103 @@
             <span>Photography page is empty.</span>
         }
     </div>
+    @* this should be a partial view *@
+    @{
+        var blockStart = (currentBlock - 1) * blockSize + 1;
+        int blockCount = (pageCount / blockSize) + 1;
+        var listOfBlocks = Enumerable.Range(1, blockCount).Select(i => i.ToString()).ToList();
+    }
+    @if (pageCount > 1)
+    {
+        <table>
+            <tr>
+                <td>
+                    <div id="pageList" class="pagination">
+                        @if (currentBlock > 1)
+                        {
+                            nextBlock = currentBlock - 1;
+                            nextPage = (nextBlock - 1) * blockSize + 1;
+                            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+                            <a href="@galleryUrl">&laquo;</a>
+                        }
+                        @if (currentPage > 1)
+                        {
+                            nextPage = currentPage - 1;
+
+                            if (nextPage == blockStart - 1)
+                            {
+                                nextBlock = currentBlock - 1;
+                            }
+
+                            galleryUrl = baseUrl + $"?pageId={nextPage}&blocckId={nextBlock}" + queryString;
+                            <a href="@galleryUrl">&lsaquo;</a>
+                        }
+                        @{
+                            var blockEnd = blockStart + blockSize - 1;
+                            if (blockEnd > pageCount)
+                            {
+                                blockEnd = pageCount;
+                            }
+                            
+                            for (int p = blockStart; p < blockEnd; p++)
+                            {
+                                galleryUrl = baseUrl + $"?pageId={p}&blockId={currentBlock}" + queryString;
+                                string aClass = "";
+
+                                if (p == currentPage)
+                                {
+                                    aClass = "class=active";
+                                }
+                                <a href="@galleryUrl" @aClass>@p</a>
+                            }
+                        }
+                        @if (blockEnd < pageCount)
+                        {
+                            nextPage = currentPage + 1;
+                            nextBlock = currentBlock + 1;
+
+                            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+                            <a href="@galleryUrl">&rsaquo;</a>
+
+                            nextPage = (currentBlock) * blockSize + 1;
+                            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+                            <a href="@galleryUrl">&raquo;</a>
+                        }
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span style="font-size:12px;black;">Available Blocks...</span>
+                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="A block is a group of  @blockSize pages. Pages
+are grouped, to organize display of photographs." />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="blockList" class="pagination">
+                        @{
+                            string list = string.Empty;
+
+                            foreach (var (b, index) in listOfBlocks.Enumerate())
+                            {
+                                nextBlock = Convert.ToInt32(b);
+                                nextPage = (nextBlock - 1) * blockSize + 1;
+                                galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+
+                                if (b == currentBlock.ToString())
+                                {
+                                    <a href="@galleryUrl">@b</a>
+                                }
+                                else
+                                {
+                                    <a href="@galleryUrl" style="color: var(--site-navigation-color);">@b</a>
+                                }
+                            }
+                        }
+                    </div>
+                </td>
+            </tr>
+        </table>
+    }
 </div>
-<br />
-@* this should be a partial view *@
-@{
-    baseUrl = baseUrl + "/Gallery/Index";
-    string galleryUrl = "";
-    var nextBlock = currentBlock;
-    int nextPage;
-    var blockStart = (currentBlock - 1) * blockSize + 1;
-    int blockCount = (pageCount / blockSize) + 1;
-    var listOfBlocks = Enumerable.Range(1, blockCount).Select(i => i.ToString()).ToList();
-}
-@if (pageCount > 1)
-{
-        <div class="pagination">
-        @if (currentBlock > 1)
-        {
-            nextBlock = currentBlock - 1;
-            nextPage = (nextBlock - 1) * blockSize + 1;
-            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
-            <a href="@galleryUrl">&laquo;</a>
-        }
-        @if (currentPage > 1)
-        {
-            nextPage = currentPage - 1;
-
-            if (nextPage == blockStart - 1)
-                nextBlock = currentBlock - 1;
-
-            galleryUrl = baseUrl + $"?pageId={nextPage}&blocckId={nextBlock}" + queryString;
-            <a href="@galleryUrl">&lsaquo;</a>
-        }
-        @{
-            var blockEnd = blockStart + blockSize - 1;
-            if (blockEnd > pageCount)
-                blockEnd = pageCount;
-
-            for (int p = blockStart; p <= blockEnd; p++)
-            {
-                galleryUrl = baseUrl + $"?pageId={p}&blockId={currentBlock}" + queryString;
-                string aClass = "";
-
-                 if (p == currentPage)
-                {
-                    aClass = "class=active";
-                }
-                                            <a href="@galleryUrl" @aClass>@p</a>
-            }
-        }
-        @if (blockEnd < pageCount)
-        {
-            nextPage = currentPage + 1;
-            nextBlock = currentBlock + 1;
-
-            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
-            <a href="@galleryUrl">&rsaquo;</a>
-
-            nextPage = (currentBlock) * blockSize + 1;                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
-            <a href="@galleryUrl">&raquo;</a>
-        }
-
-        <div class="small-info-message" style="color:black;">Available Blocks...</div>
-        <div id="blockList" style=" font-weight: bold;font-size: 8px;font-family: Arial, Helvetica, sans-serif;color:black;">
-            @{
-                string list = string.Empty;
-
-                foreach (var (b, index) in listOfBlocks.Enumerate())
-                {
-                    nextBlock = Convert.ToInt32(b);
-                    nextPage = (nextBlock - 1) * blockSize + 1;
-                    galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
-
-                        @if (b == currentBlock.ToString())
-                    {
-                            <a href="@galleryUrl">@b</a>
-                    }
-                    else
-                    {
-                            <a href="@galleryUrl" style="color: var(--site-navigation-color);">@b</a>
-                    }
-            }
-        }
-        </div>
-    </div>
-}                   

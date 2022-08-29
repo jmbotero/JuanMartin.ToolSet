@@ -33,7 +33,10 @@ namespace JuanMartin.PhotoGallery
             services.AddDistributedMemoryCache();//To Store session in Memory, This is default implementation of IDistributedCache  `
             services.AddSession();
             services.AddControllersWithViews();
-            services.AddScoped<IPhotoService, PhotoService>();
+            
+            var photoService = new PhotoService(Configuration);
+
+            services.AddSingleton<IPhotoService>(photoService);
             services.AddSingleton<IConfiguration>(Configuration);
         }
 
