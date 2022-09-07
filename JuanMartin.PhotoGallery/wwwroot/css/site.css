@@ -85,6 +85,14 @@ button.accept-policy {
     border-color: grey;
 }
 
+/*
+    disable downloads
+    https://stackoverflow.com/questions/21110130/protect-image-download
+*/
+img {
+    pointer-events: none;
+}
+
 html {
   position: relative;
   min-height: 100%;
@@ -133,7 +141,7 @@ body {
     box-shadow: 0 10px 18px rgba(0, 0,0, 0.2), 0 5px 5px rgba(0, 0,0, 0.2);
 }
 
-.gallery-image-detail-container {
+.gallery-image- detail-container {
     width: max-content;
 }
 
@@ -149,6 +157,7 @@ body {
 }
 
 .gallery-image-detail-meta {
+    width: inherit;
     padding: 12px;
     font-size: 12px;
     font-family: Arial, Helvetica, sans-serif;
@@ -164,6 +173,10 @@ body {
     text-align: right;
 }
 
+.gallery-image-detail-meta-column-sidenote {
+    align-items: center;
+    width:fit-content;
+}
 .gallery-image-detail-nav {
     padding-left: 15px;
     padding-right: 15px;

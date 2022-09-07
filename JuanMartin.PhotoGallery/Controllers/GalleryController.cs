@@ -37,8 +37,8 @@ namespace JuanMartin.PhotoGallery.Controllers
             {
             if (string.IsNullOrEmpty(searchQuery))  // case asp.net mvc name matching does not  work use request querystring
                 searchQuery = HttpContext.Request.Query["searchQuery"].ToString();
-
-            (var isMobile, var device) = HttpUtility.IsMobileDevice(HttpContext);
+            
+             (var isMobile, var device) = HttpUtility.IsMobileDevice(HttpContext);
             ViewBag.IsMobile=isMobile.ToString();
 
             if (HttpContext.Session is null)

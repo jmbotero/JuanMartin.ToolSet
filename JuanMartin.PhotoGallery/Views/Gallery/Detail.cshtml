@@ -65,6 +65,7 @@
             <tr>
                 <td class="gallery-image-detail-meta-column-left">FileName: </td>
                 <td class="gallery-image-detail-meta-column-right">@Model.Image.FileName</td>
+                <td class="gallery-image-detail-meta-column-sidenote"></td>
             </tr>
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Location: </td>
@@ -72,9 +73,11 @@
                     <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <input style="width: 150px;" type="text" asp-for="Location" value="@Model.Image.Location">
                         <button type="submit" style="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-list-action" src="~/plus.png" /></button>
-                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Use textbox to specify the location
-for the current image, and click plus icon to submit." />
                     </form>
+                </td>
+                <td class="gallery-image-detail-meta-column-sidenote">
+                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Use textbox to specify the location
+for the current image, and click plus icon to submit." />
                 </td>
             </tr>
             <tr>
@@ -93,17 +96,19 @@ for the current image, and click plus icon to submit." />
                         <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
                         <button type="submit" style="border:none;background-color: white;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.png" /></button>
                         <button type="submit" style="border:none;background-color: white;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.png" /></button>
-                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
-Use textbox to specify an image
-to add or  remove." />
                     </form>
                 </td>
-            </tr> 
+                <td class="gallery-image-detail-meta-column-sidenote">
+                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+Use textbox to specify an image
+to add or  remove." />
+                </td>
+            </tr>
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Rank: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     @*<span>-@Model.Image.Rank-</span>*@
-                    <form id="rank" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
+                    <form id="imageRank" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <div class="ranking">
                             @for (int i = 1; i <= 10; i++)
                             {
@@ -115,11 +120,13 @@ to add or  remove." />
                                 }
                                 <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
                             }
-                            <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
-Number of stars equals image rating." />
-                            <input type="text" id="rank" asp-for="SelectedRank">
                         </div>
+                        <input type="text" id="rank" asp-for="SelectedRank">
                     </form>
+                </td>
+                <td class="gallery-image-detail-meta-column-sidenote">
+                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+Number of stars equals image rating." />
                 </td>
             </tr>
         </table>

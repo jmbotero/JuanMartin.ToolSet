@@ -29,8 +29,8 @@
                     <div class="dropdown-content">
                         @foreach(string tag in Model.Tags)
                         {
-                                var t = tag.Capitalize();
-                                galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={t}";
+                            var t = tag.Capitalize();
+                            galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={t}";
                             <a href="@galleryUrl">@t</a>
                         }
                     </div>
@@ -38,7 +38,7 @@
                 }
             </td>
             <td>
-                @if(Model.Tags.Count>0)
+                @if(Model.Locations.Count>0)
                 {
                 <div id="locationViews" class="dropdown">
                         <button class="dropbtn">Display by Locations</button>
@@ -92,8 +92,8 @@
                     }
                     <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-searchQuery="@searchQuery">
                         <img class="gallery-image-index" src="@url" />
+@*                        <div class="gallery-image-index" style="background-image:url(@url)"/>*@
                     </a>
-                    @*<div class="gallery-image-index" style="background-image:url(@url)"/>*@
                     <div class="overlay">
                         <table>
                             <tr>
