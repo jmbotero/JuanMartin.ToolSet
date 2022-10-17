@@ -18,5 +18,6 @@ namespace JuanMartin.PhotoGallery.Models
         //public List<SelectListItem> Tags { get; set; }
         public string Tag { get; set; }
         public string SelectedTagListAction { get; set; }
+        public string ShoppingCartAction { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 @using JuanMartin.PhotoGallery.Controllers;
 @using JuanMartin.Kernel.Extesions;
 @{
+    var isCartView = (ViewBag.DisplayPhotogrphiesAsOrder is null) ? false : (bool)ViewBag.DisplayPhotogrphiesAsOrder;
     var pageCount = ViewBag.PageCount;
     var currentPage = ViewBag.CurrentPage;
     var currentBlock = ViewBag.BlockId;
@@ -17,45 +18,48 @@
     // persist values
     var queryString = $"&searchQuery={searchQuery}";
 }
-<div class="navbar">
+@if (!isCartView)
+{
+    <div class="navbar">
 
-    <table>
-        <tr>
-            <td>
-                @if(Model.Locations.Count>0)
-                {
-                <div id="tagViews" class="dropdown">
-                    <button class="dropbtn">Display by Tags</button>
-                    <div class="dropdown-content">
-                        @foreach(string tag in Model.Tags)
-                        {
-                            var t = tag.Capitalize();
-                            galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={t}";
-                            <a href="@galleryUrl">@t</a>
-                        }
-                    </div>
-                </div>
-                }
-            </td>
-            <td>
-                @if(Model.Locations.Count>0)
-                {
-                <div id="locationViews" class="dropdown">
-                        <button class="dropbtn">Display by Locations</button>
-                    <div class="dropdown-content">
-                        @foreach(string location in Model.Locations)
-                        {
-                            galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={location.Capitalize()}";
-                            <a href="@galleryUrl">@location</a>
-                        }
-                    </div>
-                </div>
-                }
-            </td>
-        </tr>
-    </table>
-</div>
-@if (@ViewBag.Message != null)
+        <table>
+            <tr>
+                <td>
+                    @if (Model.Locations.Count > 0)
+                    {
+                        <div id="tagViews" class="dropdown">
+                            <button class="dropbtn">Display by Tags</button>
+                            <div class="dropdown-content">
+                                @foreach (string tag in Model.Tags)
+                                {
+                                    var t = tag.Capitalize();
+                                    galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={t}";
+                                    <a href="@galleryUrl">@t</a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </td>
+                <td>
+                    @if (Model.Locations.Count > 0)
+                    {
+                        <div id="locationViews" class="dropdown">
+                            <button class="dropbtn">Display by Locations</button>
+                            <div class="dropdown-content">
+                                @foreach (string location in Model.Locations)
+                                {
+                                    galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={location.Capitalize()}";
+                                    <a href="@galleryUrl">@location</a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+}
+@if (@ViewBag.Message != null && @ViewBag.Message != "")
 {
 
     <div class="error-message">
@@ -63,12 +67,7 @@
     </div>
     <br />
 }
-@*<div id="debugInfo" style="color:red; font-size:8px;">
-    <span>user id = '@ViewBag.Suid'</span>
-    <br />
-    <span>sesssion id = '@ViewBag.Sid'</span>
-    </div>
-*@@if (@ViewBag.InfoMessage != null)
+@if (@ViewBag.InfoMessage != null)
 {
 
     <div class="info-message">
@@ -76,149 +75,209 @@
     </div>
     <br />
 }
-<div class="container body-content">
-    <div class="gallery-content">
-        @if (Model.Album != null && Model.Album.Count > 0)
-        {
-            int i = 0;
-
-            foreach (var image in Model.Album)
+@if (!isCartView)
+{
+    <div class="container body-content">
+        <div class="gallery-content">
+            @if (Model.Album != null && Model.Album.Count > 0)
             {
-                <div class="gallery-image-index-container">
-                    @{
-                        i++;
-                        var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
-                        var url = Url.Content(path);
-                    }
-                    <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-searchQuery="@searchQuery">
-                        <img class="gallery-image-index" src="@url" />
-@*                        <div class="gallery-image-index" style="background-image:url(@url)"/>*@
-                    </a>
-                    <div class="overlay">
-                        <table>
-                            <tr>
-                                <td style="width:max-content; text-align:right">Name: </td>
-                                <td>@image.FileName</td>
-                            </tr>
-                            <tr>
-                                <td style="width:max-content; text-align:right">Location: </td>
-                                <td>@image.Location</td>
-                            </tr>
-                            @if (image.AverageRank > 0)
-                            {
-                                <tr>
-                                    <td style="width:max-content; text-align:right">Average Rank: </td>
-                                    <td style="color:gold;">@image.AverageRank ★'s</td>
-                                </tr>
-                            }
-                        </table>
-                    </div>
-                    <span id="photo-id-@i" style="display: none;">@image.Id</span>
-                </div>
-            }
-        }
-        else
-        {
-            <span>Photography page is empty.</span>
-        }
-    </div>
-    @* this should be a partial view *@
-    @{
-        var blockStart = (currentBlock - 1) * blockSize + 1;
-        int blockCount = (pageCount / blockSize) + 1;
-        var listOfBlocks = Enumerable.Range(1, blockCount).Select(i => i.ToString()).ToList();
-    }
-    @if (pageCount > 1)
-    {
-        <table>
-            <tr>
-                <td>
-                    <div id="pageList" class="pagination">
-                        @if (currentBlock > 1)
-                        {
-                            nextBlock = currentBlock - 1;
-                            nextPage = (nextBlock - 1) * blockSize + 1;
-                            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
-                            <a href="@galleryUrl">&laquo;</a>
-                        }
-                        @if (currentPage > 1)
-                        {
-                            nextPage = currentPage - 1;
+                int i = 0;
 
-                            if (nextPage == blockStart - 1)
+                foreach (var image in Model.Album)
+                {
+                    <div class="gallery-image-index-container">
+                        @{
+                            i++;
+                            var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
+                            var url = Url.Content(path);
+                        }
+                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-searchQuery="@searchQuery">
+                            <img class="gallery-image-index" src="@url" />
+                            @*                        <div class="gallery-image-index" style="background-image:url(@url)"/>*@
+                        </a>
+                        <div class="overlay">
+                            <table>
+                                <tr>
+                                    <td style="width:max-content; text-align:right">Name: </td>
+                                    <td>@image.FileName</td>
+                                </tr>
+                                <tr>
+                                    <td style="width:max-content; text-align:right">Location: </td>
+                                    <td>@image.Location</td>
+                                </tr>
+                                @if (image.AverageRank > 0)
+                                {
+                                    <tr>
+                                        <td style="width:max-content; text-align:right">Average Rank: </td>
+                                        <td style="color:gold;">@image.AverageRank ★'s</td>
+                                    </tr>
+                                }
+                            </table>
+                        </div>
+                        <span id="photo-id-@i" style="display: none;">@image.Id</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <span>Photography page is empty.</span>
+            }
+        </div>
+        @* this should be a partial view *@
+        @{
+            var blockStart = (currentBlock - 1) * blockSize + 1;
+            int blockCount = (pageCount / blockSize) + 1;
+            var listOfBlocks = Enumerable.Range(1, blockCount).Select(i => i.ToString()).ToList();
+        }
+        @if (pageCount > 1)
+        {
+            <table>
+                <tr>
+                    <td>
+                        <div id="pageList" class="pagination">
+                            @if (currentBlock > 1)
                             {
                                 nextBlock = currentBlock - 1;
-                            }
-
-                            galleryUrl = baseUrl + $"?pageId={nextPage}&blocckId={nextBlock}" + queryString;
-                            <a href="@galleryUrl">&lsaquo;</a>
-                        }
-                        @{
-                            var blockEnd = blockStart + blockSize - 1;
-                            if (blockEnd > pageCount)
-                            {
-                                blockEnd = pageCount;
-                            }
-                            
-                            for (int p = blockStart; p < blockEnd; p++)
-                            {
-                                galleryUrl = baseUrl + $"?pageId={p}&blockId={currentBlock}" + queryString;
-                                string aClass = "";
-
-                                if (p == currentPage)
-                                {
-                                    aClass = "class=active";
-                                }
-                                <a href="@galleryUrl" @aClass>@p</a>
-                            }
-                        }
-                        @if (blockEnd < pageCount)
-                        {
-                            nextPage = currentPage + 1;
-                            nextBlock = currentBlock + 1;
-
-                            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
-                            <a href="@galleryUrl">&rsaquo;</a>
-
-                            nextPage = (currentBlock) * blockSize + 1;
-                            galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
-                            <a href="@galleryUrl">&raquo;</a>
-                        }
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span style="font-size:12px;black;">Available Blocks...</span>
-                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="A block is a group of  @blockSize pages. Pages
-are grouped, to organize display of photographs." />
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div id="blockList" class="pagination">
-                        @{
-                            string list = string.Empty;
-
-                            foreach (var (b, index) in listOfBlocks.Enumerate())
-                            {
-                                nextBlock = Convert.ToInt32(b);
                                 nextPage = (nextBlock - 1) * blockSize + 1;
                                 galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+                                <a href="@galleryUrl">&laquo;</a>
+                            }
+                            @if (currentPage > 1)
+                            {
+                                nextPage = currentPage - 1;
 
-                                if (b == currentBlock.ToString())
+                                if (nextPage == blockStart - 1)
                                 {
-                                    <a href="@galleryUrl">@b</a>
+                                    nextBlock = currentBlock - 1;
                                 }
-                                else
+
+                                galleryUrl = baseUrl + $"?pageId={nextPage}&blocckId={nextBlock}" + queryString;
+                                <a href="@galleryUrl">
+
+                                </a>
+                            }
+                            @{
+                                var blockEnd = blockStart + blockSize - 1;
+                                if (blockEnd > pageCount)
                                 {
-                                    <a href="@galleryUrl" style="color: var(--site-navigation-color);">@b</a>
+                                    blockEnd = pageCount;
+                                }
+
+                                for (int p = blockStart; p < blockEnd; p++)
+                                {
+                                    galleryUrl = baseUrl + $"?pageId={p}&blockId={currentBlock}" + queryString;
+                                    string aClass = "";
+
+                                    if (p == currentPage)
+                                    {
+                                        aClass = "class=active";
+                                    }
+                                    <a href="@galleryUrl" @aClass>@p</a>
                                 }
                             }
-                        }
+                            @if (blockEnd < pageCount)
+                            {
+                                nextPage = currentPage + 1;
+                                nextBlock = currentBlock + 1;
+
+                                galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+                                <a href="@galleryUrl">&rsaquo;</a>
+
+                                nextPage = (currentBlock) * blockSize + 1;
+                                galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+                                <a href="@galleryUrl">&raquo;</a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span style="font-size:12px;">Available Blocks...</span>
+                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="A block is a group of  @blockSize pages. Pages
+are grouped, to organize display of photographs." />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="blockList" class="pagination">
+                            @{
+                                string list = string.Empty;
+
+                                foreach (var (b, index) in listOfBlocks.Enumerate())
+                                {
+                                    nextBlock = Convert.ToInt32(b);
+                                    nextPage = (nextBlock - 1) * blockSize + 1;
+                                    galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+
+                                    if (b == currentBlock.ToString())
+                                    {
+                                        <a href="@galleryUrl">@b</a>
+                                    }
+                                    else
+                                    {
+                                        <a href="@galleryUrl" style="color: var(--site-navigation-color);">@b</a>
+                                    }
+                                }
+                            }
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        }
+    </div>
+}
+else
+{
+    <div class="container body-content">
+        <div class="gallery-content">
+            @if (Model.Album != null && Model.Album.Count > 0)
+            {
+                <form id="shoppincCart" asp-controller="Gallery" asp-action="Index" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-cartView="true" method="post">
+                    <input style="display: none;" type="text" id="currentImageCartAction" asp-for="ShoppingCartAction">
+                    <input style="display: none;" type="text" id="cartItemsSequence" asp-for="CartItemsSequence">
+                    <input style="display: none;" type="text" id="dragImageIndex" asp-for="DragImageIndex">
+                    <input style="display: none;" type="text" id="dropImageIndex" asp-for="DropImageIndex">
+                    <div class="cart">
+                        <div class="column" id="orderList">
+                            @foreach (var (image, i) in Model.Album.Enumerate())
+                            {
+                                var index = i + 1;
+                                <div class="list-group-item" draggable="true">
+                                    <div class="orderItem" name="@image.Id" index="@index">
+                                        <table>
+                                            <tr>
+                                                <td width="20%">
+                                                    <div class="gallery-image-cart-container">
+                                                        @{
+                                                            var path = System.IO.Path.Combine(image.Path, image.FileName).Replace(@"\", "/");
+                                                            var url = Url.Content(path);
+                                                        }
+                                                        <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-searchQuery="@searchQuery" asp-route-cartView="true">
+                                                            <img class="gallery-image-cart" src="@url" />
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td width="80%" class="gallery-image-detail-meta">
+                                                    <span id="cartItemFileName">@image.FileName</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
-                </td>
-            </tr>
-        </table>
-    }
-</div>
+                    <button type="submit" class="btn btn-nav-text" onclick="SubmitOrderIndices();"><span>Update Order Sequence</span></button>
+                </form>
+            }
+        </div>
+    </div>
+    // persist values
+    queryString = $"?pageId={currentPage}&BlockId={currentBlock}&searchQuery={searchQuery}";
+    galleryUrl = $"{baseUrl}/Index" + queryString;
+    <div class="gallery-image-detail-nav">
+        <a class="btn btn-nav-text" href="@galleryUrl">
+            &laquo; Back to gallery...
+        </a>
+    </div>
+}

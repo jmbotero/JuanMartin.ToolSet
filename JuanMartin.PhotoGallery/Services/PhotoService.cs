@@ -5,17 +5,20 @@ using JuanMartin.Kernel.Messaging;
 using JuanMartin.Models.Gallery;
 using JuanMartin.PhotoGallery.Models;
 using Microsoft.Extensions.Configuration;
+using PayPal.Api;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using static JuanMartin.PhotoGallery.Services.IPhotoService;
+using Order = JuanMartin.Models.Gallery.Order;
 
 namespace JuanMartin.PhotoGallery.Services
 {
     public class PhotoService : IPhotoService
     {
         private readonly IExchangeRequestReply _dbAdapter;
-
+        
         public int PageSize { get; set; }
 
         // # pages in a block
@@ -86,15 +89,14 @@ namespace JuanMartin.PhotoGallery.Services
             return (IRecordSet)_dbAdapter.Receive();
         }
 
-        public (string GalleryIdsList, long RowCount) uspGetPhotographyIdsList(int userID, string searchQuery)
+        public (string ImageIdsList, long RowCount) GetPhotographyIdsList(int userID, ImageListSource source, string searchQuery, int OrderId)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            var hasQuery = string.IsNullOrEmpty(searchQuery) ? 0 : 1;
-            request.AddData(new ValueHolder("uspGetPhotographyIdsList", $"uspGetPhotographyIdsList('{userID}','{hasQuery}','{searchQuery}')"));
+            request.AddData(new ValueHolder("uspGetPhotographyIdsList", $"uspGetPhotographyIdsList('{userID}','{(int)source}','{searchQuery}','{OrderId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -485,6 +487,54 @@ namespace JuanMartin.PhotoGallery.Services
             return (errorCode, user);
         }
 
+        private static Order MapOrderFromDatabaseReplyToEntityModel(int userId, IRecordSet reply)
+        {
+            Order order= null;
+
+            if (reply.Data != null && reply.Data.GetAnnotation("Record") != null)
+            {
+                foreach (ValueHolder record in reply.Data.Annotations)
+                {
+                    // be sure record.GetAnnotation("...") exists and is not null
+                    int id = Convert.ToInt32(record.GetAnnotation("Id").Value);
+
+                    string n = (string)record.GetAnnotation("Number").Value;
+                    if (string.IsNullOrEmpty(n))
+                        n = Guid.Empty.ToString();
+
+                    Guid number = Guid.Parse(n);
+                    DateTime createdDtm = Convert.ToDateTime(record.GetAnnotation("CreatedDtm").Value);
+                    string statusString = (string)record.GetAnnotation("Status").Value;
+                    int count = Convert.ToInt32(record.GetAnnotation("Count").Value);
+
+                    Order.OrderStatus status;
+                    switch (statusString)
+                    {
+                        case "inProcess":
+                            {
+                                status = Order.OrderStatus.inProcess;
+                                break;
+                            }
+                        case "complete":
+                            {
+                                status = Order.OrderStatus.complete;
+                                break;
+                            }
+                        default:
+                            {
+                                status = Order.OrderStatus.pending;
+                                break;
+                            }
+                    }
+
+                    order = new Order(id, userId, number, createdDtm, count, status);
+                }
+            }
+
+            return order;
+        }
+
+
         private static List<Photography> MapPhotographyListFromDatabaseReplyToEntityModel(int userId, IRecordSet reply)
         {
             var photographies = new List<Photography>();
@@ -653,6 +703,174 @@ namespace JuanMartin.PhotoGallery.Services
                     yield return location;
                 }
             }
+        }
+
+        public Order GetCurrentActiveOrder(int userId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetCurrentActiveOrder", $"uspGetCurrentActiveOrder('{userId}')"));
+            request.AddSender("Order", typeof(Order).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            return MapOrderFromDatabaseReplyToEntityModel(userId, reply);
+        }
+
+        public Order GetOrder(int userId, int orderId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetOrder", $"uspGetOrder('{orderId}','{userId}','-1')"));
+            request.AddSender("Order", typeof(Order).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            return MapOrderFromDatabaseReplyToEntityModel(userId, reply);
+        }
+
+        public Order AddOrder(int userId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspAddOrder", $"uspAddOrder('{userId}')"));
+            request.AddSender("Order", typeof(Order).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            return MapOrderFromDatabaseReplyToEntityModel(userId, reply);
+        }
+
+        public bool IsPhotographyInOrder(int orerId, long photographyId, int userId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspIsPhotographyInOrder", $"uspIsPhotographyInOrder('{orerId}','{photographyId}','{userId}')"));
+            request.AddSender("Order", typeof(Order).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            return (reply != null && reply.Data != null);
+        }
+
+        public IEnumerable<Photography> GetOrderPhotographies(int userId, int orderId, int pageId = 1)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspGetOrderPhotographies", $"uspGetOrderPhotographies('{userId}','{orderId}','{pageId}','{this.PageSize}')"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            return MapPhotographyListFromDatabaseReplyToEntityModel(userId, reply);
+        }
+
+        public int AddPhotographyToOrder(long id, int orderId, int userId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspAddPhotographyToOrder", $"uspAddPhotographyToOrder('{id}','{orderId}',{userId})"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var Id = Convert.ToInt32(reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value);
+
+            return Id;
+        }
+
+        public int RemovePhotographyFromOrder(long id, int orderId, int userId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspRemovePhotographyFromOrder", $"uspRemovePhotographyFromOrder('{id}','{orderId}',{userId})"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var Id = Convert.ToInt32(reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value);
+
+            return Id;
+        }
+
+        public int RemoveOrder(int orderId, int userId)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspRemoveOrder", $"uspRemoveOrder('{orderId}',{userId})"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            _dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
+
+            var Id = Convert.ToInt32(reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value);
+
+            return Id;
+        }
+
+        /// <summary>
+        /// Update index of all images in order.
+        /// </summary>
+        /// <param name="indices">Comma separated list of images and their indices
+        /// within the order, like: id:index,id:index,id:index,....</param>
+        public bool UpdateOrderItemsIndices(int userId, int orderId, GalleryIndexViewModel model)
+        {
+            if (model == null && !string.IsNullOrEmpty(model.CartItemsSequence)) return false;
+
+            var listOfImagesIndexInOrder = model.CartItemsSequence.Split(',')
+              .Select(s => s.Split(':'))
+              .ToDictionary(a => Convert.ToInt64(a[0].Trim()), a => Convert.ToInt32(a[1].Trim()));
+
+            foreach (var index in listOfImagesIndexInOrder)
+            {
+                UpdateOrderIndex(userId, orderId, index.Key, index.Value);
+            }
+
+            return true;
+        }
+
+        public void UpdateOrderIndex(int userId, int orderId, long photographyId, int index)
+        {
+            if (_dbAdapter == null)
+                throw new ApplicationException("MySql connection not set.");
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspUpdateOrderIndex", $"uspUpdateOrderIndex('{userId}','{orderId}','{photographyId}','{index}')"));
+            request.AddSender("Order", typeof(Order).ToString());
+
+            _dbAdapter.Send(request);
         }
     }
 }

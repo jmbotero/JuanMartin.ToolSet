@@ -16,13 +16,13 @@ namespace JuanMartin.PhotoGallery
     public class Startup
     {
         public static string ConnectionString { get; private set; }
-        public static string IsSignedIn { get; set; } 
+        public static bool IsSignedIn { get; set; } 
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
 
             ConnectionString = Configuration.GetConnectionString("DefaultConnection");
-            IsSignedIn = "false";
+            IsSignedIn = false;
         }
 
         public IConfiguration Configuration { get; }

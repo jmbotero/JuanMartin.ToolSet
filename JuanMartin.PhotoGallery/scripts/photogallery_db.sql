@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `tblaudit` (
   `message` varchar(250) NOT NULL,
   `_source` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=185 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -51,6 +51,33 @@ CREATE TABLE IF NOT EXISTS `tbllocation` (
   `_reference` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tblorder
+DROP TABLE IF EXISTS `tblorder`;
+CREATE TABLE IF NOT EXISTS `tblorder` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `_number` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `user_id` int DEFAULT NULL,
+  `created_dtm` datetime NOT NULL,
+  `_status` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'pending',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table gallery.tblorderitem
+DROP TABLE IF EXISTS `tblorderitem`;
+CREATE TABLE IF NOT EXISTS `tblorderitem` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `photography_id` bigint NOT NULL,
+  `_index` int NOT NULL DEFAULT '1',
+  `add_dtm` datetime NOT NULL,
+  `update_dtm` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -117,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `tblsession` (
   `start_dtm` datetime NOT NULL,
   `end_dtm` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -196,6 +223,42 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspAddOrder
+DROP PROCEDURE IF EXISTS `uspAddOrder`;
+DELIMITER //
+CREATE PROCEDURE `uspAddOrder`(
+	IN `UserID` INT
+)
+BEGIN
+	DECLARE id INT;
+	DECLARE _uuid VARCHAR(36);
+	DECLARE _status VARCHAR(10);
+	DECLARE orderExists INT;
+	
+	SET _status = 'pending';
+	SET id = -1;
+	SET orderExists = EXISTS(
+							SELECT o.*
+							FROM tblorder o
+							WHERE o.user_id = UserId
+							AND o._status = _status);
+
+	IF (orderExists = 0) THEN 	
+		SET _uuid = UUID();
+		INSERT INTO tblOrder(user_id,_number,created_dtm,_status) VALUE(UserID, _uuid,CURRENT_TIMESTAMP(),_status);
+		SET id = LAST_INSERT_ID();
+
+		CALL uspAddAuditMessage(UserId, CONCAT('Add Order (',id,') #',_uuid,')'),'uspAddOrder',0);
+
+	ELSE
+		SET id = -2; /* order already exists */
+	END IF;
+	
+
+ 	CALL uspGetOrder(id, UserId, id);  
+END//
+DELIMITER ;
+
 -- Dumping structure for procedure gallery.uspAddPhotography
 DROP PROCEDURE IF EXISTS `uspAddPhotography`;
 DELIMITER //
@@ -218,6 +281,57 @@ BEGIN
 		INSERT INTO tblPhotography (_source,filename, _path, title) VALUE(ImageSource,FileName, FilePath, Title);
 		SET id=LAST_INSERT_ID();
 	END IF;	
+
+	SELECT id;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspAddPhotographyToOrder
+DROP PROCEDURE IF EXISTS `uspAddPhotographyToOrder`;
+DELIMITER //
+CREATE PROCEDURE `uspAddPhotographyToOrder`(
+	IN `PhotographyId` BIGINT,
+	IN `OrderId` INT,
+	IN `UserId` INT
+)
+BEGIN
+	DECLARE id INT;
+	DECLARE pos INT;
+	
+	SET id=-1;
+
+	IF(UserId<>-1) THEN
+		SELECT p.id
+		INTO id
+		FROM tblphotography p
+	 	WHERE p.id = PhotographyId;
+	 	
+		IF FOUND_ROWS() THEN 	
+	 	
+	 		SELECT COUNT(*)
+	 		INTO pos
+	 		FROM tblorderitem o
+		 	WHERE o.order_id = OrderId;
+	 		SET pos = pos + 1;
+	 		
+			SELECT o.id
+			FROM tblorder o
+		 	WHERE o.id = OrderId;
+			
+			IF FOUND_ROWS() THEN
+				INSERT INTO tblOrderItem(order_id, photography_id, _index, add_dtm) VALUES(OrderId, PhotographyId, pos, CURRENT_TIMESTAMP());
+				SET id=LAST_INSERT_ID();
+			ELSE
+				SET id = -1;
+			END IF;
+		ELSE
+			SET id = -1;
+		END IF;
+	END IF;	
+	
+	IF(id > 0) THEN
+		CALL uspAddAuditMessage(UserId, CONCAT('Add photography (',PhotographyId,') to Order (',OrderId,')'),'uspAddPhotographyToOrder',0);
+	END IF;
 
 	SELECT id;
 END//
@@ -288,7 +402,7 @@ BEGIN
 	END IF;
 	
 	IF(id > 0) THEN
-		CALL uspAddAuditMessage(UserID, CONCAT('Add tag ''',Word, ''' for (',PhotographyId,')'));
+		CALL uspAddAuditMessage(UserID, CONCAT('Add tag ''',Word, ''' for (',PhotographyId,')'),'uspAddTag',0);
 	END IF;
 	SELECT id;
 END//
@@ -406,6 +520,31 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspGetCurrentActiveOrder
+DROP PROCEDURE IF EXISTS `uspGetCurrentActiveOrder`;
+DELIMITER //
+CREATE PROCEDURE `uspGetCurrentActiveOrder`(
+	IN `UserId` INT
+)
+    NO SQL
+BEGIN
+ 	DECLARE oid INT;
+ 	
+ 	SELECT MAX(o.id)
+ 	INTO oid
+ 	FROM tblorder o
+ 	WHERE o.user_id = UserId
+ 	AND o._status = 'pending'
+	ORDER BY o.created_dtm DESC;
+	 	
+ 	IF (oid = NULL) THEN 	
+		SET oid = -1;
+	END IF;
+
+ 	CALL uspGetOrder(oid, UserId, -1);
+END//
+DELIMITER ;
+
 -- Dumping structure for procedure gallery.uspGetLocations
 DROP PROCEDURE IF EXISTS `uspGetLocations`;
 DELIMITER //
@@ -422,6 +561,87 @@ BEGIN
 
 	SELECT DISTINCT l._reference AS 'Location'
 	FROM tblLocation l
+	LIMIT rec_take
+	OFFSET rec_skip;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspGetOrder
+DROP PROCEDURE IF EXISTS `uspGetOrder`;
+DELIMITER //
+CREATE PROCEDURE `uspGetOrder`(
+	IN `OrderId` INT,
+	IN `UserId` INT,
+	IN `ErrorId` INT
+)
+    COMMENT 'The ErrorId should have a default value but always pass -1 if you don''t want this ErrporId to overwrite the otder id in the response.'
+BEGIN
+	DECLARE orderExists INT;
+	DECLARE cnt INT;
+
+	IF (ErrorId=-1) THEN 		
+		SET orderExists = EXISTS(
+								SELECT o.id
+								FROM tblorder o
+								WHERE o.id = OrderId
+								AND o.user_id = UserId);
+	
+		IF (orderExists = 0) THEN 	
+			SELECT -1 AS 'Id',
+					 '' AS 'Number',
+					 UserId AS 'UserId',
+					 NOW() AS 'CreatedDtm',
+					 0 AS 'Count',
+					 '' AS 'Status';
+		ELSE
+			 		SELECT COUNT(*)
+	 		INTO cnt
+	 		FROM tblorderitem o
+		 	WHERE o.order_id = OrderId;
+		 	
+			SELECT o.id AS 'Id',
+				 o._number AS 'Number',
+				 o.user_id  AS 'UserId',
+				 o.created_dtm AS 'CreatedDtm',
+				 cnt AS 'Count',
+				 o._status AS 'Status'
+			FROM tblorder o
+			WHERE o.id = OrderId
+			AND o.user_id = UserId;
+		END IF;
+	ELSE
+		SELECT ErrorId AS 'Id',
+				 '' AS 'Number',
+				 UserId AS 'UserId',
+				 NOW() AS 'CreatedDtm',
+					 0 AS 'Count',
+				 '' AS 'Status';
+	END IF;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspGetOrderPhotographies
+DROP PROCEDURE IF EXISTS `uspGetOrderPhotographies`;
+DELIMITER //
+CREATE PROCEDURE `uspGetOrderPhotographies`(
+	IN `UserId` INT,
+	IN `OrderId` INT,
+	IN `CurrentPage` INT,
+	IN `PageSize` INT
+)
+BEGIN
+	DECLARE rec_skip INT;
+	DECLARE rec_take INT;
+	
+	SET rec_take = PageSize;
+	SET rec_skip = (CurrentPage - 1) * PageSize;
+
+	SELECT v.*
+	FROM (SELECT @p1:=UserId p) parm ,tblorderitem o 
+	JOIN vwphotographywithranking v 
+		ON v.id = o.photography_id
+	WHERE o.order_id = OrderId
+	ORDER BY o._index ASC
 	LIMIT rec_take
 	OFFSET rec_skip;
 END//
@@ -488,37 +708,49 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS `uspGetPhotographyIdsList`;
 DELIMITER //
 CREATE PROCEDURE `uspGetPhotographyIdsList`(
-	IN `UserID` INT,
-	IN `HasQuery` INT,
-	IN `SearchQuery` VARCHAR(150)
+	IN `UserId` INT,
+	IN `SetSource` INT,
+	IN `SearchQuery` VARCHAR(150),
+	IN `OrderId` INT
 )
     NO SQL
     SQL SECURITY INVOKER
 BEGIN
-	IF (HasQuery = 0) THEN
+	IF (SetSource = 0) THEN /* from all gallery */
 	   SELECT IFNULL(GROUP_CONCAT(sub.Id),'') AS 'Ids', COUNT(*) AS 'RowCount'
-	   FROM(SELECT v.*
-		FROM  (SELECT @p1:=UserID p) parm , vwphotographywithranking v
-		ORDER BY v.AverageRank DESC,v.Id DESC) sub;
-	ELSE
-
+	   FROM(
+				SELECT v.*
+				FROM  (SELECT @p1:=UserId p) parm , vwphotographywithranking v
+				ORDER BY v.AverageRank DESC, v.Id) sub;
+	ELSEIF (SetSource = 1) THEN /* from search query*/
 	   SELECT IFNULL(GROUP_CONCAT(sub.Id),'') AS 'Ids', COUNT(*) AS 'RowCount'
 		FROM 
-			((SELECT v.*
-			FROM (SELECT @p1:=UserID p) parm ,tblphotographytags pt 
-			JOIN vwphotographywithranking v 
-				ON v.id = pt.photography_id
-			JOIN tbltag t 
-				ON t.id = pt.tag_id 
-			WHERE t.word REGEXP SearchQuery
-			GROUP BY v.Id
-			ORDER BY v.AverageRank DESC,v.Id DESC)
+			((
+				SELECT v.*
+				FROM (SELECT @p1:=UserId p) parm ,tblphotographytags pt 
+				JOIN vwphotographywithranking v 
+					ON v.id = pt.photography_id
+				JOIN tbltag t 
+					ON t.id = pt.tag_id 
+				WHERE t.word REGEXP SearchQuery
+				ORDER BY v.AverageRank DESC, v.Id)
 			UNION
-			(SELECT v.*
-			FROM vwphotographywithranking v 
-			WHERE v.Location REGEXP SearchQuery
-			GROUP BY v.Id
-			ORDER BY v.AverageRank DESC,v.Id DESC))sub;
+			(
+				SELECT v.*
+				FROM vwphotographywithranking v 
+				WHERE v.Location REGEXP SearchQuery
+				ORDER BY v.AverageRank DESC, v.Id
+			))sub;
+	ELSEIF (SetSource = 2) THEN /* from order*/
+	   SELECT IFNULL(GROUP_CONCAT(sub.Id),'') AS 'Ids', COUNT(*) AS 'RowCount'
+	   FROM(
+				SELECT v.*
+				FROM (SELECT @p1:=UserId p) parm ,tblorderitem o 
+				JOIN vwphotographywithranking v 
+				ON v.id = o.photography_id
+				WHERE o.order_id = OrderId
+				ORDER BY o._index ASC
+			) sub;
 	END IF;
 END//
 DELIMITER ;
@@ -606,6 +838,109 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspIsPhotographyInOrder
+DROP PROCEDURE IF EXISTS `uspIsPhotographyInOrder`;
+DELIMITER //
+CREATE PROCEDURE `uspIsPhotographyInOrder`(
+	IN `OrderId` INT,
+	IN `PhotographyId` BIGINT,
+	IN `UserId` INT
+)
+BEGIN
+	DECLARE itemExists INT;
+	
+	SET itemExists = EXISTS(
+							SELECT oi.id
+							FROM tblorder o
+							JOIN tblorderitem oi
+							ON oi.order_id = o.id
+						 	WHERE o.user_id = UserID
+						   AND o.id =  OrderId
+							AND oi.photography_id = PhotographyId);
+	
+	IF (itemExists = 1) THEN 	
+		SELECT 'true' AS 'Result';
+	END IF;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspRemoveOrder
+DROP PROCEDURE IF EXISTS `uspRemoveOrder`;
+DELIMITER //
+CREATE PROCEDURE `uspRemoveOrder`(
+	IN `OrderId` INT,
+	IN `UserId` INT
+)
+BEGIN
+	DECLARE id INT;
+	
+	SELECT o.id
+	INTO id
+	FROM tblorder o
+	WHERE o.user_id = UserId
+	AND o.id = OrderId;
+
+	IF FOUND_ROWS() THEN 	
+		DELETE o.*
+		FROM tblorder o
+		WHERE o.user_id = UserId
+		AND o.id = OrderId;
+		
+		DELETE oi.*
+		FROM tblorderitem oi
+		WHERE oi.order_id = OrderId;
+	ELSE
+		SET id = -1;
+	END IF;
+
+	IF(id > 0) THEN
+		CALL uspAddAuditMessage(UserId, CONCAT('Remove Order (',OrderId,')'),'uspRemoveOrder',0);
+	END IF;
+	
+	SELECT id;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspRemovePhotographyFromOrder
+DROP PROCEDURE IF EXISTS `uspRemovePhotographyFromOrder`;
+DELIMITER //
+CREATE PROCEDURE `uspRemovePhotographyFromOrder`(
+	IN `PhotographyId` BIGINT,
+	IN `OrderId` INT,
+	IN `UserId` INT
+)
+BEGIN
+	DECLARE id INT;
+	
+	SELECT oi.id
+	INTO id
+	FROM tblorder o
+	JOIN tblorderitem oi
+	ON oi.order_id = o.id
+ 	WHERE o.user_id = UserID
+   AND o.id =  OrderId
+	AND oi.photography_id = PhotographyId;
+	
+	IF FOUND_ROWS() THEN 	
+		DELETE oi.*
+		FROM tblorder o
+		JOIN tblorderitem oi
+		ON oi.order_id = o.id
+	 	WHERE o.user_id = UserID
+	   AND o.id =  OrderId
+		AND oi.photography_id = PhotographyId;
+	ELSE
+		SET id=-1;
+	END IF;
+	
+	IF(id > 0) THEN
+		CALL uspAddAuditMessage(UserId, CONCAT('Remove photography (',PhotographyId,') from Order (',OrderId,')'),'uspRemovePhotographyFromOrder',0);
+	END IF;
+
+	SELECT id;
+END//
+DELIMITER ;
+
 -- Dumping structure for procedure gallery.uspRemoveTag
 DROP PROCEDURE IF EXISTS `uspRemoveTag`;
 DELIMITER //
@@ -651,7 +986,7 @@ BEGIN
 	END IF;	
 	
 	IF(id > 0) THEN
-		CALL uspAddAuditMessage(UserID, CONCAT('Remove tag ''',Word,'''  for (',PhotographyId,')'));
+		CALL uspAddAuditMessage(UserID, CONCAT('Remove tag ''',Word,'''  for (',PhotographyId,')'),'uspRemoveTag',0);
 	END IF;
 
 	SELECT id;
@@ -683,6 +1018,36 @@ CREATE PROCEDURE `uspStoreActivationCode`(
 )
 BEGIN
 	INSERT INTO tblPasswordReset(user_id ,activation_code,  request_dtm) VALUE(UserID, ActivationCode, CURRENT_TIMESTAMP());
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspUpdateOrderIndex
+DROP PROCEDURE IF EXISTS `uspUpdateOrderIndex`;
+DELIMITER //
+CREATE PROCEDURE `uspUpdateOrderIndex`(
+	IN `UserId` INT,
+	IN `OrderId` INT,
+	IN `PhotographyId` BIGINT,
+	IN `_Index` INT
+)
+BEGIN
+	DECLARE previousIndex INT;
+	
+	SELECT oi._index
+	INTO previousIndex
+	FROM tblorderitem oi
+	WHERE oi.order_id = OrderId
+	AND oi.photography_id = PhotographyId;
+
+	IF(previousIndex <> _Index) THEN
+		UPDATE tblorderitem oi
+			SET oi._index = _Index,
+				 oi.update_dtm = CURRENT_TIMESTAMP()
+		WHERE oi.order_id = OrderId
+		AND oi.photography_id = PhotographyId;
+			
+		CALL uspAddAuditMessage(UserID, CONCAT('Changed index of Photography (',PhotographyId,') in order  (',OrderId,') to: ',_Index,'.'),'uspUpdateOrderIndex',0);
+	END IF;
 END//
 DELIMITER ;
 
@@ -774,7 +1139,7 @@ BEGIN
 	END IF;
 	
 		IF(id > 0) THEN
-		CALL uspAddAuditMessage(UserID, CONCAT('Set rank = ',UserRank, ' for (',PhotographyId,')'));
+		CALL uspAddAuditMessage(UserID, CONCAT('Set rank = ',UserRank, ' for (',PhotographyId,')'),'uspUpdateRanking',0);
 	END IF;
 
 	SELECT id;
@@ -812,7 +1177,7 @@ BEGIN
 	END IF;
 	
 	IF(id > 0) THEN
-		CALL uspAddAuditMessage(UserID, CONCAT('Update password for ''', login, ''' (', id ,')'));
+		CALL uspAddAuditMessage(UserID, CONCAT('Update password for ''', login, ''' (', id ,')'),'uspUpdateUserPassword',0);
 	END IF;
 
 	SELECT id;

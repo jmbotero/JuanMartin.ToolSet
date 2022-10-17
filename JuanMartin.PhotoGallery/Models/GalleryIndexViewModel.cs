@@ -15,6 +15,10 @@ namespace JuanMartin.PhotoGallery.Models
         public int BlockId { get; set; }
         public List<string> Tags { get; set; }
         public List<string> Locations { get; set; }
+        public string ShoppingCartAction { get; set; }
+        public string CartItemsSequence { get; set; }
+        public string DragImageIndex { get; set; }
+        public string DropImageIndex { get; set; }
 
     }
 }

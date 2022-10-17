@@ -1,8 +1,10 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
 @using JuanMartin.PhotoGallery.Controllers;
 @{
-    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery";
+    var isCartView = (ViewBag.DisplayPhotogrphiesAsOrder is null) ? false : (bool)ViewBag.DisplayPhotogrphiesAsOrder;
 
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery";
+    var cartGalleryRedirectUrl = baseUrl + ((ViewBag.CartRedirectUrl is null) ? string.Empty : ViewBag.CartRedirectUrl);
     var pageId = (Model is null) ? 1 : Model.PageId;
     var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
     var currentBlock = ViewBag.BlockId;
@@ -16,10 +18,13 @@
     var nextId = HttpUtility.GetImageId(currentId, galleryIdList, HttpUtility.ImageRelativePosition.Next);
 
     // persist values
-    var queryString = $"?pageId={pageId}&BlockId={currentBlock}&searchQuery={searchQuery}";
+    var queryString = $"?pageId={pageId}&blockId={currentBlock}&searchQuery={searchQuery}";
+    if (isCartView)
+        queryString += "&cartView=true";
+
     var galleryUrl = $"{baseUrl}/Index" + queryString;
 }
-@if (@ViewBag.Message != null)
+@if (@ViewBag.Message != null && @ViewBag.Message != "")
 {
 
     <div class="error-message">
@@ -72,7 +77,7 @@
                 <td class="gallery-image-detail-meta-column-right">
                     <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <input style="width: 150px;" type="text" asp-for="Location" value="@Model.Image.Location">
-                        <button type="submit" style="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-list-action" src="~/plus.png" /></button>
+                        <button type="submit" style="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-detail-action" src="~/plus.png" /></button>
                     </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
@@ -94,8 +99,8 @@ for the current image, and click plus icon to submit." />
                         <input style="display: none;" type="text" asp-for="Tag">
                         <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
                         <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
-                        <button type="submit" style="border:none;background-color: white;" onclick="SetListAction('add');"><img class="btn-list-action" src="~/plus.png" /></button>
-                        <button type="submit" style="border:none;background-color: white;" onclick="SetListAction('remove');"><img class="btn-list-action" src="~/minus.png" /></button>
+                        <button type="submit" style="border:none;background-color: white;" onclick="SetTagListAction('add');"><img class="btn-detail-action" src="~/plus.png" /></button>
+                        <button type="submit" style="border:none;background-color: white;" onclick="SetTagListAction('remove');"><img class="btn-detail-action" src="~/minus.png" /></button>
                     </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
@@ -129,10 +134,35 @@ to add or  remove." />
 Number of stars equals image rating." />
                 </td>
             </tr>
+            <tr>
+                <td class="gallery-image-detail-meta-column-left">Actions ... </td>
+                <td class="gallery-image-detail-meta-column-right">
+                    <form id="cartActions" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
+                        <input style="display: none;" type="text" id="currentImageCartAction" asp-for="ShoppingCartAction">
+                        @if (ViewBag.IsPhotographyInOrder != null && ViewBag.IsPhotographyInOrder)
+                        {
+                            <img style="width:45px;height:45px;" src="~/cart-add-inactive.png" />
+                            <button type="submit" style="border:none;background-color: white;" onclick="SetCartItemAction('remove');"><img style="width:45px;height:45px;" src="~/cart-remove.png" /></button>
+                        }
+                        else
+                        {
+                            <button type="submit" style="border:none;background-color: white;" onclick="SetCartItemAction('add');"><img style="width:45px;height:45px;" src="~/cart-add.png" /></button>
+                            <img style="width:45px;height:45px;" src="~/cart-remove-inactive.png" />
+                        }
+                    </form>
+                </td>
+                <td class="gallery-image-detail-meta-column-sidenote">
+                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature. Either add
+add or remove this picture to the shopping cart. A picture can only be added once. " />
+                </td>
+            </tr>
         </table>
+        @{
+            var label = (isCartView) ? "order" : "gallery";
+        }
         <div class="gallery-image-detail-nav">
-            <a class="btn btn-primary" href="@galleryUrl">
-                << Back to gallery...
+            <a class="btn btn-nav-text" href="@cartGalleryRedirectUrl">
+                &laquo; Back to @label...
             </a>
         </div>
     </div>

@@ -10,11 +10,19 @@ using JuanMartin.Kernel.Messaging;
 using JuanMartin.Kernel.Utilities;
 using JuanMartin.PhotoGallery.Models;
 using System.Collections.Specialized;
+using System.Runtime.CompilerServices;
 
 namespace JuanMartin.PhotoGallery.Services
 {
     public interface IPhotoService
     {
+        enum ImageListSource
+        {
+            gallery = 0,
+            searchResults = 1,
+            shoppingCart = 2
+        };
+
         int BlockSize { get; set; }
         int PageSize { get; set; }
         void AddAuditMessage(int useerId, string meessage, string source = "", int isError = 0);
@@ -31,7 +39,7 @@ namespace JuanMartin.PhotoGallery.Services
         void ConnectUserAndRemoteHost(int userId, string remoteHost);
         User GetUser(string userName, string password);
         int GetGalleryPageCount(int pageSize);
-        public (string GalleryIdsList, long RowCount) uspGetPhotographyIdsList(int userID,  string searchQuery);
+        public (string ImageIdsList, long RowCount) GetPhotographyIdsList(int userID, ImageListSource source, string searchQuery, int OrderId);
         IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1);
         IEnumerable<Photography> GetPhotographiesBySearch(int userId, string query, int pageId = 1);
         Photography GetPhotographyById(long id, int userId);
@@ -42,7 +50,16 @@ namespace JuanMartin.PhotoGallery.Services
         IEnumerable<string> GetAllTags(int pageId = 1);
         IEnumerable<string> GetAllLocations(int pageId = 1);
         IRecordSet ExecuteSqlStatement(string statement);
-
+        Order GetCurrentActiveOrder(int userId);
+        Order GetOrder(int userId, int OrderId);
+        Order AddOrder(int userId);
+        int RemoveOrder(int orderId, int userId);
+        bool IsPhotographyInOrder(int orerId, long photographyId, int userId);
+        IEnumerable<Photography> GetOrderPhotographies(int userId, int orderId, int pageId = 1);
+        int AddPhotographyToOrder(long id, int orderId, int userId);
+        int RemovePhotographyFromOrder(long id, int orderId, int userId);
+        bool UpdateOrderItemsIndices(int userId, int orderId, GalleryIndexViewModel model);
+        void UpdateOrderIndex(int userId, int orderId, long photographyId, int index);
         static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
         {
             var photographies = new List<Photography>();

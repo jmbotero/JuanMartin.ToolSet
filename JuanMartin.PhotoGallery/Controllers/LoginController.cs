@@ -165,7 +165,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             int sessionUserId = (int)HttpContext.Session.GetInt32("UserID");
             _photoService.EndSession(sessionId);
             HttpContext.Session.Clear();
-            Startup.IsSignedIn = "false";
+            Startup.IsSignedIn = false;
 
             _photoService.AddAuditMessage(sessionUserId, $"User logged out, ended session({sessionId}).");
 
@@ -214,15 +214,15 @@ namespace JuanMartin.PhotoGallery.Controllers
             HttpContext.Session.SetInt32("SessionID", sessionId);
             HttpContext.Session.SetInt32("UserID",userId);
             _photoService.ConnectUserAndRemoteHost(userId, remoteHostName);
-            Startup.IsSignedIn = "true";
+            Startup.IsSignedIn = true;
         }
 
         private void StartNewSession(int userId)
-        {
+        { 
             var sessionId = _photoService.LoadSession(userId);
             HttpContext.Session.SetInt32("SessionID", sessionId);
             HttpContext.Session.SetInt32("UserID", userId);
-            Startup.IsSignedIn = "true";
+            Startup.IsSignedIn = true;
         }
 
         private static string PasswordResetLink(HttpContext context, string resetCode)
