@@ -1,9 +1,11 @@
 ﻿using JuanMartin.Kernel.Utilities;
+using JuanMartin.Models.Gallery;
 using JuanMartin.PhotoGallery.Models;
 using JuanMartin.PhotoGallery.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore.Update.Internal;
 using Microsoft.Extensions.Configuration;
 using System;
 
@@ -174,6 +176,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
         public ActionResult Login()
         {
+            ViewBag.GalleryRedirectUrl = ViewGalleryIndexRedirectUrl(-1);
             TempData["isSignedIn"] = Startup.IsSignedIn;
             return View();
         }
@@ -181,26 +184,30 @@ namespace JuanMartin.PhotoGallery.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Login(LoginViewModel model)
         {
+            int userId = -1;
             if (ModelState.IsValid)
             {
-                var u = _photoService.GetUser(model.UserName, model.Password);
+                User user = _photoService.GetUser(model.UserName, model.Password);
 
-
-                if (u != null)
+                if (user != null)
                 {
-                    StartNewSession(u);
+                    userId = user.UserId;
+                    StartNewSession(user);
                     int sessionId = (int)HttpContext.Session.GetInt32("SessionID");
 
-                    _photoService.AddAuditMessage(u.UserId, $"User logged in, started session ({sessionId}).");
+                    _photoService.AddAuditMessage(userId, $"User logged in, started session ({sessionId}).");
+                    ViewBag.GalleryRedirectUrl = ViewGalleryIndexRedirectUrl(userId);
 
-                    return ViewGalleryIndex(u.UserId);
+                    return ViewGalleryIndex(userId);
                 }
-                else if (u == null || u.UserId == -1)
+                else if (user == null || userId == -1)
                 {
                     ViewBag.Message = "Incorrect user name and/or password specified. Please try again.";
                 }
             } 
+
             TempData["isSignedIn"] = Startup.IsSignedIn;
+            ViewBag.GalleryRedirectUrl = ViewGalleryIndexRedirectUrl(userId);
 
             return View(model);
         }
@@ -244,16 +251,13 @@ namespace JuanMartin.PhotoGallery.Controllers
                 return RedirectToAction(controllerName: "Gallery", actionName: "Index");
         }
 
-        //private ActionResult DisplayGallery(int userId, HttpContext httpContext, IPhotoService photoService, Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataDictionary tempData)
-        //{
-        //    var remoteHostName = HttpUtility.GetClientRemoteId(httpContext);
+        private string ViewGalleryIndexRedirectUrl(int userId)
+        {
+            var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
 
-        //    var redirect = photoService.GetRedirectInfo(userId, remoteHostName);
-        //    tempData["isSignedIn"] = Startup.IsSignedIn;
-        //    if (redirect != null && redirect.RemoteHost != "")
-        //        return RedirectToAction(controllerName: redirect.Controller, actionName: redirect.Action, routeValues: new RouteValueDictionary(redirect.RouteData));
-        //    else
-        //        return RedirectToAction(controllerName: "Gallery", actionName: "Index");
-        //}
+            var redirect = _photoService.GetRedirectInfo(userId, remoteHostName);
+
+            return HttpUtility.GetRedirectUrl(redirect, overwriteAction: HttpUtility.GalleryViewTypes.Index);
+        }
     }
 }

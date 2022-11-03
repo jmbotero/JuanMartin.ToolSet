@@ -16,6 +16,8 @@ namespace JuanMartin.PhotoGallery
     public class Startup
     {
         public static string ConnectionString { get; private set; }
+        public static string Version { get; private set; }
+        public static bool IsMobile { get; set; }
         public static bool IsSignedIn { get; set; } 
         public Startup(IConfiguration configuration)
         {
@@ -23,6 +25,9 @@ namespace JuanMartin.PhotoGallery
 
             ConnectionString = Configuration.GetConnectionString("DefaultConnection");
             IsSignedIn = false;
+            IsMobile = false;
+            // set current version as major.minor.build number
+            Version = Configuration["Version"];
         }
 
         public IConfiguration Configuration { get; }

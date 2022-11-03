@@ -1,9 +1,15 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
 @using JuanMartin.PhotoGallery.Controllers;
 @{
+    var isMobile = (ViewBag.IsMobile is null) ? false : (bool)ViewBag.IsMobile;
+    bool imageExists = (Model != null && Model.Image != null) ? true : false;
+
+    string imageFileName = (!imageExists) ? "" : Model.Image.FileName;
+    string imageLocation = (!imageExists) ? "" : Model.Image.Location;
+
     var isCartView = (ViewBag.DisplayPhotogrphiesAsOrder is null) ? false : (bool)ViewBag.DisplayPhotogrphiesAsOrder;
 
-    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Gallery";
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/";
     var cartGalleryRedirectUrl = baseUrl + ((ViewBag.CartRedirectUrl is null) ? string.Empty : ViewBag.CartRedirectUrl);
     var pageId = (Model is null) ? 1 : Model.PageId;
     var searchQuery = (ViewBag.SearchQuery is null) ? string.Empty : ViewBag.SearchQuery;
@@ -22,7 +28,11 @@
     if (isCartView)
         queryString += "&cartView=true";
 
-    var galleryUrl = $"{baseUrl}/Index" + queryString;
+    var galleryUrl = $"{baseUrl}/Gallery/Index" + queryString;
+
+    string tooltipIconClass = (isMobile) ? "tooltip-icon-mobile" : "tooltip-icon-desktop";
+    string tooltipIconFile = (isMobile) ? "help-icon-mobile.png" : "help-icon.png";
+    tooltipIconFile = "/" + tooltipIconFile;
 }
 @if (@ViewBag.Message != null && @ViewBag.Message != "")
 {
@@ -33,7 +43,6 @@
     <br />
 }
 <div class="container body-content">
-    <div class="gallery-image-detail-container">
         <table>
             <tr>
                 <td>
@@ -46,12 +55,18 @@
                 </td>
                 <td style="width : 10px;"></td>
                 <td>
-                    <div>
+                <div class="gallery-image-detail-container">
                         @{
-                            var path = System.IO.Path.Combine(Model.Image.Path, Model.Image.FileName).Replace(@"\", "/");
-                            var url = Url.Content(path);
+                            var url = "";
+                            var alt = "File not found";
+                            if (imageExists)
+                            {
+                                var path = System.IO.Path.Combine(Model.Image.Path, Model.Image.FileName).Replace(@"\", "/");
+                                url = Url.Content(path);
+                                alt = path;
+                            }
                         }
-                        <img class="gallery-image-detail" src="@url" alt="@url" />
+                        <img class="gallery-image-detail" src="@url" alt="@alt" />
                     </div>
                 </td>
                 <td style="width : 10px;"></td>
@@ -69,19 +84,19 @@
         <table class="gallery-image-detail-meta">
             <tr>
                 <td class="gallery-image-detail-meta-column-left">FileName: </td>
-                <td class="gallery-image-detail-meta-column-right">@Model.Image.FileName</td>
+                <td class="gallery-image-detail-meta-column-right">@imageFileName</td>
                 <td class="gallery-image-detail-meta-column-sidenote"></td>
             </tr>
             <tr>
                 <td class="gallery-image-detail-meta-column-left">Location: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
-                        <input style="width: 150px;" type="text" asp-for="Location" value="@Model.Image.Location">
+                        <input style="width: 150px;" type="text" asp-for="Location" value="@imageLocation">
                         <button type="submit" style="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-detail-action" src="~/plus.png" /></button>
                     </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
-                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Use textbox to specify the location
+                <img src="@tooltipIconFile" rel="tooltip" class="@tooltipIconClass" alt="?" title="Use textbox to specify the location
 for the current image, and click plus icon to submit." />
                 </td>
             </tr>
@@ -91,9 +106,13 @@ for the current image, and click plus icon to submit." />
                     @*<span>-@Model.SelectedTagListAction-</span>*@
                     <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId"  asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px">
-                            @foreach (var tag in Model.Image.Tags)
-                            {
-                                <option>@tag</option>
+                            @{
+                                var tags = (imageExists) ? Model.Image.Tags : new List<string> { "" };
+                                
+                                foreach (var tag in tags)
+                                {
+                                    <option>@tag</option>
+                                }
                             }
                         </select><br />
                         <input style="display: none;" type="text" asp-for="Tag">
@@ -104,7 +123,7 @@ for the current image, and click plus icon to submit." />
                     </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
-                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+                <img src="@tooltipIconFile" rel="tooltip" class="@tooltipIconClass" alt="?" title="Need to be logged in to run this feature
 Use textbox to specify an image
 to add or  remove." />
                 </td>
@@ -115,22 +134,26 @@ to add or  remove." />
                     @*<span>-@Model.Image.Rank-</span>*@
                     <form id="imageRank" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <div class="ranking">
-                            @for (int i = 1; i <= 10; i++)
-                            {
-                                string state = "";
+                            @{
+                                var rank = (imageExists) ? Model.Image.Rank : 0;
 
-                                @if (i <= 11 - Model.Image.Rank)
+                                for (int i = 1; i <= 10; i++)
                                 {
-                                    state = "checked";
+                                    string state = "";
+
+                                    @if (i <= 11 - rank)
+                                    {
+                                        state = "checked";
+                                    }
+                                    <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
                                 }
-                                <input @state type="radio" name="ranking" value="@i" id="@i" onclick="SetRank();" onchange="this.form.submit();"><label for="@i">☆</label>
                             }
                         </div>
                         <input type="text" id="rank" asp-for="SelectedRank">
                     </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
-                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature
+                <img src="@tooltipIconFile" rel="tooltip" class="@tooltipIconClass" alt="?" title="Need to be logged in to run this feature
 Number of stars equals image rating." />
                 </td>
             </tr>
@@ -139,10 +162,15 @@ Number of stars equals image rating." />
                 <td class="gallery-image-detail-meta-column-right">
                     <form id="cartActions" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <input style="display: none;" type="text" id="currentImageCartAction" asp-for="ShoppingCartAction">
-                        @if (ViewBag.IsPhotographyInOrder != null && ViewBag.IsPhotographyInOrder)
+                        @if (imageExists && ViewBag.IsPhotographyInOrder != null && ViewBag.IsPhotographyInOrder)
                         {
                             <img style="width:45px;height:45px;" src="~/cart-add-inactive.png" />
                             <button type="submit" style="border:none;background-color: white;" onclick="SetCartItemAction('remove');"><img style="width:45px;height:45px;" src="~/cart-remove.png" /></button>
+                        }
+                        else if(!imageExists)
+                        {
+                             <img style="width:45px;height:45px;" src="~/cart-add-inactive.png" />
+                            <img style="width:45px;height:45px;" src="~/cart-remove-inactive.png" />                            
                         }
                         else
                         {
@@ -152,7 +180,7 @@ Number of stars equals image rating." />
                     </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
-                    <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Need to be logged in to run this feature. Either add
+                <img src="@tooltipIconFile" rel="tooltip" class="@tooltipIconClass" alt="?" title="Need to be logged in to run this feature. Either add
 add or remove this picture to the shopping cart. A picture can only be added once. " />
                 </td>
             </tr>
@@ -165,5 +193,4 @@ add or remove this picture to the shopping cart. A picture can only be added onc
                 &laquo; Back to @label...
             </a>
         </div>
-    </div>
 </div>

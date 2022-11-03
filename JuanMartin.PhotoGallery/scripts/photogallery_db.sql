@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `tblaudit` (
   `message` varchar(250) NOT NULL,
   `_source` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=185 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `tbllocation` (
   `ddd` float DEFAULT NULL,
   `_reference` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `tblsession` (
   `start_dtm` datetime NOT NULL,
   `end_dtm` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -509,14 +509,20 @@ BEGIN
 	DECLARE rec_take INT;
 	DECLARE rec_skip INT;
 	
-	SET rec_take = PageSize;
-	SET rec_skip = (CurrentPage - 1) * PageSize;
-
-	SELECT v.* 
-	FROM (SELECT @p1:=UserID p) parm , vwphotographywithranking v
-	ORDER BY v.AverageRank DESC, v.Id DESC
-	LIMIT rec_take
-	OFFSET rec_skip;
+	IF(PageSize <> -1) THEN
+		SET rec_take = PageSize;
+		SET rec_skip = (CurrentPage - 1) * PageSize;
+	
+		SELECT v.* 
+		FROM (SELECT @p1:=UserID p) parm , vwphotographywithranking v
+		ORDER BY v.AverageRank DESC, v.Id DESC
+		LIMIT rec_take
+		OFFSET rec_skip;
+	ELSE
+		SELECT v.* 
+		FROM (SELECT @p1:=UserID p) parm , vwphotographywithranking v
+		ORDER BY v.AverageRank DESC, v.Id DESC;
+	END IF;
 END//
 DELIMITER ;
 
@@ -829,8 +835,8 @@ BEGIN
 	    		s.redirect_routevalues AS 'QueryString'
 	FROM tblState s
 	WHERE s.remote_host = RemoteHost
-	AND s.user_id = UserID;
-/*	AND s.event_dtm = (SELECT MAX (s.event_dtm) FROM tblstate s);*/
+	AND s.user_id = UserID
+	ORDER BY s.event_dtm DESC;
 	 
 	IF NOT FOUND_ROWS() THEN 	
 		SELECT '' AS 'RemoteHost', '' AS 'Controller', '' AS 'Action', -1 AS 'RouteID', '' AS 'QueryString';

@@ -2,6 +2,7 @@
 @using JuanMartin.PhotoGallery.Controllers;
 @using JuanMartin.Kernel.Extesions;
 @{
+    var isMobile = (ViewBag.IsMobile is null) ? false : (bool)ViewBag.IsMobile;
     var isCartView = (ViewBag.DisplayPhotogrphiesAsOrder is null) ? false : (bool)ViewBag.DisplayPhotogrphiesAsOrder;
     var pageCount = ViewBag.PageCount;
     var currentPage = ViewBag.CurrentPage;
@@ -58,7 +59,7 @@
             </tr>
         </table>
     </div>
-}
+} @*add view menus *@
 @if (@ViewBag.Message != null && @ViewBag.Message != "")
 {
 
@@ -67,7 +68,7 @@
     </div>
     <br />
 }
-@if (@ViewBag.InfoMessage != null)
+@if (@ViewBag.InfoMessage != null && @ViewBag.InfoMessage != "")
 {
 
     <div class="info-message">
@@ -75,10 +76,15 @@
     </div>
     <br />
 }
-@if (!isCartView)
+@if (!isCartView) 
 {
+    string galleryIndexContentClass = (isMobile) ? "gallery-content-mobile" : "gallery-content";
+    string tooltipIconClass = (isMobile) ? "tooltip-icon-mobile" : "tooltip-icon-desktop";
+    string tooltipIconFile = (isMobile) ? "help-icon-mobile.png" : "help-icon.png";
+    tooltipIconFile = "/" +  tooltipIconFile;
+
     <div class="container body-content">
-        <div class="gallery-content">
+        <div class="@galleryIndexContentClass">
             @if (Model.Album != null && Model.Album.Count > 0)
             {
                 int i = 0;
@@ -92,7 +98,7 @@
                             var url = Url.Content(path);
                         }
                         <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-searchQuery="@searchQuery">
-                            <img class="gallery-image-index" src="@url" />
+                            <img class="gallery-image-index" src="@url" loading="lazy"/>
                             @*                        <div class="gallery-image-index" style="background-image:url(@url)"/>*@
                         </a>
                         <div class="overlay">
@@ -117,6 +123,7 @@
                         <span id="photo-id-@i" style="display: none;">@image.Id</span>
                     </div>
                 }
+                ViewBag.DebugMessage = $"{i} photographies loaded.";
             }
             else
             {
@@ -190,42 +197,46 @@
                         </div>
                     </td>
                 </tr>
-                <tr>
-                    <td>
-                        <span style="font-size:12px;">Available Blocks...</span>
-                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="A block is a group of  @blockSize pages. Pages
+                @if (!isMobile && listOfBlocks.Count > 1)
+                {
+                    <tr>
+                        <td>
+                            <span style="font-size:12px;">Available Blocks...</span>
+                            <img src="@tooltipIconFile" rel="tooltip" class="@tooltipIconClass" alt="?" title="A block is a group of  @blockSize pages. Pages
 are grouped, to organize display of photographs." />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div id="blockList" class="pagination">
-                            @{
-                                string list = string.Empty;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div id="blockList" class="pagination">
+                                @{
+                                    string list = string.Empty;
 
-                                foreach (var (b, index) in listOfBlocks.Enumerate())
-                                {
-                                    nextBlock = Convert.ToInt32(b);
-                                    nextPage = (nextBlock - 1) * blockSize + 1;
-                                    galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
+                                    foreach (var (b, index) in listOfBlocks.Enumerate())
+                                    {
+                                        nextBlock = Convert.ToInt32(b);
+                                        nextPage = (nextBlock - 1) * blockSize + 1;
+                                        galleryUrl = baseUrl + $"?pageId={nextPage}&blockId={nextBlock}" + queryString;
 
-                                    if (b == currentBlock.ToString())
-                                    {
-                                        <a href="@galleryUrl">@b</a>
-                                    }
-                                    else
-                                    {
-                                        <a href="@galleryUrl" style="color: var(--site-navigation-color);">@b</a>
+                                        if (b == currentBlock.ToString())
+                                        {
+                                            <a href="@galleryUrl">@b</a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@galleryUrl" style="color: var(--site-navigation-color);">@b</a>
+                                        }
                                     }
                                 }
-                            }
-                        </div>
+                            </div>
                     </td>
                 </tr>
+                }
+
             </table>
         }
     </div>
-}
+}@*add gallery index view *@
 else
 {
     <div class="container body-content">
@@ -253,7 +264,7 @@ else
                                                             var url = Url.Content(path);
                                                         }
                                                         <a asp-controller="Gallery" asp-action="Detail" asp-route-id="@image.Id" asp-route-pageId="@currentPage" asp-route-blockId="@currentBlock" asp-route-searchQuery="@searchQuery" asp-route-cartView="true">
-                                                            <img class="gallery-image-cart" src="@url" />
+                                                            <img class="gallery-image-cart" src="@url" loading="lazy"/>
                                                         </a>
                                                     </div>
                                                 </td>
@@ -280,4 +291,12 @@ else
             &laquo; Back to gallery...
         </a>
     </div>
+} @*add gallery shopping cart view *@
+@if (@ViewBag.DebugMessage != null && @ViewBag.DebugMessage != "")
+{
+
+    <div class="info-message" style="font-size:16px;font-weight: bold;">
+        @ViewBag.DebugMessage
+    </div>
+    <br />
 }

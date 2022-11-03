@@ -1,6 +1,10 @@
 ﻿@model JuanMartin.PhotoGallery.Models.LoginViewModel;
 @{
     ViewBag.Title = "User Login";
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/";
+    //    var baseUrl = $"{Context.Request.Host}/";
+    var galleryRedirectUrl = (ViewBag.GalleryRedirectUrl is null) ? "#" : baseUrl + ViewBag.GalleryRedirectUrl;
+
 }
 
 
@@ -49,4 +53,12 @@
     <span>If you do not have a user, click to <a p-controller="Login" asp-action="Register">Register</a>.</span>
     <br />
     <span><a p-controller="Login" asp-action="ForgotPassword">Forgot password?</a></span>
+    <br />
+    <br />
+    <br />
+    <div class="gallery-image-detail-nav">
+        <a class="btn btn-nav-text" href="@galleryRedirectUrl">
+            &laquo; Back to gallery
+        </a>
+    </div>
 } 

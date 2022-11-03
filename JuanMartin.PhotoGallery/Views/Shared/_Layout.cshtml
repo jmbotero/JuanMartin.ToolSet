@@ -1,4 +1,10 @@
 ﻿<!DOCTYPE html>
+@{
+    var isMobile = (ViewBag.IsMobile is null) ? false : (bool)ViewBag.IsMobile;
+    string tooltipIconClass = (isMobile) ? "tooltip-icon-mobile" : "tooltip-icon-desktop";
+    string tooltipIconFile = (isMobile) ? "help-icon-mobile.png" : "help-icon.png";
+    tooltipIconFile = "/" + tooltipIconFile;
+}
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -26,12 +32,12 @@
                                 @if ((bool)TempData["isSignedIn"])
                                 {
                                     <form method="post" asp-controller="Login" asp-action="Logout">
-                                        <input type="image" name="Logout" src="~/signout.png" style="height:45px;width:45px;" class="btn-logout tooltipicon" title="Signout">
+                                        <input type="image" name="Logout" src="~/signout.png" class="btn-logout tooltip-icon-desktop" title="Signout">
                                     </form>
                                 }
                                 else
                                 {
-                                    <img class="btn-logout tooltipicon" name="Logout" style="height:45px;width:45px;" src="~/signout-inactive.png" alt="Logout" title="Signout" />
+                                    <img class="btn-logout tooltip-icon-desktop" name="Logout" src="~/signout-inactive.png" alt="Logout" title="Signout" />
                                 }
                             </div>
                         </li>
@@ -41,59 +47,62 @@
                                 {
                                     <form method="post" asp-controller="Gallery" asp-action="Index" asp-route-pageId="1" asp-route-blockId="1" asp-route-cartView="true">
                                         <div class="notification">
-                                            <input type="image" name="Cart" src="~/shopping-cart.png" style="height:40px;width:40px;" class="tooltipicon" title="Current Order">
+                                            <input type="image" name="Cart" src="~/shopping-cart.png" class="tooltip-icon-desktop" title="Current Order">
                                             <span class="badge">@ViewBag.PhotographyCount</span>
                                         </div>
                                     </form>
                                 }
                                 else
                                 {
-                                    <img class="tooltipicon" name="CartEmpty" style="height:45px;width:45px;" src="~/shopping-cart-empty.png" alt="Cart Empty"  title="Current Order"/>
+                                    <img class="tooltip-icon-desktop" name="CartEmpty" src="~/shopping-cart-empty.png" alt="Cart Empty"  title="Current Order"/>
                                 }
                             </div>
                         </li>
-                        <li class="nav-item">
-                            <div name="cancelOrder" style="width:45px;height: fit-content;justify-content:right;">
-                                @if (ViewBag.HasCurrentActiveOrder != null && ViewBag.HasCurrentActiveOrder)
-                                {
-                                    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
-                                    baseUrl += Url.RouteUrl(ViewContext.RouteData.Values);
-                                    string qs = Context.Request.QueryString.ToString();
-                                    if (string.IsNullOrEmpty(qs))
-                                        qs = "?";
-                                    if (!qs.Contains("orderAction") || qs == "?")
-                                        qs += "orderAction=cancel";
-                                    var url = baseUrl + qs;
-                                    <a href="@url" onclick="ConfirmCancel()">
-                                        <img class="tooltipicon" name="cancelOrder" style="height:45px;width:45px;" src="~/order-cancel.png" title="Cancel Order" />
-                                    </a>
-                                }
-                                else
-                                {
-                                    <img class="tooltipicon" name="disableCancelOrder" style="height:45px;width:45px;" src="~/order-cancel-inactive.png" title="Cancel Order" />
-                                }
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <div name="checkout" style="width:45px;height: fit-content;justify-content:right;">
-                                @if (ViewBag.HasCurrentActiveOrder != null && ViewBag.HasCurrentActiveOrder)
-                                {
-                                    <form method="post" asp-controller="Payment" asp-action="Index" asp-route-pageId="1" asp-route-blockId="1">
-                                        <input type="image" name="startChecout" src="~/cart-checkout.png" style="height:45px;width:45px;" class="tooltipicon" title="Checkout">
-                                    </form>
-                                }
-                                else
-                                {
-                                    <img class="tooltipicon" name="disableChekout" style="height:45px;width:45px;" src="~/cart-checkout-inactive.png" title="Checkout" />
-                                }
-                            </div>
-                        </li>
+                        @if (ViewBag.DisplayPhotogrphiesAsOrder != null && ViewBag.DisplayPhotogrphiesAsOrder)
+                        {
+                            <li class="nav-item">
+                                <div name="cancelOrder" style="fit-content;justify-content:right;">
+                                    @if (ViewBag.HasCurrentActiveOrder != null && ViewBag.HasCurrentActiveOrder)
+                                    {
+                                        var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
+                                        baseUrl += Url.RouteUrl(ViewContext.RouteData.Values);
+                                        string qs = Context.Request.QueryString.ToString();
+                                        if (string.IsNullOrEmpty(qs))
+                                            qs = "?";
+                                        if (!qs.Contains("orderAction") || qs == "?")
+                                            qs += "orderAction=cancel";
+                                        var url = baseUrl + qs;
+                                        <a href="@url" onclick="ConfirmCancel()">
+                                            <img class="tooltip-icon-desktop" name="cancelOrder" src="~/order-cancel.png" title="Cancel Order" />
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <img class="tooltip-icon-desktop" name="disableCancelOrder" src="~/order-cancel-inactive.png" title="Cancel Order" />
+                                    }
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <div name="checkout" style="width:45px;height: fit-content;justify-content:right;">
+                                    @if (ViewBag.HasCurrentActiveOrder != null && ViewBag.HasCurrentActiveOrder)
+                                    {
+                                        <form method="post" asp-controller="Payment" asp-action="Index" asp-route-pageId="1" asp-route-blockId="1">
+                                            <input type="image" name="startChecout" src="~/cart-checkout.png" class="tooltip-icon-desktop" title="Checkout">
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <img class="tooltip-icon-desktop" name="disableChekout" src="~/cart-checkout-inactive.png" title="Checkout" />
+                                    }
+                                </div>
+                            </li>
+                        }
                     </ul>
                 </div>
                 <div name="searchBar"style="width: fit-content;">
                     <form method="post" asp-controller="Gallery" asp-action="Index" asp-route-pageId="1" asp-route-blockId="1" class="search nosubmit">
                         <input type="search" id="searchQuery" name="searchQuery" placeholder="Search gallery ..." class="search nosubmit">
-                        <img src="~/help-icon.png" class="tooltipicon" alt="?" title="Search query must be one
+                        <img src="@tooltipIconFile" rel="tooltip" class="@tooltipIconClass" alt="?" title="Search query must be one
     or more comma separated list of
     tags possibly used in images." />
                     </form>
@@ -109,13 +118,14 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2022 - JuanMartin.PhotoGallery
+            &copy; 2022 - JuanMartin.PhotoGallery - @ViewBag.Version
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js" integrity="sha512-zYXldzJsDrNKV+odAwFYiDXV2Cy37cwizT+NkuiPGsa9X1dOz04eHvUWVuxaJ299GvcJT31ug2zO4itXBjFx4w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/tooltip.js "></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

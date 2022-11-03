@@ -10,11 +10,21 @@ using System.Net.Mail;
 using System.Text.RegularExpressions;
 using JuanMartin.Kernel.Extesions;
 using Microsoft.AspNetCore.Http.Features;
+using JuanMartin.PhotoGallery.Models;
+using Microsoft.AspNetCore.Routing;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
     public class HttpUtility
     {
+        public enum GalleryViewTypes
+        {
+            None = 0,
+            Index = 1 ,
+            Detail = 2
+        };
         public enum ImageRelativePosition
         {
             Previous = 0,
@@ -24,6 +34,9 @@ namespace JuanMartin.PhotoGallery.Controllers
         public static long GetImageId(long currenId, string idList, ImageRelativePosition position)
         {
             long result = -1;
+
+            if(idList is null)
+                return result;
 
             string id = $",{currenId},";
             int i = idList.IndexOf(id);
@@ -67,6 +80,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             return result;
         }
 
+
         public static List<SelectListItem> SetListOfItemsforDisplay(List<string> listOfItems, string selectedItem)
         {
             List<SelectListItem> items = new();
@@ -105,7 +119,7 @@ namespace JuanMartin.PhotoGallery.Controllers
                 }
                 else
                 {
-                    return (true, "");
+                    return (false, "");
                 }
             }
             return (false, null);
@@ -150,5 +164,51 @@ namespace JuanMartin.PhotoGallery.Controllers
 
             smtp.Send(message);
         }
+
+        public static string GetRedirectUrl(RedirectResponseModel redirect, GalleryViewTypes overwriteAction = GalleryViewTypes.None, string controllerName = "Gallery")
+        {
+            var actionName = overwriteAction.ToString();
+            if (redirect != null && redirect.RemoteHost != "")
+            {
+                controllerName = redirect.Controller;
+                actionName = redirect.Action;
+                if (overwriteAction == GalleryViewTypes.None && actionName != overwriteAction.ToString())
+                    return $"{controllerName}/{GalleryViewTypes.Index}";
+                else
+                    actionName = overwriteAction.ToString();
+
+                RouteValueDictionary routeValues = new(redirect.RouteData);
+                return $"{controllerName}/{actionName}/{PrepareRouteValues(routeValues, actionName)}";
+            }
+            else
+                return $"{controllerName}/{actionName}";
+        }
+
+
+        public static string PrepareRouteValues(RouteValueDictionary routeValues, string thisAction)
+        {
+            string[] actionsWithId = { "Detail" };
+            string url = "";
+            string queryString = "";
+
+            if (routeValues != null)
+            {
+                url = (actionsWithId.Contains(thisAction) && routeValues.ContainsKey("id")) ? $"{routeValues["id"]}?" : "?";
+
+                foreach (var routeValue in routeValues)
+                {
+                    if (routeValue.Key == "id")
+                        continue;
+
+                    queryString += (routeValue.Key != "id" && queryString.Length > 0) ? "&" : "";
+                    queryString += $"{routeValue.Key}={routeValue.Value}";
+                }
+
+                url += queryString;
+            }
+
+            return url;
+        }
+
     }
 }

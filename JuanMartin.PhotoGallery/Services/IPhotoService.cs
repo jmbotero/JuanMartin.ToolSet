@@ -25,6 +25,8 @@ namespace JuanMartin.PhotoGallery.Services
 
         int BlockSize { get; set; }
         int PageSize { get; set; }
+        int MobilePageSize { get; set; }
+
         void AddAuditMessage(int useerId, string meessage, string source = "", int isError = 0);
         User VerifyEmail(string email);
         void StoreActivationCode(int userId, string activationCode);

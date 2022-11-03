@@ -14,6 +14,7 @@ using System.Linq;
 using static JuanMartin.PhotoGallery.Services.IPhotoService;
 using Order = JuanMartin.Models.Gallery.Order;
 using JuanMartin.Kernel.Extesions;
+using System.Security.Cryptography;
 
 namespace JuanMartin.PhotoGallery.Controllers
 {
@@ -22,6 +23,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         private readonly IPhotoService _photoService;
         private readonly IConfiguration _configuration;
         private readonly bool _guestModeEnabled = false;
+        
         private  enum SelectedItemAction
         {
             none = 0,
@@ -43,14 +45,9 @@ namespace JuanMartin.PhotoGallery.Controllers
         {
             string message = "";
 
-            ViewBag.DisplayPhotogrphiesAsOrder = cartView;
-
             if (string.IsNullOrEmpty(searchQuery))  // case asp.net mvc name matching does not  work use request querystring
                 searchQuery = HttpContext.Request.Query["searchQuery"].ToString();
             
-            (var isMobile, var device) = HttpUtility.IsMobileDevice(HttpContext);
-            ViewBag.IsMobile=isMobile.ToString();
-
             if (HttpContext.Session is null)
                 Startup.IsSignedIn = false;
 
@@ -66,6 +63,8 @@ namespace JuanMartin.PhotoGallery.Controllers
             //message = $" User = ({sessionUserId}),  Session = ({sessionId})";
 
            var model = new GalleryIndexViewModel();
+            // set iformation for toolbar
+            (_, Order order) = SetLayoutViewHeaderInformation(userId: sessionUserId, cartView: cartView);
 
             //if(pageId > 1)
             //    throw new InvalidDataException($"search: '{searchQuery}'.");
@@ -74,8 +73,6 @@ namespace JuanMartin.PhotoGallery.Controllers
                 message = RemoveCurrentOrder(sessionUserId);
             }
 
-            // set iformation for toolbar
-            (_, Order order) = SetLayoutViewHeaderInformation(userId: sessionUserId, cartView: cartView);
 
             if (string.IsNullOrEmpty(searchQuery))
             {
@@ -252,8 +249,13 @@ namespace JuanMartin.PhotoGallery.Controllers
 
         private (int UserId, Order Order) SetLayoutViewHeaderInformation(int userId = -1, long photographyId=-1, bool cartView = false)
         {
+            ViewBag.Version = Startup.Version;
+            (var isMobile, _) = HttpUtility.IsMobileDevice(HttpContext);
+            ViewBag.IsMobile = isMobile;
+            Startup.IsMobile = isMobile;
+
             Order order;
-             int uid = (int)((userId == -1) ? GetCurrentUserId() : userId);
+            int uid = (int)((userId == -1) ? GetCurrentUserId() : userId);
             int orderId = GetCurrentSessionOrderId();
 
             if (orderId == -1)
@@ -264,7 +266,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             else
                 order = _photoService.GetOrder(uid, orderId);
 
-            ViewBag.CartRedirectUrl = GetRedirectUrlInGalleryController("Index", uid);
+            ViewBag.CartRedirectUrl = GetRedirectUrl(HttpUtility.GalleryViewTypes.Index, uid);
             ViewBag.DisplayPhotogrphiesAsOrder = cartView;
             ViewBag.PhotographyCount = (order != null) ? order.Count : 0;
             ViewBag.HasCurrentActiveOrder = orderId != -1;
@@ -510,9 +512,9 @@ namespace JuanMartin.PhotoGallery.Controllers
             else
                 searchQuery = "";
 
-            (string ImaeIdsList, long rowCount) = photoService.GetPhotographyIdsList(userID, source, searchQuery, OrderId);
+            (string galleryIdList, long rowCount) = photoService.GetPhotographyIdsList(userID, source, searchQuery, OrderId);
 
-            HttpContext.Session.SetString("galleryIdList", ImaeIdsList);
+            HttpContext.Session.SetString("galleryIdList", galleryIdList);
             ViewBag.PageCount = (int)(rowCount / _photoService.PageSize) + 1;
 
             return (int)rowCount;
@@ -536,7 +538,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             var model = new GalleryDetailViewModel
             {
                 Image = image,
-                Location = image.Location,
+                Location = (image is null) ? "" : image.Location,
                 PageId = pageId,
                 SearchQuery = searchQuery,
                 SelectedTagListAction = NoActionSelected,
@@ -578,31 +580,13 @@ namespace JuanMartin.PhotoGallery.Controllers
                 return RedirectToAction(controllerName: "Gallery", actionName: "Index");
         }
 
-        private string GetRedirectUrlInGalleryController(string redirectToAction, int userId)
+        private string GetRedirectUrl(HttpUtility.GalleryViewTypes overwriteView, int userId)
         {
-            string url = $"/{redirectToAction}";
-
             var remoteHostName = HttpUtility.GetClientRemoteId(HttpContext);
 
             var redirect = _photoService.GetRedirectInfo(userId, remoteHostName);
-            if (redirect != null && redirect.RemoteHost != "")
-            {
-                url += (redirectToAction != "Index" && redirect.RouteData.TryGetValue("id", out object value)) ? $"/{value}" : "";
-                if(redirect.RouteData.Count > 1)
-                {
-                    foreach(var (item, index) in redirect.RouteData.ToList().Enumerate())
-                    {
-                        if (item.Key != "id")
-                        {
-                            url += (index == 0) ? "?" : "&";
-                            url += $"{item.Key}={item.Value}";
-                        }
-                    }
-                }
-                return url;
-            }
 
-            return url;
+            return HttpUtility.GetRedirectUrl(redirect, overwriteAction: overwriteView);
         }
 
     }

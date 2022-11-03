@@ -23,6 +23,7 @@ namespace JuanMartin.PhotoGallery.Services
 
         // # pages in a block
         public int BlockSize { get; set; }
+        public int MobilePageSize { get; set; }
 
         public PhotoService()
         {
@@ -32,6 +33,7 @@ namespace JuanMartin.PhotoGallery.Services
         {
             BlockSize = Convert.ToInt32(configuration["GalleryBlockSize"]);
             PageSize = Convert.ToInt32(configuration["GalleryPageSize"]);
+            MobilePageSize = Convert.ToInt32(configuration["MobileGalleryPageSize"]);            
         }
 
         internal static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
@@ -45,8 +47,8 @@ namespace JuanMartin.PhotoGallery.Services
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
-
-            request.AddData(new ValueHolder("PhotoGraphies", $"uspGetAllPhotographies({pageId},{this.PageSize},{userId})"));
+            int pageSize = (Startup.IsMobile) ? MobilePageSize : PageSize;
+            request.AddData(new ValueHolder("PhotoGraphies", $"uspGetAllPhotographies('{pageId}','{pageSize}','{userId}')"));
             request.AddSender("uspGetAllPhotographies", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -62,7 +64,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetPageCount", $"uspGetPageCount({pageSize})"));
+            request.AddData(new ValueHolder("uspGetPageCount", $"uspGetPageCount('{pageSize}')"));
             request.AddSender("Gallery", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -116,7 +118,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetPotography", $"uspGetPotography({photographyId},{userId})"));
+            request.AddData(new ValueHolder("uspGetPotography", $"uspGetPotography('{photographyId}','{userId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -127,7 +129,7 @@ namespace JuanMartin.PhotoGallery.Services
             return (photographies.Count == 0) ? null : photographies[0];
         }
 
-        public int UpdatePhotographyRanking(long id, int userId, int rank)
+        public int UpdatePhotographyRanking(long photographyId, int userId, int rank)
         {
             if (userId == -1)
                 return -1;
@@ -137,7 +139,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspUpdateRanking", $"uspUpdateRanking({userId},{id},{rank})"));
+            request.AddData(new ValueHolder("uspUpdateRanking", $"uspUpdateRanking('{userId}','{photographyId}','{rank}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -148,7 +150,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             return rankingId;
         }
-        public int UpdatePhotographyDetails(long id, int userId, string location)
+        public int UpdatePhotographyDetails(long photographyId, int userId, string location)
         {
             if (userId == -1)
                 return -1;
@@ -158,7 +160,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspUpdatePhotographyDetails", $"uspUpdatePhotographyDetails('{userId}','{id}','{location}')"));
+            request.AddData(new ValueHolder("uspUpdatePhotographyDetails", $"uspUpdatePhotographyDetails('{userId}','{photographyId}','{location}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -251,7 +253,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspAddSession", $"uspAddSession({userId})"));
+            request.AddData(new ValueHolder("uspAddSession", $"uspAddSession('{userId}')"));
             request.AddSender("Session", typeof(Microsoft.AspNetCore.Http.ISession).ToString());
 
             _dbAdapter.Send(request);
@@ -271,7 +273,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetUserRedirectInfo", $"uspGetUserRedirectInfo('{remoteHost}',{userId})"));
+            request.AddData(new ValueHolder("uspGetUserRedirectInfo", $"uspGetUserRedirectInfo('{remoteHost}','{userId}')"));
             request.AddSender("RedirectRequestModel", typeof(RedirectResponseModel).ToString());
 
             _dbAdapter.Send(request);
@@ -398,7 +400,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspUpdateUserPassword", $"uspUpdateUserPassword({userId},'{userName}','{password}')"));
+            request.AddData(new ValueHolder("uspUpdateUserPassword", $"uspUpdateUserPassword('{userId}','{userName}','{password}')"));
             request.AddSender("User", typeof(User).ToString());
 
             _dbAdapter.Send(request);
@@ -444,7 +446,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspStoreActivationCode", $"uspStoreActivationCode({userId},'{activationCode}')"));
+            request.AddData(new ValueHolder("uspStoreActivationCode", $"uspStoreActivationCode('{userId}','{activationCode}')"));
             request.AddSender("ActivationCode", typeof(string).ToString());
 
             _dbAdapter.Send(request);
@@ -576,14 +578,14 @@ namespace JuanMartin.PhotoGallery.Services
             return photographies;
         }
 
-        public int AddTag(int userId, string tag, long id)
+        public int AddTag(int userId, string tag, long photographyId)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspAddTag", $"uspAddTag('{userId}','{tag}',{id})"));
+            request.AddData(new ValueHolder("uspAddTag", $"uspAddTag('{userId}','{tag}','{photographyId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -594,14 +596,14 @@ namespace JuanMartin.PhotoGallery.Services
             return Id;
         }
 
-        public int RemoveTag(int userId, string tag, long id)
+        public int RemoveTag(int userId, string tag, long photographyId)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspRemoveTag", $"uspRemoveTag('{userId}','{tag}',{id})"));
+            request.AddData(new ValueHolder("uspRemoveTag", $"uspRemoveTag('{userId}','{tag}','{photographyId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -619,7 +621,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspConnectUserAndRemoteHost", $"uspConnectUserAndRemoteHost({userId},'{remoteHost}')"));
+            request.AddData(new ValueHolder("uspConnectUserAndRemoteHost", $"uspConnectUserAndRemoteHost('{userId}','{remoteHost}')"));
             request.AddSender("User", typeof(User).ToString());
 
             _dbAdapter.Send(request);
@@ -726,9 +728,10 @@ namespace JuanMartin.PhotoGallery.Services
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
+            const int noErrorId = -1;
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspGetOrder", $"uspGetOrder('{orderId}','{userId}','-1')"));
+            request.AddData(new ValueHolder("uspGetOrder", $"uspGetOrder('{orderId}','{userId}','{noErrorId}')"));
             request.AddSender("Order", typeof(Order).ToString());
 
             _dbAdapter.Send(request);
@@ -753,14 +756,14 @@ namespace JuanMartin.PhotoGallery.Services
             return MapOrderFromDatabaseReplyToEntityModel(userId, reply);
         }
 
-        public bool IsPhotographyInOrder(int orerId, long photographyId, int userId)
+        public bool IsPhotographyInOrder(int orderId, long photographyId, int userId)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspIsPhotographyInOrder", $"uspIsPhotographyInOrder('{orerId}','{photographyId}','{userId}')"));
+            request.AddData(new ValueHolder("uspIsPhotographyInOrder", $"uspIsPhotographyInOrder('{orderId}','{photographyId}','{userId}')"));
             request.AddSender("Order", typeof(Order).ToString());
 
             _dbAdapter.Send(request);
@@ -785,14 +788,14 @@ namespace JuanMartin.PhotoGallery.Services
             return MapPhotographyListFromDatabaseReplyToEntityModel(userId, reply);
         }
 
-        public int AddPhotographyToOrder(long id, int orderId, int userId)
+        public int AddPhotographyToOrder(long photographyId, int orderId, int userId)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspAddPhotographyToOrder", $"uspAddPhotographyToOrder('{id}','{orderId}',{userId})"));
+            request.AddData(new ValueHolder("uspAddPhotographyToOrder", $"uspAddPhotographyToOrder('{photographyId}','{orderId}','{userId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -803,14 +806,14 @@ namespace JuanMartin.PhotoGallery.Services
             return Id;
         }
 
-        public int RemovePhotographyFromOrder(long id, int orderId, int userId)
+        public int RemovePhotographyFromOrder(long photographyId, int orderId, int userId)
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspRemovePhotographyFromOrder", $"uspRemovePhotographyFromOrder('{id}','{orderId}',{userId})"));
+            request.AddData(new ValueHolder("uspRemovePhotographyFromOrder", $"uspRemovePhotographyFromOrder('{photographyId}','{orderId}','{userId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
@@ -828,7 +831,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
 
-            request.AddData(new ValueHolder("uspRemoveOrder", $"uspRemoveOrder('{orderId}',{userId})"));
+            request.AddData(new ValueHolder("uspRemoveOrder", $"uspRemoveOrder('{orderId}','{userId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
 
             _dbAdapter.Send(request);
