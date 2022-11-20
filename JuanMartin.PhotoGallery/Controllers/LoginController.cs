@@ -65,8 +65,10 @@ namespace JuanMartin.PhotoGallery.Controllers
         {
             ViewBag.IsCodevalid = false;
             string message;
-            ResetPasswordViewModel model = new();
-            model.ResetCode = id;
+            ResetPasswordViewModel model = new()
+            {
+                ResetCode = id
+            };
 
             if (string.IsNullOrWhiteSpace(id) && !UtilityString.IsGuid(id))
             {
@@ -176,6 +178,7 @@ namespace JuanMartin.PhotoGallery.Controllers
         }
         public ActionResult Login()
         {
+            SetupViewInformation();
             ViewBag.GalleryRedirectUrl = ViewGalleryIndexRedirectUrl(-1);
             TempData["isSignedIn"] = Startup.IsSignedIn;
             return View();
@@ -212,6 +215,13 @@ namespace JuanMartin.PhotoGallery.Controllers
             return View(model);
         }
 
+        private void  SetupViewInformation()
+        {
+            ViewBag.Version = Startup.Version;
+            var isMobile = Startup.IsMobile;
+            ViewBag.IsMobile = isMobile;
+            
+        }
         private void StartNewSession(JuanMartin.Models.Gallery.User u)
         {
             int userId = u.UserId;

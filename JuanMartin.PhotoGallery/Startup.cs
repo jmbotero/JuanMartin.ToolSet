@@ -18,7 +18,7 @@ namespace JuanMartin.PhotoGallery
         public static string ConnectionString { get; private set; }
         public static string Version { get; private set; }
         public static bool IsMobile { get; set; }
-        public static bool IsSignedIn { get; set; } 
+        public static bool IsSignedIn { get; set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;

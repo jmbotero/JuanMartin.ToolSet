@@ -1,9 +1,13 @@
 ﻿@model JuanMartin.PhotoGallery.Models.LoginViewModel;
+@using JuanMartin.Kernel.Extesions;
 @{
     ViewBag.Title = "User Login";
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/";
-    //    var baseUrl = $"{Context.Request.Host}/";
     var galleryRedirectUrl = (ViewBag.GalleryRedirectUrl is null) ? "#" : baseUrl + ViewBag.GalleryRedirectUrl;
+    var isMobile = (ViewBag.IsMobile is null) ? false : (bool)ViewBag.IsMobile;
+    string fontSizeDeviceTypeOverride = (isMobile) ? "16" : "10";
+    string fontColorDeviceTypeOverride = (isMobile) ? "dodgerblue" : "black";
+    string fontWeightDeviceTypeOverride = (isMobile) ? "bold" : "normal";
 
 }
 
@@ -26,15 +30,15 @@
 
     <table>
         <tr>
-            <td>@Html.LabelFor(a => a.UserName)</td>
-            <td>@Html.TextBoxFor(a => a.UserName)</td>
+            <td style="font-size: @fontSizeDeviceTypeOverride;font-weight:@fontWeightDeviceTypeOverride;">@Html.LabelFor(a => a.UserName)</td>
+            <td style="font-size: @fontSizeDeviceTypeOverride;">@Html.TextBoxFor(a => a.UserName)</td>
             <td>@Html.ValidationMessageFor(a => a.UserName)</td>
         </tr>
         <tr>
-            <td>
+            <td style="font-size: @fontSizeDeviceTypeOverride;font-weight:@fontWeightDeviceTypeOverride;">
                 @Html.LabelFor(a => a.Password)
             </td>
-            <td>
+            <td style="font-size: @fontSizeDeviceTypeOverride;">
                 @Html.PasswordFor(a => a.Password)
             </td>
             <td>
@@ -56,9 +60,12 @@
     <br />
     <br />
     <br />
+
+            string message = $"« Back to gallery...";
+            message   = (isMobile) ? message.ToUpper() : message.Capitalize();
+            string navigationButtonClass = (isMobile) ? "btn-nav-with-text-mobile" : "btn-nav-with-text-desktop";
+
     <div class="gallery-image-detail-nav">
-        <a class="btn btn-nav-text" href="@galleryRedirectUrl">
-            &laquo; Back to gallery
-        </a>
+        <a class="btn @navigationButtonClass" href="@galleryRedirectUrl">@message</a>
     </div>
 } 

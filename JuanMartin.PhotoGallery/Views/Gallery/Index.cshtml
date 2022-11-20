@@ -3,6 +3,16 @@
 @using JuanMartin.Kernel.Extesions;
 @{
     var isMobile = (ViewBag.IsMobile is null) ? false : (bool)ViewBag.IsMobile;
+
+    string galleryIndexContentClass = (isMobile) ? "gallery-content-mobile" : "gallery-content";
+    string navigationButtonClass = (isMobile) ? "btn-nav-with-text-mobile" : "btn-nav-with-text-desktop";
+    string tooltipIconClass = (isMobile) ? "tooltip-icon-mobile" : "tooltip-icon-desktop";
+    string tooltipIconFile = (isMobile) ? "help-icon-mobile.png" : "help-icon.png";
+    tooltipIconFile = "/" +  tooltipIconFile;
+    string fontSizeDeviceTypeOverride = (isMobile) ? "16" : "10";
+    string fontColorDeviceTypeOverride = (isMobile) ? "black" : "black";
+    string fontWeightDeviceTypeOverride = (isMobile) ? "bold" : "normal";
+
     var isCartView = (ViewBag.DisplayPhotogrphiesAsOrder is null) ? false : (bool)ViewBag.DisplayPhotogrphiesAsOrder;
     var pageCount = ViewBag.PageCount;
     var currentPage = ViewBag.CurrentPage;
@@ -30,7 +40,7 @@
                     {
                         <div id="tagViews" class="dropdown">
                             <button class="dropbtn">Display by Tags</button>
-                            <div class="dropdown-content">
+                            <div class="dropdown-content" style="font-size: @fontSizeDeviceTypeOverride;">
                                 @foreach (string tag in Model.Tags)
                                 {
                                     var t = tag.Capitalize();
@@ -46,7 +56,7 @@
                     {
                         <div id="locationViews" class="dropdown">
                             <button class="dropbtn">Display by Locations</button>
-                            <div class="dropdown-content">
+                            <div class="dropdown-content" style="font-size: @fontSizeDeviceTypeOverride;">
                                 @foreach (string location in Model.Locations)
                                 {
                                     galleryUrl = baseUrl + $"?pageId=1&blockId=1&searchQuery={location.Capitalize()}";
@@ -62,9 +72,15 @@
 } @*add view menus *@
 @if (@ViewBag.Message != null && @ViewBag.Message != "")
 {
+    var m = ViewBag.Message;
+    var lines = m.split("<br/>");
 
     <div class="error-message">
-        @ViewBag.Message
+        @foreach(var line in lines)
+        {
+            <span>@line</span>
+            <br />
+        }
     </div>
     <br />
 }
@@ -78,11 +94,6 @@
 }
 @if (!isCartView) 
 {
-    string galleryIndexContentClass = (isMobile) ? "gallery-content-mobile" : "gallery-content";
-    string tooltipIconClass = (isMobile) ? "tooltip-icon-mobile" : "tooltip-icon-desktop";
-    string tooltipIconFile = (isMobile) ? "help-icon-mobile.png" : "help-icon.png";
-    tooltipIconFile = "/" +  tooltipIconFile;
-
     <div class="container body-content">
         <div class="@galleryIndexContentClass">
             @if (Model.Album != null && Model.Album.Count > 0)
@@ -104,18 +115,18 @@
                         <div class="overlay">
                             <table>
                                 <tr>
-                                    <td style="width:max-content; text-align:right">Name: </td>
-                                    <td>@image.FileName</td>
+                                    <td style="width:max-content; text-align:right;font-size: @fontSizeDeviceTypeOverride;">Name: </td>
+                                    <td style="font-size: @fontSizeDeviceTypeOverride;">@image.FileName</td>
                                 </tr>
                                 <tr>
-                                    <td style="width:max-content; text-align:right">Location: </td>
-                                    <td>@image.Location</td>
+                                    <td style="width:max-content; text-align:right;font-size: @fontSizeDeviceTypeOverride;">Location: </td>
+                                    <td style="font-size: @fontSizeDeviceTypeOverride;">@image.Location</td>
                                 </tr>
                                 @if (image.AverageRank > 0)
                                 {
                                     <tr>
-                                        <td style="width:max-content; text-align:right">Average Rank: </td>
-                                        <td style="color:gold;">@image.AverageRank ★'s</td>
+                                        <td style="width:max-content; text-align:right;font-size: @fontSizeDeviceTypeOverride;">Average Rank: </td>
+                                        <td style="color:gold;font-size: @fontSizeDeviceTypeOverride;">@image.AverageRank ★'s</td>
                                     </tr>
                                 }
                             </table>
@@ -127,7 +138,7 @@
             }
             else
             {
-                <span>Photography page is empty.</span>
+                <span style="font-size: @fontSizeDeviceTypeOverride;">Photography page is empty.</span>
             }
         </div>
         @* this should be a partial view *@
@@ -269,7 +280,7 @@ else
                                                     </div>
                                                 </td>
                                                 <td width="80%" class="gallery-image-detail-meta">
-                                                    <span id="cartItemFileName">@image.FileName</span>
+                                                    <span id="cartItemFileName" style="font-size: @fontSizeDeviceTypeOverride;">@image.FileName</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -278,18 +289,27 @@ else
                             }
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-nav-text" onclick="SubmitOrderIndices();"><span>Update Order Sequence</span></button>
+                    <br />
+                    @{
+                        string msg = "Update Order Sequence";
+                        msg   = (isMobile) ? msg.ToUpper() : msg.Capitalize();
+                    }
+                    <button type="submit" class="btn @navigationButtonClass" onclick="SubmitOrderIndices();"><span>@msg</span></button>
                 </form>
             }
         </div>
-    </div>
-    // persist values
-    queryString = $"?pageId={currentPage}&BlockId={currentBlock}&searchQuery={searchQuery}";
-    galleryUrl = $"{baseUrl}/Index" + queryString;
-    <div class="gallery-image-detail-nav">
-        <a class="btn btn-nav-text" href="@galleryUrl">
-            &laquo; Back to gallery...
-        </a>
+
+        @{
+            // persist values
+            queryString = $"?pageId={currentPage}&BlockId={currentBlock}&searchQuery={searchQuery}";
+            galleryUrl = $"{baseUrl}/Index" + queryString;
+
+            string message = "« Back to gallery...";
+            message   = (isMobile) ? message.ToUpper() : message.Capitalize();
+        }
+        <div class="gallery-image-detail-nav">
+            <a class="btn @navigationButtonClass" href="@galleryUrl">@message</a>
+        </div>
     </div>
 } @*add gallery shopping cart view *@
 @if (@ViewBag.DebugMessage != null && @ViewBag.DebugMessage != "")

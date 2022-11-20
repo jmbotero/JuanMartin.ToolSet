@@ -61,7 +61,7 @@
                         @if (ViewBag.DisplayPhotogrphiesAsOrder != null && ViewBag.DisplayPhotogrphiesAsOrder)
                         {
                             <li class="nav-item">
-                                <div name="cancelOrder" style="fit-content;justify-content:right;">
+                                <div name="cancelOrder" style="width:fit-content;justify-content:right;">
                                     @if (ViewBag.HasCurrentActiveOrder != null && ViewBag.HasCurrentActiveOrder)
                                     {
                                         var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";

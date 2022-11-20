@@ -347,7 +347,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             var orderId = -1;
             var count = GetPhotographyIdsList(sessionUserId, _photoService, searchQuery, orderId);
             searchQuery = searchQuery.Replace("|", ",");
-            ViewBag.InfoMessage = $">> {count} results for images with tags  in ({searchQuery}).";
+            ViewBag.InfoMessage = $">> {count} images  were found with tags: ({searchQuery}).";
             model.PhotographyCount = count;
             model.BlockId = blockId;
             model.PageId = pageId;
@@ -366,7 +366,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             model.Album = (List<Photography>)_photoService.GetOrderPhotographies(sessionUserId, order.OrderId, pageId);
             var count = GetPhotographyIdsList(sessionUserId, _photoService, "", order.OrderId);
             string label = (count == 1) ? "photography" : "photographies";
-            ViewBag.InfoMessage = $">> ({count}) {label} in order #{order.Number}";
+            ViewBag.InfoMessage = $">> ({count}) {label} in<br/>Order #{order.Number}<br/>created on {order.CreatedDtm}";
             model.CartItemsSequence = "";
             model.ShoppingCartAction = SelectedItemAction.none.ToString();
             model.PhotographyCount = count;

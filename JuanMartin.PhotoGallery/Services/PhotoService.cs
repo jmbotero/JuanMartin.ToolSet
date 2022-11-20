@@ -5,7 +5,6 @@ using JuanMartin.Kernel.Messaging;
 using JuanMartin.Models.Gallery;
 using JuanMartin.PhotoGallery.Models;
 using Microsoft.Extensions.Configuration;
-using PayPal.Api;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;

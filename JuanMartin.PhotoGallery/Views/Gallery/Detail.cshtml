@@ -1,5 +1,6 @@
 ﻿@model JuanMartin.PhotoGallery.Models.GalleryDetailViewModel;
 @using JuanMartin.PhotoGallery.Controllers;
+@using JuanMartin.Kernel.Extesions;
 @{
     var isMobile = (ViewBag.IsMobile is null) ? false : (bool)ViewBag.IsMobile;
     bool imageExists = (Model != null && Model.Image != null) ? true : false;
@@ -30,6 +31,10 @@
 
     var galleryUrl = $"{baseUrl}/Gallery/Index" + queryString;
 
+    string navigationButtonClass = (isMobile) ? "btn-nav-with-text-mobile" : "btn-nav-with-text-desktop";
+    string fontSizeDeviceTypeOverride = (isMobile) ? "16" : "10";
+    string fontColorDeviceTypeOverride = (isMobile) ? "dodgerblue" : "black";
+    string fontWeightDeviceTypeOverride = (isMobile) ? "bold" : "normal";
     string tooltipIconClass = (isMobile) ? "tooltip-icon-mobile" : "tooltip-icon-desktop";
     string tooltipIconFile = (isMobile) ? "help-icon-mobile.png" : "help-icon.png";
     tooltipIconFile = "/" + tooltipIconFile;
@@ -83,15 +88,15 @@
         <br />
         <table class="gallery-image-detail-meta">
             <tr>
-                <td class="gallery-image-detail-meta-column-left">FileName: </td>
-                <td class="gallery-image-detail-meta-column-right">@imageFileName</td>
+            <td class="gallery-image-detail-meta-column-left" style="font-size: @fontSizeDeviceTypeOverride;color:@fontColorDeviceTypeOverride;">FileName: </td>
+            <td class="gallery-image-detail-meta-column-right" style="font-size: @fontSizeDeviceTypeOverride;">@imageFileName</td>
                 <td class="gallery-image-detail-meta-column-sidenote"></td>
             </tr>
             <tr>
-                <td class="gallery-image-detail-meta-column-left">Location: </td>
+            <td class="gallery-image-detail-meta-column-left" style="font-size: @fontSizeDeviceTypeOverride;color:@fontColorDeviceTypeOverride;">Location: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
-                        <input style="width: 150px;" type="text" asp-for="Location" value="@imageLocation">
+                    <input style="width: 150px;font-size: @fontSizeDeviceTypeOverride;" type="text" asp-for="Location" value="@imageLocation">
                         <button type="submit" style="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-detail-action" src="~/plus.png" /></button>
                     </form>
                 </td>
@@ -101,11 +106,11 @@ for the current image, and click plus icon to submit." />
                 </td>
             </tr>
             <tr>
-                <td class="gallery-image-detail-meta-column-left">Tags: </td>
+            <td class="gallery-image-detail-meta-column-left" style="font-size: @fontSizeDeviceTypeOverride;color:@fontColorDeviceTypeOverride;">Tags: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     @*<span>-@Model.SelectedTagListAction-</span>*@
                     <form id="tags" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId"  asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
-                        <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px">
+                    <select id="tagList" size="2" onclick="GetSelectedTagText(this)" style="width:150px;font-size: @fontSizeDeviceTypeOverride;">
                             @{
                                 var tags = (imageExists) ? Model.Image.Tags : new List<string> { "" };
                                 
@@ -117,7 +122,7 @@ for the current image, and click plus icon to submit." />
                         </select><br />
                         <input style="display: none;" type="text" asp-for="Tag">
                         <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
-                        <input style="width: 150px;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
+                    <input style="width: 150px;font-size: @fontSizeDeviceTypeOverride;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
                         <button type="submit" style="border:none;background-color: white;" onclick="SetTagListAction('add');"><img class="btn-detail-action" src="~/plus.png" /></button>
                         <button type="submit" style="border:none;background-color: white;" onclick="SetTagListAction('remove');"><img class="btn-detail-action" src="~/minus.png" /></button>
                     </form>
@@ -129,7 +134,7 @@ to add or  remove." />
                 </td>
             </tr>
             <tr>
-                <td class="gallery-image-detail-meta-column-left">Rank: </td>
+            <td class="gallery-image-detail-meta-column-left" style="font-size: @fontSizeDeviceTypeOverride;color:@fontColorDeviceTypeOverride;">Rank: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     @*<span>-@Model.Image.Rank-</span>*@
                     <form id="imageRank" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
@@ -158,7 +163,7 @@ Number of stars equals image rating." />
                 </td>
             </tr>
             <tr>
-                <td class="gallery-image-detail-meta-column-left">Actions ... </td>
+            <td class="gallery-image-detail-meta-column-left" style="font-size: @fontSizeDeviceTypeOverride;color:@fontColorDeviceTypeOverride;">Actions ... </td>
                 <td class="gallery-image-detail-meta-column-right">
                     <form id="cartActions" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
                         <input style="display: none;" type="text" id="currentImageCartAction" asp-for="ShoppingCartAction">
@@ -187,10 +192,11 @@ add or remove this picture to the shopping cart. A picture can only be added onc
         </table>
         @{
             var label = (isCartView) ? "order" : "gallery";
+
+            string message = $"« Back to {label}...";
+            message   = (isMobile) ? message.ToUpper() : message.Capitalize();
         }
         <div class="gallery-image-detail-nav">
-            <a class="btn btn-nav-text" href="@cartGalleryRedirectUrl">
-                &laquo; Back to @label...
-            </a>
+            <a class="btn @navigationButtonClass"  href="@cartGalleryRedirectUrl">@message</a>
         </div>
 </div>

@@ -17,11 +17,20 @@ a {
   color: #0366d6;
 }
 
-.btn-nav-text {
+.btn-nav-with-text-desktop {
     color: #fff;
     background-color: var(--site-navigation-color); /*#1b6ec2;*/
     border-color: #1861ac;
     font-size: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+}
+
+.btn-nav-with-text-mobile {
+    color: #fff;
+    background-color: var(--site-navigation-color); /*#1b6ec2;*/
+    border-color: #1861ac;
+    font-size: 16px;
     font-family: Arial, Helvetica, sans-serif;
     font-weight: bold;
 }
@@ -169,8 +178,8 @@ body {
 .gallery-image-cart {
     display: block;
     position: center;
-    height: 45px;
-    width: 45px;
+    height: 65px;
+    width: 65px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -214,6 +223,13 @@ body {
     align-items: center;
     width:fit-content;
 }
+
+.gallery-image-detail-meta-text-mobile {
+    color: white;
+    font-size: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
 .gallery-image-detail-nav {
     padding-left: 15px;
     padding-right: 15px;
