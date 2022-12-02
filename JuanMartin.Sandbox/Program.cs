@@ -4,12 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JuanMartin.Kernel.Utilities;
-using JuanMartin.Models.Gallery;
-using JuanMartin.Kernel.Messaging;
-using JuanMartin.Kernel;
 using JuanMartin.Kernel.Adapters;
 using JuanMartin.Sandbox.Objects;
-using System.IO;
 
 namespace JuanMartin.Sandbox
 {
@@ -42,7 +38,7 @@ namespace JuanMartin.Sandbox
             //var upr = PhotoService.UpdatePhotographyRanking(1, 9, 6);
             //var pc = PhotoService.GetGalleryPageCount(8);
             //var gph = PhotoService.GetAllPhotographies(1, 1).ToList();
-            var searchQuery = "city";
+            //var searchQuery = "city";
 
             //int userId = 1,limit = 8, offset = 8;
             //var s = $"SELECT v.* FROM (SELECT @p1:={userId} p) parm ,tblphotographytags pt JOIN vwphotographywithranking v ON v.id = pt.photography_id JOIN tbltag t ON t.id = pt.tag_id WHERE t.word REGEXP '{searchQuery.Replace(',','|')}'  ORDER BY v.Id ASC LIMIT {limit} OFFSET {offset}";
@@ -58,9 +54,13 @@ namespace JuanMartin.Sandbox
             //var count = 2;
             //PhotoService.AddAuditMessage(1, $"Search for ({searchQuery}) returned {count} results.");
 
-            var connectionString = "server=localhost; port=3306; database=gallery; user=root; password=yala; Persist Security Info=True; Connect Timeout=300";
-            var path = @"C:\GitHub\JuanMartin.ToolSet\JuanMartin.PhotoGallery\wwwroot\photos.lnk";
-            PhotoService.LoadPhotographies(new AdapterMySql(connectionString), path, ".jpg,.JPG", true);
+
+            //JsonApplicationSettings applicationSettings = new JsonApplicationSettings(@"C:\GitHub\JuanMartin.ToolSet\JuanMartin.PhotoGallery");
+            //PhotoService photoService = new PhotoService(applicationSettings.Configuration);
+            //var connectionString = applicationSettings.ConnectionString;
+            ////var path = @"C:\GitHub\JuanMartin.ToolSet\JuanMartin.PhotoGallery\wwwroot\photos.lnk";
+            //var path = @"C:\GitHub\JuanMartin.ToolSet\JuanMartin.PhotoGallery\wwwroot\photos\digital";
+            //photoService.LoadPhotographiesWithLocation(connectionString, path, ".jpg,.JPG", false, 1, "East  Africa");
 
         }
 

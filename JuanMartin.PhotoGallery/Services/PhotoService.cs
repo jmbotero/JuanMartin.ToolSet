@@ -2,12 +2,14 @@
 using JuanMartin.Kernel;
 using JuanMartin.Kernel.Adapters;
 using JuanMartin.Kernel.Messaging;
+using JuanMartin.Kernel.Utilities;
 using JuanMartin.Models.Gallery;
 using JuanMartin.PhotoGallery.Models;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using static JuanMartin.PhotoGallery.Services.IPhotoService;
 using Order = JuanMartin.Models.Gallery.Order;
@@ -33,11 +35,6 @@ namespace JuanMartin.PhotoGallery.Services
             BlockSize = Convert.ToInt32(configuration["GalleryBlockSize"]);
             PageSize = Convert.ToInt32(configuration["GalleryPageSize"]);
             MobilePageSize = Convert.ToInt32(configuration["MobileGalleryPageSize"]);            
-        }
-
-        internal static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
-        {
-            IPhotoService.LoadPhotographies(dbAdapter, directory, acceptedExtensions, directoryIsLink);
         }
 
         public IEnumerable<Photography> GetAllPhotographies(int userId, int pageId = 1)
@@ -551,7 +548,7 @@ namespace JuanMartin.PhotoGallery.Services
                     var title = (string)record.GetAnnotation("Title").Value;
                     var location = (string)record.GetAnnotation("Location").Value;
                     var rank = (long)record.GetAnnotation("Rank").Value;
-                    var averageRank = (double)record.GetAnnotation("AverageRank").Value;
+                    var averageRank = Convert.ToInt64(record.GetAnnotation("AverageRank").Value);
                     var tags = (string)record.GetAnnotation("Tags").Value;
 
                     var photography = new Photography
@@ -874,5 +871,92 @@ namespace JuanMartin.PhotoGallery.Services
 
             _dbAdapter.Send(request);
         }
+         public IEnumerable<Photography> LoadPhotographies(string connectionString, string directory, string acceptedExtensions, bool directoryIsLink)
+        {
+            var photographies = new List<Photography>();
+            //AdapterMySql dbAdapter = new(Startup.ConnectionString);//("localhost", "photogallery", "root", "yala");
+            var files = UtilityFile.GetAllFiles(directory, directoryIsLink);
+
+            // paginate and exclude uaccepted etensions
+            files = files.Where(f => acceptedExtensions.Contains(f.Extension)).ToList();
+
+            const string archiveTag = @"Archive\";
+            const string photosTag = @"\photos";
+
+            foreach (FileInfo file in files)
+            {
+                string name = file.Name;
+                string path = file.DirectoryName;
+                //preproces for web project
+                if (path.Contains(archiveTag))
+                {
+                    int i = path.IndexOf(archiveTag) + archiveTag.Length - 1;
+                    path = "~" + photosTag + path[i..];
+                }
+                else if (path.Contains(photosTag))
+                {
+                    int i = path.IndexOf(photosTag);
+                    path = "~" + path[i..];
+                }
+                string title = "";
+
+                AdapterMySql dbAdapter = new AdapterMySql(connectionString);
+                long id = AddPhotography(dbAdapter, name, path, title);
+
+                var photography = new Photography
+                {
+                    UserId = -1,
+                    Id = id,
+                    FileName = name,
+                    Path = path,
+                    Source = GetPhotographySource(path),
+                    Title = title,
+                    Location = "",
+                    Rank = 0,
+                    AverageRank = 0
+                };
+
+                photographies.Add(photography);
+            }
+            return photographies;
+         }
+        public IEnumerable<Photography> LoadPhotographiesWithLocation(string connectionString, string directory, string acceptedExtensions, bool directoryIsLink, int userId, string location)
+        {
+            List<Photography> photographies = LoadPhotographies(connectionString, directory, acceptedExtensions, directoryIsLink).ToList();
+
+            foreach(Photography photography in photographies) 
+            {  
+                UpdatePhotographyDetails(photography.Id, userId, location);
+                photography.Location = location;
+            }
+
+            return photographies;
+        }
+        public long AddPhotography(AdapterMySql dbAdapter,string name, string path, string title)
+        {
+            int source = (int)GetPhotographySource(path);
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspAddPhotoGraphy", $"uspAddPhotoGraphy({source},'{name}','{path}','{title}')"));
+            request.AddSender("PhotoGraphy", typeof(Photography).ToString());
+
+            dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)dbAdapter.Receive();
+
+            var Id = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
+
+            return Id;
+        }
+
+        private static Photography.PhysicalSource GetPhotographySource(string path)
+        {
+            if (path.Contains(@"slide"))
+                return Photography.PhysicalSource.slide;
+            if (path.Contains(@"negative"))
+                return Photography.PhysicalSource.negative;
+            return Photography.PhysicalSource.digital;
+        }
+
     }
 }

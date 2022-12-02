@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32228.343
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33103.201
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuanMartin.PhotoGallery", "JuanMartin.PhotoGallery.csproj", "{2354433E-CC47-410F-8BEF-490CC5387A83}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuanMartin.PhotoGallery", "JuanMartin.PhotoGallery.csproj", "{2354433E-CC47-410F-8BEF-490CC5387A83}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuanMartin.Kernel", "..\..\JuanMartin.Kernel\JuanMartin.Kernel\JuanMartin.Kernel.csproj", "{4515E3A1-F6B3-4AF5-AE75-BB9E214EC349}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuanMartin.Models", "..\..\JuanMartin.Models\JuanMartin.Models\JuanMartin.Models.csproj", "{6B59DE41-40F5-41C0-98CD-3393D463C757}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GalleryConsole", "GalleryConsole\GalleryConsole.csproj", "{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{6B59DE41-40F5-41C0-98CD-3393D463C757}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B59DE41-40F5-41C0-98CD-3393D463C757}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B59DE41-40F5-41C0-98CD-3393D463C757}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

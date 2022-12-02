@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace JuanMartin.Sandbox.Objects
 {
-    public class PhotoService
+    public class _PhotoService
     {
         
         public static string Databese => "gallery";

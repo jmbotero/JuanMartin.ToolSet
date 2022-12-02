@@ -1,15 +1,13 @@
 -- --------------------------------------------------------
 -- Host:                         127.0.0.1
--- Server version:               8.0.30 - MySQL Community Server - GPL
+-- Server version:               8.0.31 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.1.0.6537
+-- HeidiSQL Version:             11.2.0.6213
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
@@ -103,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   `location_id` int DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `FK_photography_locations` (`location_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -690,7 +688,7 @@ BEGIN
 	SET rec_take = PageSize;
 	SET rec_skip = (CurrentPage - 1) * PageSize;
 
-	(SELECT v.*
+	(SELECT DISTINCT v.*
 	FROM (SELECT @p1:=UserID p) parm ,tblphotographytags pt 
 	JOIN vwphotographywithranking v 
 		ON v.id = pt.photography_id
@@ -700,7 +698,7 @@ BEGIN
 	GROUP BY v.Id
 	ORDER BY v.AverageRank DESC,v.Id DESC)
 	UNION
-	(SELECT v.*
+	(SELECT DISTINCT v.*
 	FROM vwphotographywithranking v 
 	WHERE v.Location REGEXP SearchQuery
 	GROUP BY v.Id
@@ -1303,7 +1301,6 @@ DROP VIEW IF EXISTS `vwphotographywithranking`;
 DROP TABLE IF EXISTS `vwphotographywithranking`;
 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographywithranking` AS select `p`.`Id` AS `Id`,`p`.`Filename` AS `Filename`,ifnull(`p`.`Location`,'') AS `Location`,`p`.`Path` AS `Path`,(case when (locate('slide',`p`.`Path`) > 0) then 1 else 0 end) AS `Source`,`p`.`Title` AS `Title`,ifnull(`p`.`Tags`,'') AS `Tags`,ifnull(`r`.`_rank`,0) AS `Rank`,ifnull(`udfGetAverageRank`(`p`.`Id`),0) AS `AverageRank` from (`vwphotographydetails` `p` left join `tblranking` `r` on(((`r`.`user_id` = `p1`()) and (`r`.`photography_id` = `p`.`Id`))));
 
-/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

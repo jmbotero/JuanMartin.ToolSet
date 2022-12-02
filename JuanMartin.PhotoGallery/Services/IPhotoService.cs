@@ -62,61 +62,8 @@ namespace JuanMartin.PhotoGallery.Services
         int RemovePhotographyFromOrder(long id, int orderId, int userId);
         bool UpdateOrderItemsIndices(int userId, int orderId, GalleryIndexViewModel model);
         void UpdateOrderIndex(int userId, int orderId, long photographyId, int index);
-        static void LoadPhotographies(IExchangeRequestReply dbAdapter, string directory, string acceptedExtensions, bool directoryIsLink)
-        {
-            var photographies = new List<Photography>();
-            //AdapterMySql dbAdapter = new(Startup.ConnectionString);//("localhost", "photogallery", "root", "yala");
-            var files = UtilityFile.GetAllFiles(directory, directoryIsLink);
-
-            // paginate and exclude uaccepted etensions
-            files = files.Where(f => acceptedExtensions.Contains(f.Extension)).ToList();
-
-            const string archiveTag = @"Archive\";
-            const string photosTag = @"\photos";
-
-            foreach (FileInfo file in files)
-            {
-                string name = file.Name;
-                string path = file.DirectoryName;
-                //preproces for web project
-                if (path.Contains(archiveTag))
-                {
-                    int i = path.IndexOf(archiveTag) + archiveTag.Length - 1;
-                    path = "~" + photosTag + path[i..];
-                }
-                else if (path.Contains(photosTag))
-                {
-                    int i = path.IndexOf(photosTag);
-                    path = "~" + path[i..];
-                }
-                string title = "";
-                long id = AddPhotography((AdapterMySql)dbAdapter, name, path, title);
-            }
-        }
-
-        private static long AddPhotography(AdapterMySql DbAdapter, string name, string path, string title)
-        {
-            int source = (int)GetPhotographySource(path);
-
-            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
-
-            request.AddData(new ValueHolder("uspAddPhotoGraphy", $"uspAddPhotoGraphy({source},'{name}','{path}','{title}')"));
-            request.AddSender("PhotoGraphy", typeof(Photography).ToString());
-
-            DbAdapter.Send(request);
-            IRecordSet reply = (IRecordSet)DbAdapter.Receive();
-
-            var Id = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
-
-            return Id;
-        }
-
-        private static Photography.PhysicalSource GetPhotographySource(string path)
-        {
-            if (path.Contains(@"slide"))
-                return Photography.PhysicalSource.slide;
-
-            return Photography.PhysicalSource.negative;
-        }
+        IEnumerable<Photography> LoadPhotographies(string connectionString, string directory, string acceptedExtensions, bool directoryIsLink);
+        IEnumerable<Photography> LoadPhotographiesWithLocation(string connectionString, string directory, string acceptedExtensions, bool directoryIsLink, int userId, string location);
+        long AddPhotography(AdapterMySql dbAdapter, string name, string path, string title);
     }
 }

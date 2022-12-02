@@ -1,7 +1,6 @@
 SET foreign_key_checks = 0;
 TRUNCATE TABLE `tblphotography`; 
 
--- Dumping data for table gallery.tblphotography: ~2588 rows 
 INSERT INTO `tblphotography` (`id`, `_source`, `_path`, `title`, `filename`, `location_id`) VALUES
 	(1, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0001.JPG', NULL),
 	(2, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0002.JPG', NULL),
@@ -53,7 +52,7 @@ INSERT INTO `tblphotography` (`id`, `_source`, `_path`, `title`, `filename`, `lo
 	(48, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0048.JPG', NULL),
 	(49, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0049.JPG', NULL),
 	(50, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0050.JPG', NULL),
-		(51, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0051.JPG', NULL),
+	(51, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0051.JPG', NULL),
 	(52, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0052.JPG', NULL),
 	(53, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0053.JPG', NULL),
 	(54, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0054.JPG', NULL),
@@ -92,6 +91,16 @@ INSERT INTO `tblphotography` (`id`, `_source`, `_path`, `title`, `filename`, `lo
 	(87, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0087.JPG', NULL),
 	(88, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0088.JPG', NULL),
 	(89, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0089.JPG', NULL),
-	(90, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0090.JPG', NULL);
-
+	(90, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0090.JPG', NULL),
+	(91, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0091.JPG', NULL),
+	(92, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0092.JPG', NULL),
+	(93, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0093.JPG', NULL),
+	(94, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0094.JPG', NULL),
+	(95, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0095.JPG', NULL),
+	(96, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0096.JPG', NULL),
+	(97, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0097.JPG', NULL),
+	(98, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0098.JPG', NULL),
+	(99, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0099.JPG', NULL),
+	(100, 0, '~\\photos\\35mm Negatives 01', '\'\'', '35mm Negatives 01_0100.JPG', NULL);
+	
 SET foreign_key_checks = 1;
