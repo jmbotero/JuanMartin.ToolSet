@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuanMartin.Kernel", "..\..\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuanMartin.Models", "..\..\JuanMartin.Models\JuanMartin.Models\JuanMartin.Models.csproj", "{6B59DE41-40F5-41C0-98CD-3393D463C757}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GalleryConsole", "GalleryConsole\GalleryConsole.csproj", "{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{6B59DE41-40F5-41C0-98CD-3393D463C757}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B59DE41-40F5-41C0-98CD-3393D463C757}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B59DE41-40F5-41C0-98CD-3393D463C757}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F2B97CAE-F434-469B-A2EA-FC848D7ECB62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

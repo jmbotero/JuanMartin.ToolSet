@@ -5,8 +5,9 @@
     var isMobile = (ViewBag.IsMobile is null) ? false : (bool)ViewBag.IsMobile;
     bool imageExists = (Model != null && Model.Image != null) ? true : false;
 
-    string imageFileName = (!imageExists) ? "" : Model.Image.FileName;
-    string imageLocation = (!imageExists) ? "" : Model.Image.Location;
+    string imageFileName = (imageExists) ? Model.Image.FileName : "";
+    string imageLocation = (imageExists) ? Model.Image.Location : "";
+    if (imageLocation.Length == 0) imageLocation = "NEW";
 
     var isCartView = (ViewBag.DisplayPhotogrphiesAsOrder is null) ? false : (bool)ViewBag.DisplayPhotogrphiesAsOrder;
 
@@ -86,7 +87,6 @@
             </tr>
         </table>
         <br />
-        <table class="gallery-image-detail-meta">
             <tr>
             <td class="gallery-image-detail-meta-column-left" style="font-size: @fontSizeDeviceTypeOverride;color:@fontColorDeviceTypeOverride;">FileName: </td>
             <td class="gallery-image-detail-meta-column-right" style="font-size: @fontSizeDeviceTypeOverride;">@imageFileName</td>
@@ -96,8 +96,9 @@
             <td class="gallery-image-detail-meta-column-left" style="font-size: @fontSizeDeviceTypeOverride;color:@fontColorDeviceTypeOverride;">Location: </td>
                 <td class="gallery-image-detail-meta-column-right">
                     <form id="location" asp-controller="Gallery" asp-action="Detail" asp-route-id="@currentId" asp-route-searchQuery="@searchQuery" asp-route-pageId="@pageId" asp-route-blockId="@currentBlock" method="post">
-                    <input style="width: 150px;font-size: @fontSizeDeviceTypeOverride;" type="text" asp-for="Location" value="@imageLocation">
-                        <button type="submit" style="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-detail-action" src="~/plus.png" /></button>
+                        <input style="display: none;" type="text" id="placeHolderSource" asp-for="PlaceHolderSource">
+                        <input style="width: 150px;font-size: @fontSizeDeviceTypeOverride;" type="text" asp-for="Location" onchange="SetLocation();" />
+                         <button tyTagithist"le="border:none;background-color: white;" onclick="this.form.submit();"><img class="btn-detail-action" src="~/plus.png" /></button>
                     </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
@@ -120,9 +121,10 @@ for the current image, and click plus icon to submit." />
                                 }
                             }
                         </select><br />
-                        <input style="display: none;" type="text" asp-for="Tag">
-                        <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
-                    <input style="width: 150px;font-size: @fontSizeDeviceTypeOverride;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
+                    <input style="display: none;" type="text" id="placeHolderSource" asp-for="PlaceHolderSource">
+                    <input style="display: none;" type="text" asp-for="Tag">
+                    <input style="display: none;" type="text" id="selectedTagListAction" asp-for="SelectedTagListAction">
+                        <input style="width: 150px;font-size: @fontSizeDeviceTypeOverride;" type="text" id="hiddenTag" placeholder="Tag to add/remove..." onchange="SetTag(this);">
                         <button type="submit" style="border:none;background-color: white;" onclick="SetTagListAction('add');"><img class="btn-detail-action" src="~/plus.png" /></button>
                         <button type="submit" style="border:none;background-color: white;" onclick="SetTagListAction('remove');"><img class="btn-detail-action" src="~/minus.png" /></button>
                     </form>
@@ -154,8 +156,10 @@ to add or  remove." />
                                 }
                             }
                         </div>
-                        <input type="text" id="rank" asp-for="SelectedRank">
-                    </form>
+                    <input style="display: none;" type="text" id="placeHolderSource" asp-for="PlaceHolderSource">
+                    <input type="text" id="rank" asp-for="SelectedRank">
+                    <input style="display: none;" type="text" id="placeHolderRank" asp-for="PlaceHolderRank">
+                </form>
                 </td>
                 <td class="gallery-image-detail-meta-column-sidenote">
                 <img src="@tooltipIconFile" rel="tooltip" class="@tooltipIconClass" alt="?" title="Need to be logged in to run this feature

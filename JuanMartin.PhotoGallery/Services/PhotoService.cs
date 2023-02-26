@@ -6,9 +6,11 @@ using JuanMartin.Kernel.Utilities;
 using JuanMartin.Models.Gallery;
 using JuanMartin.PhotoGallery.Models;
 using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Data;
 using System.IO;
 using System.Linq;
 using static JuanMartin.PhotoGallery.Services.IPhotoService;
@@ -19,7 +21,7 @@ namespace JuanMartin.PhotoGallery.Services
     public class PhotoService : IPhotoService
     {
         private readonly IExchangeRequestReply _dbAdapter;
-        
+        private const int MaximumFileNameLength = 30;
         public int PageSize { get; set; }
 
         // # pages in a block
@@ -167,6 +169,26 @@ namespace JuanMartin.PhotoGallery.Services
 
             return locationId;
         }
+        public int UpdatePhotographyDetails(string connectionString, long photographyId, int userId, string location)
+        {
+            if (userId == -1)
+                return -1;
+
+            IExchangeRequestReply dbAdapter =new AdapterMySql(connectionString);
+
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspUpdatePhotographyDetails", $"uspUpdatePhotographyDetails('{userId}','{photographyId}','{location}')"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)dbAdapter.Receive();
+
+            // be sure record.GetAnnotation("...") exists and is not null
+            var locationId = (int)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
+
+            return locationId;
+        }
 
         public User GetUser(string userName, string password)
         {
@@ -304,7 +326,8 @@ namespace JuanMartin.PhotoGallery.Services
             return requestModel;
         }
 
-        public RedirectResponseModel SetRedirectInfo(int userId, string remoteHost, string controller, string action, long routeId = -1, string queryString = "")
+        public RedirectResponseModel SetRedirectInfo(int userId, string remoteHost, string controller, string action, long routeId = -1, string
+            queryString = "")
         {
             if (_dbAdapter == null)
                 throw new ApplicationException("MySql connection not set.");
@@ -333,7 +356,7 @@ namespace JuanMartin.PhotoGallery.Services
         /// <param name="routeId"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        public Dictionary<string, object> GenerateRouteValues(long routeId, string queryString)
+        public Dictionary<string, object> GenerateRouteValues(long routeId, string queryString, Dictionary<string, string> additionalQueryStringItems = null)
         {
             if (string.IsNullOrEmpty(queryString))
                 return null;
@@ -574,6 +597,33 @@ namespace JuanMartin.PhotoGallery.Services
             return photographies;
         }
 
+        public void AddTags(string connectionString, int userId, string tags, IEnumerable<Photography> photographies)
+        {
+             foreach (Photography photo in photographies)
+            {
+                 foreach(var tag in tags.Split(','))
+                {
+                    AddTag(connectionString, userId, tag, photo.Id);
+                }
+            }
+        }
+
+        public int AddTag(string connectionString, int userId, string tag, long photographyId)
+        {
+            AdapterMySql dbAdapter = new AdapterMySql(connectionString);
+            Message request = new("Command", System.Data.CommandType.StoredProcedure.ToString());
+
+            request.AddData(new ValueHolder("uspAddTag", $"uspAddTag('{userId}','{tag}','{photographyId}')"));
+            request.AddSender("Photography", typeof(Photography).ToString());
+
+            dbAdapter.Send(request);
+            IRecordSet reply = (IRecordSet)dbAdapter.Receive();
+
+            var Id = Convert.ToInt32(reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value);
+
+            return Id;
+        }
+
         public int AddTag(int userId, string tag, long photographyId)
         {
             if (_dbAdapter == null)
@@ -601,7 +651,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             request.AddData(new ValueHolder("uspRemoveTag", $"uspRemoveTag('{userId}','{tag}','{photographyId}')"));
             request.AddSender("Photography", typeof(Photography).ToString());
-
+              
             _dbAdapter.Send(request);
             IRecordSet reply = (IRecordSet)_dbAdapter.Receive();
 
@@ -873,9 +923,11 @@ namespace JuanMartin.PhotoGallery.Services
         }
          public IEnumerable<Photography> LoadPhotographies(string connectionString, string directory, string acceptedExtensions, bool directoryIsLink)
         {
+            Dictionary<string, string> keyValueFileList = new Dictionary<string, string>();
             var photographies = new List<Photography>();
             //AdapterMySql dbAdapter = new(Startup.ConnectionString);//("localhost", "photogallery", "root", "yala");
             var files = UtilityFile.GetAllFiles(directory, directoryIsLink);
+            int count = 1;
 
             // paginate and exclude uaccepted etensions
             files = files.Where(f => acceptedExtensions.Contains(f.Extension)).ToList();
@@ -887,6 +939,13 @@ namespace JuanMartin.PhotoGallery.Services
             {
                 string name = file.Name;
                 string path = file.DirectoryName;
+
+                if(name.Length > MaximumFileNameLength ) 
+                {
+                    string newName = $"{new DirectoryInfo(path).Name.Replace(' ', '_')}_{count.ToString().PadLeft(5, '0')}{file.Extension}";
+                    keyValueFileList.Add(newName, name);
+                    name = newName;
+                }
                 //preproces for web project
                 if (path.Contains(archiveTag))
                 {
@@ -903,20 +962,28 @@ namespace JuanMartin.PhotoGallery.Services
                 AdapterMySql dbAdapter = new AdapterMySql(connectionString);
                 long id = AddPhotography(dbAdapter, name, path, title);
 
-                var photography = new Photography
+                if (id > 0)
                 {
-                    UserId = -1,
-                    Id = id,
-                    FileName = name,
-                    Path = path,
-                    Source = GetPhotographySource(path),
-                    Title = title,
-                    Location = "",
-                    Rank = 0,
-                    AverageRank = 0
-                };
+                    var photography = new Photography
+                    {
+                        UserId = -1,
+                        Id = id,
+                        FileName = name,
+                        Path = path,
+                        Source = GetPhotographySource(path),
+                        Title = title,
+                        Location = "",
+                        Rank = 0,
+                        AverageRank = 0
+                    };
 
-                photographies.Add(photography);
+                    photographies.Add(photography);
+                }
+                count++;
+            }
+            if(keyValueFileList.Count> 0)
+            {
+                RenameFiles(directory, keyValueFileList);
             }
             return photographies;
          }
@@ -926,7 +993,7 @@ namespace JuanMartin.PhotoGallery.Services
 
             foreach(Photography photography in photographies) 
             {  
-                UpdatePhotographyDetails(photography.Id, userId, location);
+                UpdatePhotographyDetails(connectionString,photography.Id, userId, location);
                 photography.Location = location;
             }
 
@@ -945,8 +1012,12 @@ namespace JuanMartin.PhotoGallery.Services
             IRecordSet reply = (IRecordSet)dbAdapter.Receive();
 
             var Id = (long)reply.Data.GetAnnotationByValue(1).GetAnnotation("id").Value;
+            var response = (int)reply.Data.GetAnnotationByValue(1).GetAnnotation("response").Value;
 
-            return Id;
+            if (response != 1)
+                return -1;
+            else
+                return Id;
         }
 
         private static Photography.PhysicalSource GetPhotographySource(string path)
@@ -956,6 +1027,18 @@ namespace JuanMartin.PhotoGallery.Services
             if (path.Contains(@"negative"))
                 return Photography.PhysicalSource.negative;
             return Photography.PhysicalSource.digital;
+        }
+
+        private static void RenameFiles(string directory, Dictionary<string, string> keyValuePairs)
+        {
+            foreach (var file in keyValuePairs)
+            {
+                string originalFileName = Path.Combine(directory, file.Value);
+                string newFileName= Path.Combine(directory, file.Key);
+
+                if (File.Exists(originalFileName))
+                    File.Move(originalFileName, newFileName);
+            }
         }
 
     }

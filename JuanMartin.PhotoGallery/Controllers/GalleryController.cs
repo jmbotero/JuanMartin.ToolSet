@@ -168,7 +168,7 @@ namespace JuanMartin.PhotoGallery.Controllers
             {
                 message = ProcessSubmittedRank(id, model, message, sessionUserId);
             }
-            if (model != null && model.ShoppingCartAction!= NoActionSelected)
+            if (model != null && model.ShoppingCartAction != null && model.ShoppingCartAction != NoActionSelected)
             {
                 message = ProcessShoppingCartAction(id, model, message, sessionUserId);
             }

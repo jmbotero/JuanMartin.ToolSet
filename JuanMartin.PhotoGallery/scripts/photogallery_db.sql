@@ -2,12 +2,14 @@
 -- Host:                         127.0.0.1
 -- Server version:               8.0.31 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             11.2.0.6213
+-- HeidiSQL Version:             12.3.0.6589
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
@@ -37,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `tblaudit` (
   `message` varchar(250) NOT NULL,
   `_source` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=883 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -48,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `tbllocation` (
   `ddd` float DEFAULT NULL,
   `_reference` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -99,9 +101,10 @@ CREATE TABLE IF NOT EXISTS `tblphotography` (
   `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
   `filename` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `location_id` int DEFAULT NULL,
+  `archive` smallint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `FK_photography_locations` (`location_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=490 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -142,7 +145,7 @@ CREATE TABLE IF NOT EXISTS `tblsession` (
   `start_dtm` datetime NOT NULL,
   `end_dtm` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=127 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -167,7 +170,7 @@ CREATE TABLE IF NOT EXISTS `tbltag` (
   `id` int NOT NULL AUTO_INCREMENT,
   `word` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -179,7 +182,7 @@ CREATE TABLE IF NOT EXISTS `tbluser` (
   `_password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -268,19 +271,25 @@ CREATE PROCEDURE `uspAddPhotography`(
 )
 BEGIN
 	DECLARE id BIGINT;
+	DECLARE response INT;
 	
+	SET response = -1;
 
 	SELECT pic.id 
 	INTO id
 	FROM tblphotography pic
- 	WHERE pic.filename = FileName;
+ 	WHERE pic.filename = FileName
+	AND pic._path = FilePath;
 	
 	IF NOT FOUND_ROWS() THEN 	
+		SET response = 1;
 		INSERT INTO tblPhotography (_source,filename, _path, title) VALUE(ImageSource,FileName, FilePath, Title);
 		SET id=LAST_INSERT_ID();
+	ELSE
+		SET response = -2;
 	END IF;	
 
-	SELECT id;
+	SELECT response, id;
 END//
 DELIMITER ;
 
@@ -441,10 +450,10 @@ CREATE PROCEDURE `uspConnectUserAndRemoteHost`(
 	IN `RemoteHost` VARCHAR(50)
 )
 BEGIN
-	IF (UserID = 1) THEN
+	IF (UserID !=  -1) THEN
       DELETE s.*
 		FROM tblstate s 
-		WHERE  s.remote_host = RemoteHost AND s.user_id = UserID;
+		WHERE  s.remote_host = RemoteHost AND s.user_id = -1;
 	END IF;
 
 	UPDATE tblState s
@@ -521,6 +530,31 @@ BEGIN
 		FROM (SELECT @p1:=UserID p) parm , vwphotographywithranking v
 		ORDER BY v.AverageRank DESC, v.Id DESC;
 	END IF;
+END//
+DELIMITER ;
+
+-- Dumping structure for procedure gallery.uspGetArchivedPhotographies
+DROP PROCEDURE IF EXISTS `uspGetArchivedPhotographies`;
+DELIMITER //
+CREATE PROCEDURE `uspGetArchivedPhotographies`(
+	IN `UserId` INT,
+	IN `CurrentPage` INT,
+	IN `PageSize` INT
+)
+BEGIN
+	DECLARE rec_take INT;
+	DECLARE rec_skip INT;
+	
+	SET rec_take = PageSize;
+	SET rec_skip = (CurrentPage - 1) * PageSize;
+
+	SELECT DISTINCT v.*
+	FROM vwphotographywithranking v 
+	WHERE v.Archive = 1
+	GROUP BY v.Id
+	ORDER BY v.AverageRank DESC,v.Id DESC
+	LIMIT rec_take
+	OFFSET rec_skip;
 END//
 DELIMITER ;
 
@@ -695,12 +729,14 @@ BEGIN
 	JOIN tbltag t 
 		ON t.id = pt.tag_id 
 	WHERE t.word REGEXP SearchQuery
+	AND v.Archive = 0 	
 	GROUP BY v.Id
 	ORDER BY v.AverageRank DESC,v.Id DESC)
 	UNION
 	(SELECT DISTINCT v.*
 	FROM vwphotographywithranking v 
 	WHERE v.Location REGEXP SearchQuery
+	AND v.Archive = 0 	
 	GROUP BY v.Id
 	ORDER BY v.AverageRank DESC,v.Id DESC)
 	LIMIT rec_take
@@ -725,6 +761,7 @@ BEGIN
 	   FROM(
 				SELECT v.*
 				FROM  (SELECT @p1:=UserId p) parm , vwphotographywithranking v
+				WHERE v.Archive = 0
 				ORDER BY v.AverageRank DESC, v.Id) sub;
 	ELSEIF (SetSource = 1) THEN /* from search query*/
 	   SELECT IFNULL(GROUP_CONCAT(sub.Id),'') AS 'Ids', COUNT(*) AS 'RowCount'
@@ -737,12 +774,14 @@ BEGIN
 				JOIN tbltag t 
 					ON t.id = pt.tag_id 
 				WHERE t.word REGEXP SearchQuery
+				AND v.Archive = 0
 				ORDER BY v.AverageRank DESC, v.Id)
 			UNION
 			(
 				SELECT v.*
 				FROM vwphotographywithranking v 
 				WHERE v.Location REGEXP SearchQuery
+				AND v.Archive = 0
 				ORDER BY v.AverageRank DESC, v.Id
 			))sub;
 	ELSEIF (SetSource = 2) THEN /* from order*/
@@ -754,6 +793,15 @@ BEGIN
 				ON v.id = o.photography_id
 				WHERE o.order_id = OrderId
 				ORDER BY o._index ASC
+			) sub;
+	ELSEIF (SetSource = 3) THEN /* archived from gallery */
+	   SELECT IFNULL(GROUP_CONCAT(sub.Id),'') AS 'Ids', COUNT(*) AS 'RowCount'
+	   FROM(
+				SELECT v.*
+				FROM vwphotographywithranking v 
+				WHERE v.Location REGEXP SearchQuery
+				AND v.Archive = 1
+				ORDER BY v.AverageRank DESC, v.Id
 			) sub;
 	END IF;
 END//
@@ -1055,6 +1103,37 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Dumping structure for procedure gallery.uspUpdatePhotographyArchiveStatus
+DROP PROCEDURE IF EXISTS `uspUpdatePhotographyArchiveStatus`;
+DELIMITER //
+CREATE PROCEDURE `uspUpdatePhotographyArchiveStatus`(
+	IN `UserId` INT,
+	IN `PhotographyId` BIGINT,
+	IN `ArchiveStatus` VARCHAR(5)
+)
+BEGIN
+	DECLARE _archcive SMALLINT;
+
+	IF(ArchiveStatus = "true") THEN
+		SET _archcive=1;
+	ELSEIF(ArchiveStatus = "false") THEN
+		SET _archcive=0;
+	END IF;
+	
+	SELECT *
+	FROM tblUser u
+ 	WHERE u.id = UserId;
+
+	IF FOUND_ROWS() THEN 	
+		UPDATE tblphotography p
+			SET p.archive = _archcive
+	 	WHERE p.id = PhotographyId;
+
+		CALL uspAddAuditMessage(UserId, CONCAT('Set archive to [', ArchiveStatus, '] for (',PhotographyId,')'),'uspUpdatePhotographyArchiveStatus',0);
+	END IF;
+END//
+DELIMITER ;
+
 -- Dumping structure for procedure gallery.uspUpdatePhotographyDetails
 DROP PROCEDURE IF EXISTS `uspUpdatePhotographyDetails`;
 DELIMITER //
@@ -1257,6 +1336,7 @@ CREATE TABLE `vwphotographydetails` (
 	`Location` VARCHAR(50) NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Archive` SMALLINT(5) NOT NULL,
 	`Tags` TEXT NULL COLLATE 'utf8mb4_0900_ai_ci'
 ) ENGINE=MyISAM;
 
@@ -1278,6 +1358,7 @@ CREATE TABLE `vwphotographywithranking` (
 	`Path` VARCHAR(255) NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Source` INT(10) NOT NULL,
 	`Title` VARCHAR(100) NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`Archive` SMALLINT(5) NOT NULL,
 	`Tags` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
 	`Rank` BIGINT(19) NOT NULL,
 	`AverageRank` FLOAT NOT NULL
@@ -1287,7 +1368,7 @@ CREATE TABLE `vwphotographywithranking` (
 DROP VIEW IF EXISTS `vwphotographydetails`;
 -- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `vwphotographydetails`;
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `p`.`id` AS `Id`,`p`.`filename` AS `Filename`,`loc`.`_reference` AS `Location`,`p`.`_path` AS `Path`,`p`.`title` AS `Title`,`vw`.`Taglist` AS `Tags` from ((`tblphotography` `p` left join `tbllocation` `loc` on((`loc`.`id` = `p`.`location_id`))) left join `vwphotographytags` `vw` on((`vw`.`photography_id` = `p`.`id`)));
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographydetails` AS select `p`.`id` AS `Id`,`p`.`filename` AS `Filename`,`loc`.`_reference` AS `Location`,`p`.`_path` AS `Path`,`p`.`title` AS `Title`,`p`.`archive` AS `Archive`,`vw`.`Taglist` AS `Tags` from ((`tblphotography` `p` left join `tbllocation` `loc` on((`loc`.`id` = `p`.`location_id`))) left join `vwphotographytags` `vw` on((`vw`.`photography_id` = `p`.`id`)));
 
 -- Dumping structure for view gallery.vwphotographytags
 DROP VIEW IF EXISTS `vwphotographytags`;
@@ -1299,8 +1380,9 @@ CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographytags` AS sele
 DROP VIEW IF EXISTS `vwphotographywithranking`;
 -- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `vwphotographywithranking`;
-CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographywithranking` AS select `p`.`Id` AS `Id`,`p`.`Filename` AS `Filename`,ifnull(`p`.`Location`,'') AS `Location`,`p`.`Path` AS `Path`,(case when (locate('slide',`p`.`Path`) > 0) then 1 else 0 end) AS `Source`,`p`.`Title` AS `Title`,ifnull(`p`.`Tags`,'') AS `Tags`,ifnull(`r`.`_rank`,0) AS `Rank`,ifnull(`udfGetAverageRank`(`p`.`Id`),0) AS `AverageRank` from (`vwphotographydetails` `p` left join `tblranking` `r` on(((`r`.`user_id` = `p1`()) and (`r`.`photography_id` = `p`.`Id`))));
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `vwphotographywithranking` AS select `p`.`Id` AS `Id`,`p`.`Filename` AS `Filename`,ifnull(`p`.`Location`,'') AS `Location`,`p`.`Path` AS `Path`,(case when (locate('slide',`p`.`Path`) > 0) then 1 else 0 end) AS `Source`,`p`.`Title` AS `Title`,`p`.`Archive` AS `Archive`,ifnull(`p`.`Tags`,'') AS `Tags`,ifnull(`r`.`_rank`,0) AS `Rank`,ifnull(`udfGetAverageRank`(`p`.`Id`),0) AS `AverageRank` from (`vwphotographydetails` `p` left join `tblranking` `r` on(((`r`.`user_id` = `p1`()) and (`r`.`photography_id` = `p`.`Id`))));
 
+/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

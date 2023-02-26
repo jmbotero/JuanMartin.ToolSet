@@ -29,12 +29,13 @@
     // persist values
     var queryString = $"&searchQuery={searchQuery}";
 }
+   <div id="preloader"></div>
 @if (!isCartView)
 {
     <div class="navbar">
 
-        <table>
-            <tr>
+            <table>
+                <tr>
                 <td>
                     @if (Model.Locations.Count > 0)
                     {

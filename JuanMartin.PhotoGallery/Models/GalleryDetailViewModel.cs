@@ -13,11 +13,13 @@ namespace JuanMartin.PhotoGallery.Models
         public int PageId { get; set; }
         public string Location { get; set; }
         public int SelectedRank { get; set; }
+        public int PlaceHolderRank { get; set; }
         public Photography Image { get; set; }
         public string ImageIdList { get; set; }
         //public List<SelectListItem> Tags { get; set; }
         public string Tag { get; set; }
         public string SelectedTagListAction { get; set; }
         public string ShoppingCartAction { get; set; }
+        public string PlaceHolderSource { get; set; }
     }
 }

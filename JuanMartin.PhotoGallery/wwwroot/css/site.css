@@ -607,8 +607,21 @@ https://www.w3schools.com/howto/howto_css_notification_button.asp
         position: absolute;
         top: 5px;
         right: -10px;
-        padding: 5px 10px;
+        padding: 5px 10px;()
         border-radius: 50%;
         background-color: red;
         color: white;
     }
+
+#preloader {
+    background-image: url('../Rainbow.gif');
+    background-repeat:no-repeat;
+    background-color:white;
+    background-position-x:center;
+    background-position-y:center;
+    background-size: 15%;
+    height: 100vh;
+    width: 100%;
+    position: fixed;
+    z-index: 100;
+}

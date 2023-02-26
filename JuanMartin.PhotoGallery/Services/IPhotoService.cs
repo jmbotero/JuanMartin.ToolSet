@@ -36,7 +36,7 @@ namespace JuanMartin.PhotoGallery.Services
         int LoadSession(int userId);
         void EndSession(int sessionId);
         RedirectResponseModel GetRedirectInfo(int userId,string remoteHost);
-        Dictionary<string, object> GenerateRouteValues(long routeId, string queryString);
+        Dictionary<string, object> GenerateRouteValues(long routeId, string queryString, Dictionary<string, string> additionalQueryStringItems = null);
         RedirectResponseModel SetRedirectInfo(int userId,string remoteHost, string controller, string action, long routeId = -1, string queryString = "");
         void ConnectUserAndRemoteHost(int userId, string remoteHost);
         User GetUser(string userName, string password);
@@ -48,6 +48,8 @@ namespace JuanMartin.PhotoGallery.Services
         int UpdatePhotographyRanking(long id, int userId, int rank);
         int UpdatePhotographyDetails(long id, int userId, string location);
         int AddTag(int userId, string tag, long id);
+        int AddTag(string connectionString, int userId, string tag, long id);
+        void AddTags(string connectionString, int userId, string tags, IEnumerable<Photography> photographies);
         int RemoveTag(int userId, string tag, long id);
         IEnumerable<string> GetAllTags(int pageId = 1);
         IEnumerable<string> GetAllLocations(int pageId = 1);

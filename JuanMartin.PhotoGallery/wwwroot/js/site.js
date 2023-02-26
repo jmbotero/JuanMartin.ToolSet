@@ -1,13 +1,24 @@
 ﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
+// preloader...
+var loader = document.getElementById('preloader');
 
-// Write your JavaScript code.
+window.addEventListener('load', function () {
+    loader.style.display = "none";
+});
+
+// detail...
 function SetRank() {
     var getSelectedValue = document.querySelector('input[name="ranking"]:checked');
 
     if (getSelectedValue != null) {
         var rank = 11 - parseInt(getSelectedValue.value);
         var rankText = document.getElementById('rank');
+
+    // cache temporary  entry
+        document.getElementById('placeHolderSource').value = 'Rank';
+        document.getElementById('placeHolderRaank').value = rank;
+
 
         rankText.value = rank;
         document.getElementById('selectedTagListAction').value = "none";
@@ -19,11 +30,19 @@ function ClearTag() {
 }
 
 function SetTagListAction(actionName) {
+    // cache temporary  entry
+    document.getElementById('placeHolderSource').value = "Tag";
+
     document.getElementById('selectedTagListAction').value = actionName;
 }
 
 function SetCartItemAction(actionName) {
     document.getElementById('currentImageCartAction').value = actionName;
+}
+
+function SetLocation() {
+    // cache temporary  entry
+    document.getElementById('placeHolderSource').value = "Location";
 }
 
 function SetTag(element) {

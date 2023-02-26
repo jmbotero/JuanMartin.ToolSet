@@ -1,0 +1,2 @@
+ALTER TABLE tblphotography
+ADD archive SMALLINT NOT NULL DEFAULT 0;
